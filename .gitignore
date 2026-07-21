@@ -1,0 +1,57 @@
+# Miscellaneous
+*.class
+*.log
+*.pyc
+*.swp
+.DS_Store
+.atom/
+.buildlog/
+.history
+.svn/
+migrate_working_dir/
+
+# IntelliJ related
+*.iml
+*.ipr
+*.iws
+.idea/
+
+# VS Code
+.vscode/
+
+# Flutter/Dart/Pub
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+build/
+pubspec.lock
+
+# Web build output
+web/flutter_service_worker.js
+
+# macOS
+.DS_Store
+
+# Coverage
+coverage/
+
+# Android
+android/local.properties
+android/.gradle
+
+# iOS
+ios/Pods/
+ios/.symlinks/
+
+# Symbols
+app.*.symbols
+
+# Obfuscation related
+app.*.map.json
+
+# Firebase files
+google-services.json
+GoogleService-Info.plist
