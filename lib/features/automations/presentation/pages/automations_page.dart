@@ -1,195 +1,170 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
 
 class AutomationsPage extends StatelessWidget {
   const AutomationsPage({super.key});
 
   static const List<_Automation> _automations = [
     _Automation(
-      name: 'New Lead Welcome',
-      trigger: 'When a new lead is created',
-      status: 'Active',
-      runs: 124,
-      openRate: 88,
-      icon: Icons.waving_hand_outlined,
-      color: AppColors.gold,
+      'New Lead Welcome',
+      'When a new lead is created',
+      124,
+      '88%',
+      true,
+      Icons.person_add_rounded,
+      AppColors.info,
     ),
     _Automation(
-      name: 'Follow Up Sequence',
-      trigger: 'Follow up with leads',
-      status: 'Active',
-      runs: 98,
-      openRate: 72,
-      icon: Icons.replay_outlined,
-      color: AppColors.info,
+      'Follow Up Sequence',
+      'Follow up with leads',
+      98,
+      '72%',
+      true,
+      Icons.replay_rounded,
+      AppColors.gold,
     ),
     _Automation(
-      name: 'Re-engagement Campaign',
-      trigger: 'Win back inactive leads',
-      status: 'Active',
-      runs: 64,
-      openRate: 45,
-      icon: Icons.refresh_outlined,
-      color: AppColors.success,
+      'Re-engagement Campaign',
+      'Win back inactive leads',
+      64,
+      '45%',
+      false,
+      Icons.refresh_rounded,
+      AppColors.warning,
     ),
     _Automation(
-      name: 'Deal Won Celebration',
-      trigger: 'Celebrate new customers',
-      status: 'Active',
-      runs: 23,
-      openRate: 100,
-      icon: Icons.celebration_outlined,
-      color: AppColors.warning,
+      'Deal Won Celebration',
+      'Celebrate new customers',
+      23,
+      '100%',
+      true,
+      Icons.celebration_rounded,
+      AppColors.success,
     ),
     _Automation(
-      name: 'Onboarding Drip',
-      trigger: 'New customer signs up',
-      status: 'Draft',
-      runs: 0,
-      openRate: 0,
-      icon: Icons.start_outlined,
-      color: AppColors.chart1,
+      'Proposal Follow-up',
+      'After proposal is sent',
+      47,
+      '61%',
+      true,
+      Icons.description_rounded,
+      AppColors.badgeNew,
     ),
     _Automation(
-      name: 'Churned Account Alert',
-      trigger: 'Account inactive for 30 days',
-      status: 'Paused',
-      runs: 12,
-      openRate: 34,
-      icon: Icons.notifications_outlined,
-      color: AppColors.error,
+      'Onboarding Sequence',
+      'New customer onboarding',
+      88,
+      '94%',
+      true,
+      Icons.rocket_launch_rounded,
+      AppColors.success,
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      currentRoute: '/automations',
-      pageTitle: 'Automations',
-      topBarActions: [
-        GoldButton(
-          label: 'New Automation',
-          icon: Icons.add,
-          onTap: () {},
-          small: true,
-        ),
-        const SizedBox(width: AppSpacing.md),
-      ],
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Automations', style: AppTypography.headlineSmall),
-                    Text('Create workflows that work for you.',
-                        style: AppTypography.bodySmall),
-                  ],
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Expanded(
-              child: AppCard(
-                padding: EdgeInsets.zero,
-                child: AppDataTable(
-                  headers: const [
-                    'Automation',
-                    'Status',
-                    'Runs',
-                    'Open Rate',
-                    '',
-                  ],
-                  columnWidths: const [240, 100, 100, 200, 80],
-                  rows: _automations
-                      .map((a) => [
-                            Row(
-                              children: [
-                                Container(
-                                  width: 36,
-                                  height: 36,
-                                  decoration: BoxDecoration(
-                                    color: a.color.withOpacity(0.12),
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Icon(a.icon,
-                                      size: 18, color: a.color),
-                                ),
-                                const SizedBox(width: 10),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(a.name,
-                                          style: AppTypography.titleSmall,
-                                          overflow: TextOverflow.ellipsis),
-                                      Text(a.trigger,
-                                          style: AppTypography.caption,
-                                          overflow: TextOverflow.ellipsis),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
-                            StatusBadge(
-                              label: a.status,
-                              color: a.status == 'Active'
-                                  ? AppColors.success
-                                  : a.status == 'Paused'
-                                      ? AppColors.warning
-                                      : AppColors.textTertiary,
-                              bgColor: a.status == 'Active'
-                                  ? AppColors.successLight
-                                  : a.status == 'Paused'
-                                      ? AppColors.warningLight
-                                      : AppColors.borderLight,
-                            ),
-                            Text(
-                              a.runs == 0 ? '-' : '${a.runs}',
-                              style: AppTypography.bodySmall,
-                            ),
-                            a.openRate == 0
-                                ? Text('-',
-                                    style: AppTypography.bodySmall)
-                                : Row(
-                                    children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                          child: LinearProgressIndicator(
-                                            value: a.openRate / 100,
-                                            backgroundColor:
-                                                AppColors.borderLight,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<
-                                                    Color>(a.color),
-                                            minHeight: 6,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text('${a.openRate}%',
-                                          style: AppTypography.caption),
-                                    ],
-                                  ),
-                            _ToggleSwitch(
-                              enabled: a.status == 'Active',
-                              color: a.color,
-                            ),
-                          ])
-                      .toList(),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SectionHeader(
+                  title: 'Automations',
+                  subtitle: 'Create workflows that work for you.',
                 ),
               ),
+              PrimaryButton(
+                label: 'New Automation',
+                icon: Icons.add_rounded,
+                onPressed: () {},
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          Row(
+            children: const [
+              _AutoStatCard(label: 'Active Automations', value: '12', icon: Icons.bolt_rounded, color: AppColors.gold),
+              SizedBox(width: 16),
+              _AutoStatCard(label: 'Actions This Week', value: '2,847', icon: Icons.play_circle_outlined, color: AppColors.info),
+              SizedBox(width: 16),
+              _AutoStatCard(label: 'Hours Saved', value: '146h', icon: Icons.schedule_outlined, color: AppColors.success),
+              SizedBox(width: 16),
+              _AutoStatCard(label: 'Success Rate', value: '94.2%', icon: Icons.check_circle_outline_rounded, color: AppColors.badgeQualified),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          AppCard(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const SearchField(hint: 'Search automations...'),
+                      const Spacer(),
+                      SecondaryButton(
+                        label: 'Filter',
+                        icon: Icons.tune_rounded,
+                        onPressed: () {},
+                        small: true,
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                ..._automations.asMap().entries.map((e) => Column(
+                      children: [
+                        _AutomationRow(automation: e.value),
+                        if (e.key < _automations.length - 1) const Divider(height: 1),
+                      ],
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _AutoStatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const _AutoStatCard({required this.label, required this.value, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: AppCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value, style: const TextStyle(fontFamily: 'Inter', fontSize: 20, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.textSecondary)),
+              ],
             ),
           ],
         ),
@@ -198,52 +173,120 @@ class AutomationsPage extends StatelessWidget {
   }
 }
 
-class _Automation {
-  final String name;
-  final String trigger;
-  final String status;
-  final int runs;
-  final int openRate;
-  final IconData icon;
-  final Color color;
-
-  const _Automation({
-    required this.name,
-    required this.trigger,
-    required this.status,
-    required this.runs,
-    required this.openRate,
-    required this.icon,
-    required this.color,
-  });
-}
-
-class _ToggleSwitch extends StatefulWidget {
-  final bool enabled;
-  final Color color;
-
-  const _ToggleSwitch({required this.enabled, required this.color});
+class _AutomationRow extends StatefulWidget {
+  final _Automation automation;
+  const _AutomationRow({required this.automation});
 
   @override
-  State<_ToggleSwitch> createState() => _ToggleSwitchState();
+  State<_AutomationRow> createState() => _AutomationRowState();
 }
 
-class _ToggleSwitchState extends State<_ToggleSwitch> {
-  late bool _value;
+class _AutomationRowState extends State<_AutomationRow> {
+  late bool _enabled;
 
   @override
   void initState() {
     super.initState();
-    _value = widget.enabled;
+    _enabled = widget.automation.enabled;
   }
 
   @override
   Widget build(BuildContext context) {
-    return Switch(
-      value: _value,
-      onChanged: (v) => setState(() => _value = v),
-      activeColor: widget.color,
-      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+    final a = widget.automation;
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: a.color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(a.icon, size: 20, color: a.color),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  a.name,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  a.trigger,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 24),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                a.runs.toString(),
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Text(
+                'Active',
+                style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: AppColors.textTertiary),
+              ),
+            ],
+          ),
+          const SizedBox(width: 24),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Text(
+                a.openRate,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 16,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const Text(
+                'Open Rate',
+                style: TextStyle(fontFamily: 'Inter', fontSize: 10, color: AppColors.textTertiary),
+              ),
+            ],
+          ),
+          const SizedBox(width: 24),
+          Switch(
+            value: _enabled,
+            onChanged: (v) => setState(() => _enabled = v),
+          ),
+        ],
+      ),
     );
   }
+}
+
+class _Automation {
+  final String name;
+  final String trigger;
+  final int runs;
+  final String openRate;
+  final bool enabled;
+  final IconData icon;
+  final Color color;
+  const _Automation(this.name, this.trigger, this.runs, this.openRate, this.enabled, this.icon, this.color);
 }

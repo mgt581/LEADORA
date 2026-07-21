@@ -1,376 +1,217 @@
-import 'package:fl_chart/fl_chart.dart';
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
+import '../../../../core/widgets/charts/chart_widgets.dart';
 
 class ReportsPage extends StatelessWidget {
   const ReportsPage({super.key});
 
+  static const List<_Report> _savedReports = [
+    _Report('Weekly Performance', 'Sales', 'Jul 21, 2024', Icons.bar_chart_rounded),
+    _Report('Lead Source Analysis', 'Marketing', 'Jul 20, 2024', Icons.pie_chart_rounded),
+    _Report('Revenue Forecast Q3', 'Finance', 'Jul 18, 2024', Icons.trending_up_rounded),
+    _Report('Email Campaign Results', 'Marketing', 'Jul 17, 2024', Icons.mark_email_read_rounded),
+    _Report('Pipeline Health Check', 'Sales', 'Jul 15, 2024', Icons.account_tree_rounded),
+    _Report('Customer Acquisition Cost', 'Finance', 'Jul 14, 2024', Icons.monetization_on_rounded),
+  ];
+
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      currentRoute: '/reports',
-      pageTitle: 'Reports',
-      topBarActions: [
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.white,
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: AppColors.border),
-          ),
-          child: Row(
-            mainAxisSize: MainAxisSize.min,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
             children: [
-              const Icon(Icons.calendar_today_outlined,
-                  size: 14, color: AppColors.textSecondary),
-              const SizedBox(width: 6),
-              Text('Jul 14 – 21, 2024', style: AppTypography.labelMedium),
-              const SizedBox(width: 6),
-              const Icon(Icons.keyboard_arrow_down,
-                  size: 16, color: AppColors.textSecondary),
+              const Expanded(
+                child: SectionHeader(
+                  title: 'Reports',
+                  subtitle: 'Track your performance and growth.',
+                ),
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                decoration: BoxDecoration(
+                  color: AppColors.cardBg,
+                  borderRadius: BorderRadius.circular(8),
+                  border: Border.all(color: AppColors.cardBorder),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.calendar_today_outlined, size: 14, color: AppColors.textSecondary),
+                    SizedBox(width: 6),
+                    Text('Jul 14 – Jul 21, 2024',
+                        style: TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.textSecondary)),
+                    SizedBox(width: 4),
+                    Icon(Icons.keyboard_arrow_down_rounded, size: 14, color: AppColors.textSecondary),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 12),
+              PrimaryButton(
+                label: 'New Report',
+                icon: Icons.add_rounded,
+                onPressed: () {},
+              ),
             ],
           ),
-        ),
-        const SizedBox(width: 8),
-        GoldButton(
-          label: 'Export',
-          icon: Icons.download_outlined,
-          onTap: () {},
-          small: true,
-        ),
-        const SizedBox(width: AppSpacing.md),
-      ],
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text('Track your performance and growth.',
-                    style: AppTypography.bodySmall),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: AppSpacing.md,
-              mainAxisSpacing: AppSpacing.md,
-              childAspectRatio: 2.0,
-              children: const [
-                StatCard(
-                  title: 'Total Leads',
-                  value: '248',
-                  change: '+18%',
-                  isPositive: true,
-                  icon: Icons.people_outline,
-                ),
-                StatCard(
-                  title: 'Conversions',
-                  value: '23',
-                  change: '+9%',
-                  isPositive: true,
-                  icon: Icons.swap_horiz_outlined,
-                  iconColor: AppColors.success,
-                  iconBgColor: AppColors.successLight,
-                ),
-                StatCard(
-                  title: 'Conversion Rate',
-                  value: '9.3%',
-                  change: '+2.1%',
-                  isPositive: true,
-                  icon: Icons.percent_outlined,
-                  iconColor: AppColors.info,
-                  iconBgColor: AppColors.infoLight,
-                ),
-                StatCard(
-                  title: 'Revenue',
-                  value: '£12,540',
-                  change: '+22%',
-                  isPositive: true,
-                  icon: Icons.currency_pound_outlined,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            LayoutBuilder(
-              builder: (context, constraints) {
-                if (constraints.maxWidth > 700) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Expanded(flex: 3, child: _RevenueChart()),
-                      const SizedBox(width: AppSpacing.md),
-                      Expanded(flex: 2, child: _TopSalesReps()),
-                    ],
-                  );
-                }
-                return Column(
-                  children: [
-                    _RevenueChart(),
-                    const SizedBox(height: AppSpacing.md),
-                    _TopSalesReps(),
-                  ],
-                );
-              },
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            _ReportsList(),
-          ],
-        ),
-      ),
-    );
-  }
-}
 
-class _RevenueChart extends StatelessWidget {
-  final List<FlSpot> _spots = const [
-    FlSpot(0, 8400),
-    FlSpot(1, 9200),
-    FlSpot(2, 8800),
-    FlSpot(3, 10500),
-    FlSpot(4, 11200),
-    FlSpot(5, 10800),
-    FlSpot(6, 12540),
-  ];
+          const SizedBox(height: 4),
 
-  const _RevenueChart();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Revenue Over Time', style: AppTypography.titleMedium),
-          const SizedBox(height: AppSpacing.lg),
-          SizedBox(
-            height: 200,
-            child: LineChart(
-              LineChartData(
-                gridData: FlGridData(
-                  show: true,
-                  drawVerticalLine: false,
-                  getDrawingHorizontalLine: (value) => FlLine(
-                    color: AppColors.border,
-                    strokeWidth: 1,
-                    dashArray: [4, 4],
-                  ),
-                ),
-                titlesData: FlTitlesData(
-                  bottomTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      getTitlesWidget: (value, meta) {
-                        const days = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-                        final idx = value.toInt();
-                        if (idx < 0 || idx >= days.length) {
-                          return const SizedBox.shrink();
-                        }
-                        return Padding(
-                          padding: const EdgeInsets.only(top: 6),
-                          child: Text(days[idx], style: AppTypography.caption),
-                        );
-                      },
-                    ),
-                  ),
-                  leftTitles: AxisTitles(
-                    sideTitles: SideTitles(
-                      showTitles: true,
-                      reservedSize: 52,
-                      getTitlesWidget: (value, meta) => Text(
-                        '£${(value / 1000).toStringAsFixed(0)}k',
-                        style: AppTypography.caption,
-                      ),
-                    ),
-                  ),
-                  rightTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                  topTitles: const AxisTitles(
-                    sideTitles: SideTitles(showTitles: false),
-                  ),
-                ),
-                borderData: FlBorderData(show: false),
-                minX: 0,
-                maxX: 6,
-                minY: 7000,
-                maxY: 14000,
-                lineBarsData: [
-                  LineChartBarData(
-                    spots: _spots,
-                    isCurved: true,
-                    gradient: const LinearGradient(
-                      colors: [AppColors.goldDark, AppColors.gold],
-                    ),
-                    barWidth: 2.5,
-                    dotData: const FlDotData(show: false),
-                    belowBarData: BarAreaData(
-                      show: true,
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [
-                          AppColors.gold.withOpacity(0.15),
-                          AppColors.gold.withOpacity(0.01),
-                        ],
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _TopSalesReps extends StatelessWidget {
-  final List<_SalesRep> _reps = const [
-    _SalesRep('Alex Bryant', '£4,820', 8, AppColors.gold),
-    _SalesRep('Sarah Chen', '£3,240', 6, AppColors.chart1),
-    _SalesRep('James Reid', '£2,680', 5, AppColors.chart2),
-    _SalesRep('Emma Parker', '£1,800', 4, AppColors.chart3),
-  ];
-
-  const _TopSalesReps();
-
-  @override
-  Widget build(BuildContext context) {
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Top Sales Reps', style: AppTypography.titleMedium),
-          const SizedBox(height: AppSpacing.md),
-          ..._reps.asMap().entries.map((e) => Padding(
-                padding: const EdgeInsets.symmetric(vertical: 8),
-                child: Row(
-                  children: [
-                    Text(
-                      '${e.key + 1}',
-                      style: AppTypography.caption.copyWith(
-                        fontWeight: FontWeight.w700,
-                        color: AppColors.gold,
-                      ),
-                    ),
-                    const SizedBox(width: 10),
-                    CircleAvatar(
-                      radius: 14,
-                      backgroundColor: e.value.color.withOpacity(0.15),
-                      child: Text(
-                        e.value.name[0],
-                        style: TextStyle(
-                          fontSize: 11,
-                          fontWeight: FontWeight.w700,
-                          color: e.value.color,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    Expanded(
-                      child: Text(e.value.name,
-                          style: AppTypography.titleSmall),
-                    ),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      children: [
-                        Text(e.value.revenue,
-                            style: AppTypography.titleSmall),
-                        Text('${e.value.deals} deals',
-                            style: AppTypography.caption),
-                      ],
-                    ),
-                  ],
-                ),
+          // KPI metrics
+          Row(
+            children: const [
+              Expanded(child: StatCard(
+                title: 'Total Leads',
+                value: '248',
+                delta: '+16%',
+                deltaPositive: true,
+                icon: Icons.person_search_rounded,
+                iconColor: AppColors.info,
+                iconBackground: AppColors.infoSurface,
               )),
+              SizedBox(width: 16),
+              Expanded(child: StatCard(
+                title: 'Conversions',
+                value: '23',
+                delta: '+9%',
+                deltaPositive: true,
+                icon: Icons.trending_up_rounded,
+                iconColor: AppColors.success,
+                iconBackground: AppColors.successSurface,
+              )),
+              SizedBox(width: 16),
+              Expanded(child: StatCard(
+                title: 'Conversion Rate',
+                value: '9.3%',
+                delta: '+2.1%',
+                deltaPositive: true,
+                icon: Icons.percent_rounded,
+              )),
+              SizedBox(width: 16),
+              Expanded(child: StatCard(
+                title: 'Revenue',
+                value: '£12,540',
+                delta: '+22%',
+                deltaPositive: true,
+                icon: Icons.attach_money_rounded,
+              )),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Charts row
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 3,
+                child: TrendLineChart(
+                  title: 'Leads Over Time',
+                  values: [42, 58, 35, 72, 89, 64, 95, 48, 76, 83, 67, 91, 55, 78],
+                  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                  period: 'Last 7 days',
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                flex: 2,
+                child: DonutChartCard(
+                  title: 'Leads by Source',
+                  centerLabel: 'Total',
+                  centerValue: '248',
+                  sections: [
+                    DonutSection(label: 'Website', value: 42, color: AppColors.gold),
+                    DonutSection(label: 'LinkedIn', value: 28, color: AppColors.info),
+                    DonutSection(label: 'Referral', value: 15, color: AppColors.success),
+                    DonutSection(label: 'Ads', value: 10, color: AppColors.badgeProposal),
+                    DonutSection(label: 'Other', value: 5, color: AppColors.textTertiary),
+                  ],
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Saved reports
+          const Text(
+            'Saved Reports',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          LayoutBuilder(builder: (context, constraints) {
+            final cardWidth = (constraints.maxWidth - 20) / 2;
+            return Wrap(
+              spacing: 20,
+              runSpacing: 12,
+              children: _savedReports.map((r) => SizedBox(
+                width: cardWidth,
+                child: _ReportCard(report: r),
+              )).toList(),
+            );
+          }),
         ],
       ),
     );
   }
 }
 
-class _SalesRep {
-  final String name;
-  final String revenue;
-  final int deals;
-  final Color color;
-
-  const _SalesRep(this.name, this.revenue, this.deals, this.color);
-}
-
-class _ReportsList extends StatelessWidget {
-  final List<_Report> _reports = const [
-    _Report('Lead Generation Report', 'Weekly summary of new leads and sources', Icons.people_outline, 'Jul 21, 2024'),
-    _Report('Revenue Report', 'Monthly revenue breakdown by channel', Icons.currency_pound_outlined, 'Jul 21, 2024'),
-    _Report('Pipeline Report', 'Current pipeline value and stage analysis', Icons.account_tree_outlined, 'Jul 20, 2024'),
-    _Report('Email Performance', 'Campaign open, click, and reply rates', Icons.email_outlined, 'Jul 19, 2024'),
-  ];
-
-  const _ReportsList();
+class _ReportCard extends StatelessWidget {
+  final _Report report;
+  const _ReportCard({required this.report});
 
   @override
   Widget build(BuildContext context) {
     return AppCard(
-      padding: EdgeInsets.zero,
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      padding: const EdgeInsets.all(16),
+      onTap: () {},
+      child: Row(
         children: [
-          Padding(
-            padding: const EdgeInsets.all(AppSpacing.cardPadding),
-            child: Row(
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: AppColors.goldSurface,
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(report.icon, size: 20, color: AppColors.gold),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Text('Recent Reports', style: AppTypography.titleMedium),
-                const Spacer(),
-                GoldButton(
-                    label: 'Create Report',
-                    icon: Icons.add,
-                    onTap: () {},
-                    small: true),
+                Text(
+                  report.title,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  '${report.category} · ${report.date}',
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    color: AppColors.textTertiary,
+                  ),
+                ),
               ],
             ),
           ),
-          const Divider(height: 1),
-          AppDataTable(
-            headers: const ['Report Name', 'Description', 'Generated'],
-            columnWidths: const [220, 380, 140],
-            rows: _reports
-                .map((r) => [
-                      Row(
-                        children: [
-                          Container(
-                            width: 32,
-                            height: 32,
-                            decoration: BoxDecoration(
-                              color: AppColors.goldSurface,
-                              borderRadius: BorderRadius.circular(8),
-                            ),
-                            child: Icon(r.icon,
-                                size: 16, color: AppColors.gold),
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(r.title,
-                                style: AppTypography.titleSmall,
-                                overflow: TextOverflow.ellipsis),
-                          ),
-                        ],
-                      ),
-                      Text(r.description,
-                          style: AppTypography.bodySmall,
-                          overflow: TextOverflow.ellipsis),
-                      Text(r.generated, style: AppTypography.caption),
-                    ])
-                .toList(),
-          ),
+          const Icon(Icons.chevron_right_rounded, size: 18, color: AppColors.textTertiary),
         ],
       ),
     );
@@ -379,9 +220,8 @@ class _ReportsList extends StatelessWidget {
 
 class _Report {
   final String title;
-  final String description;
+  final String category;
+  final String date;
   final IconData icon;
-  final String generated;
-
-  const _Report(this.title, this.description, this.icon, this.generated);
+  const _Report(this.title, this.category, this.date, this.icon);
 }

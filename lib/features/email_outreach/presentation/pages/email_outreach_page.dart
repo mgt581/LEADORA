@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
 
 class EmailOutreachPage extends StatefulWidget {
   const EmailOutreachPage({super.key});
@@ -12,187 +9,328 @@ class EmailOutreachPage extends StatefulWidget {
   State<EmailOutreachPage> createState() => _EmailOutreachPageState();
 }
 
-class _EmailOutreachPageState extends State<EmailOutreachPage> {
-  int _selectedTab = 0;
-  final List<String> _tabs = ['Campaigns', 'Templates', 'Analytics'];
+class _EmailOutreachPageState extends State<EmailOutreachPage>
+    with SingleTickerProviderStateMixin {
+  late TabController _tab;
 
-  final List<_Campaign> _campaigns = const [
-    _Campaign(name: 'Summer Promotion', status: 'Active', sent: 1240, opened: 487, clicked: 124, replied: 48),
-    _Campaign(name: 'Follow-up Sequence', status: 'Active', sent: 860, opened: 301, clicked: 87, replied: 35),
-    _Campaign(name: 'Re-engagement Campaign', status: 'Paused', sent: 540, opened: 162, clicked: 43, replied: 12),
-    _Campaign(name: 'Deal Won Celebration', status: 'Active', sent: 124, opened: 124, clicked: 98, replied: 78),
-    _Campaign(name: 'Onboarding Sequence', status: 'Draft', sent: 0, opened: 0, clicked: 0, replied: 0),
+  static const List<_Campaign> _campaigns = [
+    _Campaign('Summer Promotion', 'Active', '1,248', '64.2%', '28.7%', '4.1%'),
+    _Campaign('Welcome Series', 'Active', '847', '71.5%', '34.2%', '2.8%'),
+    _Campaign('Re-engagement', 'Paused', '523', '42.1%', '18.6%', '1.2%'),
+    _Campaign('Product Launch', 'Active', '2,104', '58.9%', '31.4%', '5.7%'),
+    _Campaign('Win-back', 'Paused', '312', '38.4%', '14.2%', '0.9%'),
   ];
 
   @override
+  void initState() {
+    super.initState();
+    _tab = TabController(length: 3, vsync: this);
+  }
+
+  @override
+  void dispose() {
+    _tab.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return AppShell(
-      currentRoute: '/email-outreach',
-      pageTitle: 'Email Outreach',
-      topBarActions: [
-        GoldButton(
-          label: 'New Campaign',
-          icon: Icons.add,
-          onTap: () {},
-          small: true,
-        ),
-        const SizedBox(width: AppSpacing.md),
-      ],
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: AppSpacing.md,
-              mainAxisSpacing: AppSpacing.md,
-              childAspectRatio: 2.2,
-              children: const [
-                StatCard(
-                  title: 'Emails Sent',
-                  value: '2,764',
-                  change: '+18% this week',
-                  isPositive: true,
-                  icon: Icons.send_outlined,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SectionHeader(
+                  title: 'Email Outreach',
+                  subtitle: 'Create and manage email campaigns.',
                 ),
-                StatCard(
-                  title: 'Open Rate',
-                  value: '38.4%',
-                  change: '+2.1% vs last week',
-                  isPositive: true,
-                  icon: Icons.mail_open_outlined,
-                  iconColor: AppColors.info,
-                  iconBgColor: AppColors.infoLight,
+              ),
+              PrimaryButton(
+                label: 'New Campaign',
+                icon: Icons.add_rounded,
+                onPressed: () {},
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          // Stats
+          Row(
+            children: const [
+              Expanded(child: _EmailStatCard(label: 'Emails Sent', value: '24,853', icon: Icons.send_outlined, color: AppColors.info)),
+              SizedBox(width: 16),
+              Expanded(child: _EmailStatCard(label: 'Open Rate', value: '61.4%', icon: Icons.mail_open_outlined, color: AppColors.success)),
+              SizedBox(width: 16),
+              Expanded(child: _EmailStatCard(label: 'Click Rate', value: '27.8%', icon: Icons.touch_app_outlined, color: AppColors.gold)),
+              SizedBox(width: 16),
+              Expanded(child: _EmailStatCard(label: 'Conversions', value: '3.2%', icon: Icons.trending_up_rounded, color: AppColors.badgeQualified)),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          AppCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // Tabs
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: TabBar(
+                    controller: _tab,
+                    isScrollable: true,
+                    tabAlignment: TabAlignment.start,
+                    tabs: const [
+                      Tab(text: 'Campaigns'),
+                      Tab(text: 'Templates'),
+                      Tab(text: 'Sequences'),
+                    ],
+                  ),
                 ),
-                StatCard(
-                  title: 'Click Rate',
-                  value: '12.6%',
-                  icon: Icons.ads_click_outlined,
-                  iconColor: AppColors.success,
-                  iconBgColor: AppColors.successLight,
+
+                const Divider(height: 1),
+
+                // Search bar
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const Expanded(child: SearchField(hint: 'Search campaigns...')),
+                      const Spacer(),
+                      SecondaryButton(
+                        label: 'Filter',
+                        icon: Icons.tune_rounded,
+                        onPressed: () {},
+                        small: true,
+                      ),
+                    ],
+                  ),
                 ),
-                StatCard(
-                  title: 'Reply Rate',
-                  value: '6.2%',
-                  change: '+0.8% vs last week',
-                  isPositive: true,
-                  icon: Icons.reply_outlined,
-                ),
+
+                const Divider(height: 1),
+
+                // Table header
+                _buildHeader(),
+
+                const Divider(height: 1),
+
+                // Rows
+                ..._campaigns.asMap().entries.map((e) => Column(
+                      children: [
+                        _CampaignRow(campaign: e.value),
+                        if (e.key < _campaigns.length - 1) const Divider(height: 1),
+                      ],
+                    )),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
-            AppCard(
-              padding: EdgeInsets.zero,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      color: AppColors.contentBg,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: const [
+          Expanded(flex: 3, child: _H('Campaign')),
+          Expanded(flex: 1, child: _H('Status')),
+          Expanded(flex: 2, child: _H('Sent')),
+          Expanded(flex: 2, child: _H('Open Rate')),
+          Expanded(flex: 2, child: _H('Click Rate')),
+          Expanded(flex: 2, child: _H('Conversion')),
+        ],
+      ),
+    );
+  }
+}
+
+class _H extends StatelessWidget {
+  final String text;
+  const _H(this.text);
+  @override
+  Widget build(BuildContext context) => Text(
+        text.toUpperCase(),
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textSecondary,
+          letterSpacing: 0.5,
+        ),
+      );
+}
+
+class _EmailStatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const _EmailStatCard({required this.label, required this.value, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            width: 40,
+            height: 40,
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(icon, size: 20, color: color),
+          ),
+          const SizedBox(width: 12),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                value,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 22,
+                  fontWeight: FontWeight.w700,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              Text(
+                label,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 11,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _CampaignRow extends StatefulWidget {
+  final _Campaign campaign;
+  const _CampaignRow({required this.campaign});
+
+  @override
+  State<_CampaignRow> createState() => _CampaignRowState();
+}
+
+class _CampaignRowState extends State<_CampaignRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.campaign;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        color: _hovered ? AppColors.contentBg : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Row(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                    child: Row(
-                      children: [
-                        ..._tabs.asMap().entries.map(
-                              (e) => GestureDetector(
-                                onTap: () =>
-                                    setState(() => _selectedTab = e.key),
-                                child: AnimatedContainer(
-                                  duration: const Duration(milliseconds: 150),
-                                  margin: const EdgeInsets.only(right: 4),
-                                  padding: const EdgeInsets.symmetric(
-                                      horizontal: 14, vertical: 7),
-                                  decoration: BoxDecoration(
-                                    color: _selectedTab == e.key
-                                        ? AppColors.sidebarBg
-                                        : Colors.transparent,
-                                    borderRadius: BorderRadius.circular(8),
-                                  ),
-                                  child: Text(
-                                    e.value,
-                                    style: AppTypography.labelMedium.copyWith(
-                                      color: _selectedTab == e.key
-                                          ? AppColors.white
-                                          : AppColors.textSecondary,
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                      ],
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: AppColors.goldSurface,
+                      borderRadius: BorderRadius.circular(8),
                     ),
+                    child: const Icon(Icons.email_rounded, size: 16, color: AppColors.gold),
                   ),
-                  const Divider(height: 1),
-                  AppDataTable(
-                    headers: const [
-                      'Campaign',
-                      'Status',
-                      'Sent',
-                      'Opened',
-                      'Clicked',
-                      'Replied',
-                    ],
-                    columnWidths: const [200, 100, 100, 100, 100, 100],
-                    rows: _campaigns
-                        .map((c) => [
-                              Row(
-                                children: [
-                                  Container(
-                                    width: 32,
-                                    height: 32,
-                                    decoration: BoxDecoration(
-                                      color: AppColors.goldSurface,
-                                      borderRadius: BorderRadius.circular(8),
-                                    ),
-                                    child: const Icon(
-                                      Icons.email_outlined,
-                                      size: 16,
-                                      color: AppColors.gold,
-                                    ),
-                                  ),
-                                  const SizedBox(width: 8),
-                                  Expanded(
-                                    child: Text(
-                                      c.name,
-                                      style: AppTypography.titleSmall,
-                                      overflow: TextOverflow.ellipsis,
-                                    ),
-                                  ),
-                                ],
-                              ),
-                              StatusBadge(
-                                label: c.status,
-                                color: c.status == 'Active'
-                                    ? AppColors.success
-                                    : c.status == 'Paused'
-                                        ? AppColors.warning
-                                        : AppColors.textTertiary,
-                                bgColor: c.status == 'Active'
-                                    ? AppColors.successLight
-                                    : c.status == 'Paused'
-                                        ? AppColors.warningLight
-                                        : AppColors.borderLight,
-                              ),
-                              Text(c.sent == 0
-                                  ? '-'
-                                  : '${c.sent}'),
-                              Text(c.opened == 0
-                                  ? '-'
-                                  : '${c.opened}'),
-                              Text(c.clicked == 0
-                                  ? '-'
-                                  : '${c.clicked}'),
-                              Text(c.replied == 0
-                                  ? '-'
-                                  : '${c.replied}'),
-                            ])
-                        .toList(),
+                  const SizedBox(width: 10),
+                  Text(
+                    c.name,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                 ],
               ),
             ),
+            Expanded(flex: 1, child: StatusBadge.fromStatus(c.status)),
+            _MetricCell(value: c.sent, flex: 2),
+            _RateCell(rate: c.openRate, flex: 2),
+            _RateCell(rate: c.clickRate, flex: 2),
+            _RateCell(rate: c.conversion, flex: 2),
           ],
         ),
+      ),
+    );
+  }
+}
+
+class _MetricCell extends StatelessWidget {
+  final String value;
+  final int flex;
+  const _MetricCell({required this.value, required this.flex});
+
+  @override
+  Widget build(BuildContext context) => Expanded(
+        flex: flex,
+        child: Text(
+          value,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 13,
+            color: AppColors.textPrimary,
+          ),
+        ),
+      );
+}
+
+class _RateCell extends StatelessWidget {
+  final String rate;
+  final int flex;
+  const _RateCell({required this.rate, required this.flex});
+
+  @override
+  Widget build(BuildContext context) {
+    final value = double.tryParse(rate.replaceAll('%', '')) ?? 0;
+    return Expanded(
+      flex: flex,
+      child: Row(
+        children: [
+          SizedBox(
+            width: 48,
+            child: LinearProgressIndicator(
+              value: value / 100,
+              backgroundColor: AppColors.contentBg,
+              valueColor: const AlwaysStoppedAnimation<Color>(AppColors.gold),
+              minHeight: 4,
+              borderRadius: BorderRadius.circular(100),
+            ),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            rate,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w500,
+              color: AppColors.textSecondary,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -201,17 +339,9 @@ class _EmailOutreachPageState extends State<EmailOutreachPage> {
 class _Campaign {
   final String name;
   final String status;
-  final int sent;
-  final int opened;
-  final int clicked;
-  final int replied;
-
-  const _Campaign({
-    required this.name,
-    required this.status,
-    required this.sent,
-    required this.opened,
-    required this.clicked,
-    required this.replied,
-  });
+  final String sent;
+  final String openRate;
+  final String clickRate;
+  final String conversion;
+  const _Campaign(this.name, this.status, this.sent, this.openRate, this.clickRate, this.conversion);
 }

@@ -1,166 +1,152 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
 
 class WebsiteAuditsPage extends StatelessWidget {
   const WebsiteAuditsPage({super.key});
 
   static const List<_Audit> _audits = [
-    _Audit(url: 'designco.com', score: 94, seo: 96, performance: 91, accessibility: 98, issues: 3),
-    _Audit(url: 'techflow.io', score: 78, seo: 82, performance: 71, accessibility: 88, issues: 12),
-    _Audit(url: 'marketplus.net', score: 65, seo: 70, performance: 58, accessibility: 74, issues: 21),
-    _Audit(url: 'brightidea.co.uk', score: 88, seo: 90, performance: 86, accessibility: 92, issues: 6),
-    _Audit(url: 'nextgensolutions.com', score: 72, seo: 68, performance: 76, accessibility: 80, issues: 15),
+    _Audit('designco.com', 84, 91, 78, 96, 'Jul 21, 2024', 'Completed'),
+    _Audit('techflow.io', 72, 85, 64, 88, 'Jul 20, 2024', 'Completed'),
+    _Audit('marketplus.co', 61, 74, 55, 82, 'Jul 19, 2024', 'Completed'),
+    _Audit('brightidea.com', 93, 97, 89, 99, 'Jul 18, 2024', 'Completed'),
+    _Audit('nextgen.dev', 45, 62, 38, 71, 'Jul 17, 2024', 'Failed'),
+    _Audit('creativelab.studio', 78, 88, 72, 91, 'Pending', 'Running'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      currentRoute: '/website-audits',
-      pageTitle: 'Website Audits',
-      topBarActions: [
-        GoldButton(
-          label: 'New Audit',
-          icon: Icons.add,
-          onTap: () {},
-          small: true,
-        ),
-        const SizedBox(width: AppSpacing.md),
-      ],
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: AppSpacing.md,
-              mainAxisSpacing: AppSpacing.md,
-              childAspectRatio: 2.2,
-              children: const [
-                StatCard(
-                  title: 'Audits Run',
-                  value: '48',
-                  change: '+8 this month',
-                  isPositive: true,
-                  icon: Icons.web_outlined,
-                ),
-                StatCard(
-                  title: 'Avg. Score',
-                  value: '79',
-                  icon: Icons.analytics_outlined,
-                  iconColor: AppColors.info,
-                  iconBgColor: AppColors.infoLight,
-                ),
-                StatCard(
-                  title: 'Critical Issues',
-                  value: '14',
-                  change: '-3 resolved',
-                  isPositive: true,
-                  icon: Icons.warning_outlined,
-                  iconColor: AppColors.error,
-                  iconBgColor: AppColors.errorLight,
-                ),
-                StatCard(
-                  title: 'Sites Monitored',
-                  value: '23',
-                  icon: Icons.monitor_outlined,
-                  iconColor: AppColors.success,
-                  iconBgColor: AppColors.successLight,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Expanded(
-              child: AppCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                      child: Row(
-                        children: [
-                          Text('Recent Audits',
-                              style: AppTypography.titleMedium),
-                          const Spacer(),
-                          OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.refresh_outlined, size: 14),
-                            label: const Text('Refresh All'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              textStyle: AppTypography.labelMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: AppDataTable(
-                        headers: const [
-                          'Website',
-                          'Overall Score',
-                          'SEO',
-                          'Performance',
-                          'Accessibility',
-                          'Issues',
-                        ],
-                        columnWidths: const [200, 160, 100, 130, 130, 80],
-                        rows: _audits
-                            .map((a) => [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 28,
-                                        height: 28,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.goldSurface,
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                        ),
-                                        child: const Icon(Icons.web_outlined,
-                                            size: 14,
-                                            color: AppColors.gold),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Text(a.url,
-                                          style: AppTypography.titleSmall),
-                                    ],
-                                  ),
-                                  _ScoreBar(score: a.score),
-                                  Text('${a.seo}',
-                                      style: AppTypography.bodySmall),
-                                  Text('${a.performance}',
-                                      style: AppTypography.bodySmall),
-                                  Text('${a.accessibility}',
-                                      style: AppTypography.bodySmall),
-                                  StatusBadge(
-                                    label: '${a.issues} issues',
-                                    color: a.issues > 10
-                                        ? AppColors.error
-                                        : a.issues > 5
-                                            ? AppColors.warning
-                                            : AppColors.success,
-                                    bgColor: a.issues > 10
-                                        ? AppColors.errorLight
-                                        : a.issues > 5
-                                            ? AppColors.warningLight
-                                            : AppColors.successLight,
-                                  ),
-                                ])
-                            .toList(),
-                      ),
-                    ),
-                  ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SectionHeader(
+                  title: 'Website Audits',
+                  subtitle: 'SEO and performance analysis for your clients.',
                 ),
               ),
+              PrimaryButton(
+                label: 'New Audit',
+                icon: Icons.add_rounded,
+                onPressed: () {},
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          Row(
+            children: const [
+              _AuditStatCard(label: 'Audits Run', value: '142', icon: Icons.search_rounded, color: AppColors.info),
+              SizedBox(width: 16),
+              _AuditStatCard(label: 'Avg. SEO Score', value: '76', icon: Icons.search_off_rounded, color: AppColors.success),
+              SizedBox(width: 16),
+              _AuditStatCard(label: 'Critical Issues', value: '38', icon: Icons.warning_amber_rounded, color: AppColors.error),
+              SizedBox(width: 16),
+              _AuditStatCard(label: 'Sites Monitored', value: '24', icon: Icons.monitor_heart_outlined, color: AppColors.gold),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          AppCard(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const SearchField(hint: 'Search audits...'),
+                      const Spacer(),
+                      SecondaryButton(
+                        label: 'Filter',
+                        icon: Icons.tune_rounded,
+                        onPressed: () {},
+                        small: true,
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                _buildHeader(),
+                const Divider(height: 1),
+                ..._audits.asMap().entries.map((e) => Column(
+                      children: [
+                        _AuditRow(audit: e.value),
+                        if (e.key < _audits.length - 1) const Divider(height: 1),
+                      ],
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      color: AppColors.contentBg,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: const [
+          Expanded(flex: 3, child: _H('Domain')),
+          Expanded(flex: 2, child: _H('SEO Score')),
+          Expanded(flex: 2, child: _H('Performance')),
+          Expanded(flex: 2, child: _H('Accessibility')),
+          Expanded(flex: 2, child: _H('Best Practices')),
+          Expanded(flex: 2, child: _H('Date')),
+          Expanded(flex: 1, child: _H('Status')),
+        ],
+      ),
+    );
+  }
+}
+
+class _H extends StatelessWidget {
+  final String text;
+  const _H(this.text);
+  @override
+  Widget build(BuildContext context) => Text(
+        text.toUpperCase(),
+        style: const TextStyle(fontFamily: 'Inter', fontSize: 11, fontWeight: FontWeight.w600, color: AppColors.textSecondary, letterSpacing: 0.5),
+      );
+}
+
+class _AuditStatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  final Color color;
+  const _AuditStatCard({required this.label, required this.value, required this.icon, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: AppCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 40,
+              height: 40,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(10),
+              ),
+              child: Icon(icon, size: 20, color: color),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(value, style: const TextStyle(fontFamily: 'Inter', fontSize: 22, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
+                Text(label, style: const TextStyle(fontFamily: 'Inter', fontSize: 11, color: AppColors.textSecondary)),
+              ],
             ),
           ],
         ),
@@ -169,56 +155,104 @@ class WebsiteAuditsPage extends StatelessWidget {
   }
 }
 
-class _Audit {
-  final String url;
-  final int score;
-  final int seo;
-  final int performance;
-  final int accessibility;
-  final int issues;
+class _AuditRow extends StatefulWidget {
+  final _Audit audit;
+  const _AuditRow({required this.audit});
 
-  const _Audit({
-    required this.url,
-    required this.score,
-    required this.seo,
-    required this.performance,
-    required this.accessibility,
-    required this.issues,
-  });
+  @override
+  State<_AuditRow> createState() => _AuditRowState();
 }
 
-class _ScoreBar extends StatelessWidget {
-  final int score;
+class _AuditRowState extends State<_AuditRow> {
+  bool _hovered = false;
 
-  const _ScoreBar({required this.score});
-
-  Color get _color {
+  Color _scoreColor(int score) {
     if (score >= 90) return AppColors.success;
-    if (score >= 70) return AppColors.gold;
+    if (score >= 70) return AppColors.warning;
     return AppColors.error;
   }
 
   @override
   Widget build(BuildContext context) {
+    final a = widget.audit;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        color: _hovered ? AppColors.contentBg : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  Container(
+                    width: 32,
+                    height: 32,
+                    decoration: BoxDecoration(
+                      color: AppColors.contentBg,
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: AppColors.cardBorder),
+                    ),
+                    child: const Icon(Icons.language_rounded, size: 14, color: AppColors.textSecondary),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(a.domain, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, fontWeight: FontWeight.w500, color: AppColors.textPrimary)),
+                ],
+              ),
+            ),
+            Expanded(flex: 2, child: _ScorePill(score: a.seo, color: _scoreColor(a.seo))),
+            Expanded(flex: 2, child: _ScorePill(score: a.performance, color: _scoreColor(a.performance))),
+            Expanded(flex: 2, child: _ScorePill(score: a.accessibility, color: _scoreColor(a.accessibility))),
+            Expanded(flex: 2, child: _ScorePill(score: a.bestPractices, color: _scoreColor(a.bestPractices))),
+            Expanded(flex: 2, child: Text(a.date, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.textTertiary))),
+            Expanded(flex: 1, child: StatusBadge.fromStatus(a.status)),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ScorePill extends StatelessWidget {
+  final int score;
+  final Color color;
+  const _ScorePill({required this.score, required this.color});
+
+  @override
+  Widget build(BuildContext context) {
     return Row(
       children: [
-        Expanded(
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(4),
-            child: LinearProgressIndicator(
-              value: score / 100,
-              backgroundColor: AppColors.borderLight,
-              valueColor: AlwaysStoppedAnimation<Color>(_color),
-              minHeight: 6,
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: 0.12),
+            borderRadius: BorderRadius.circular(100),
+          ),
+          child: Text(
+            score.toString(),
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: color,
             ),
           ),
-        ),
-        const SizedBox(width: 8),
-        Text(
-          '$score',
-          style: AppTypography.titleSmall.copyWith(color: _color),
         ),
       ],
     );
   }
+}
+
+class _Audit {
+  final String domain;
+  final int seo;
+  final int performance;
+  final int accessibility;
+  final int bestPractices;
+  final String date;
+  final String status;
+  const _Audit(this.domain, this.seo, this.performance, this.accessibility, this.bestPractices, this.date, this.status);
 }

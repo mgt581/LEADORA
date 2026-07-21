@@ -1,9 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
 
 class LeadsPage extends StatefulWidget {
   const LeadsPage({super.key});
@@ -13,213 +10,354 @@ class LeadsPage extends StatefulWidget {
 }
 
 class _LeadsPageState extends State<LeadsPage> {
-  String _activeFilter = 'All Leads';
-  final List<String> _filters = [
-    'All Leads',
-    'New',
-    'Contacted',
-    'Qualified',
-    'Proposal',
-    'Won',
-    'Lost',
+  String _filter = 'All Leads';
+  String _search = '';
+
+  static const List<String> _tabs = [
+    'All Leads', 'New', 'Contacted', 'Qualified', 'Proposal', 'Won', 'Lost',
   ];
 
-  final List<_Lead> _leads = const [
-    _Lead(
-      name: 'Sarah Johnson',
-      email: 'sarah@designco.com',
-      company: 'Design Co.',
-      status: 'New',
-      source: 'Website',
-      created: '2 min ago',
-    ),
-    _Lead(
-      name: 'David Williams',
-      email: 'david@techflow.com',
-      company: 'TechFlow',
-      status: 'Contacted',
-      source: 'LinkedIn',
-      created: '1 h ago',
-    ),
-    _Lead(
-      name: 'James Brown',
-      email: 'james@marketplus.com',
-      company: 'MarketPlus',
-      status: 'Qualified',
-      source: 'Referral',
-      created: '1 h ago',
-    ),
-    _Lead(
-      name: 'Emily Davis',
-      email: 'emily@brightidea.com',
-      company: 'Bright Idea',
-      status: 'Proposal',
-      source: 'Website',
-      created: '5 h ago',
-    ),
-    _Lead(
-      name: 'Michael Wilson',
-      email: 'michael@nextgen.com',
-      company: 'NextGen',
-      status: 'New',
-      source: 'Ads',
-      created: '1 day ago',
-    ),
-    _Lead(
-      name: 'Jessica Taylor',
-      email: 'jessica@creativlab.com',
-      company: 'Creative Lab',
-      status: 'Contacted',
-      source: 'LinkedIn',
-      created: '1 day ago',
-    ),
-    _Lead(
-      name: 'Robert Martinez',
-      email: 'robert@scale.io',
-      company: 'Scale.io',
-      status: 'Won',
-      source: 'Referral',
-      created: '2 days ago',
-    ),
-    _Lead(
-      name: 'Amanda Chen',
-      email: 'amanda@synergy.com',
-      company: 'Synergy Co.',
-      status: 'Qualified',
-      source: 'Website',
-      created: '3 days ago',
-    ),
+  static const List<_Lead> _leads = [
+    _Lead('Sarah Johnson', 'sarah@designco.com', 'Design Co.', 'New', 'Website', '2 min ago'),
+    _Lead('David Williams', 'david@techflow.com', 'TechFlow', 'Contacted', 'LinkedIn', '1 h ago'),
+    _Lead('James Brown', 'james@marketplus.com', 'MarketPlus', 'Qualified', 'Referral', '1 h ago'),
+    _Lead('Emily Davis', 'emily@brightidea.com', 'Bright Idea', 'Proposal', 'Website', '5 h ago'),
+    _Lead('Michael Wilson', 'michael@nextgen.com', 'NextGen', 'New', 'Ads', '1 d ago'),
+    _Lead('Jessica Taylor', 'jessica@creativelab.com', 'Creative Lab', 'Contacted', 'LinkedIn', '1 d ago'),
+    _Lead('Robert Martinez', 'robert@fusiontech.com', 'FusionTech', 'Won', 'Website', '2 d ago'),
+    _Lead('Amanda Lee', 'amanda@pioneer.com', 'Pioneer Inc.', 'Qualified', 'Referral', '2 d ago'),
+    _Lead('Chris Anderson', 'chris@visionex.com', 'VisionEx', 'New', 'Ads', '3 d ago'),
+    _Lead('Laura Thompson', 'laura@apex.com', 'Apex Solutions', 'Lost', 'Email', '4 d ago'),
   ];
 
-  List<_Lead> get _filteredLeads {
-    if (_activeFilter == 'All Leads') return _leads;
-    return _leads
-        .where((l) => l.status == _activeFilter)
-        .toList();
+  List<_Lead> get _filtered {
+    return _leads.where((lead) {
+      final matchesFilter = _filter == 'All Leads' || lead.status == _filter;
+      final matchesSearch = _search.isEmpty ||
+          lead.name.toLowerCase().contains(_search.toLowerCase()) ||
+          lead.email.toLowerCase().contains(_search.toLowerCase()) ||
+          lead.company.toLowerCase().contains(_search.toLowerCase());
+      return matchesFilter && matchesSearch;
+    }).toList();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      currentRoute: '/leads',
-      pageTitle: 'Leads',
-      topBarActions: [
-        GoldButton(
-          label: 'Add Lead',
-          icon: Icons.add,
-          onTap: () {},
-          small: true,
-        ),
-        const SizedBox(width: AppSpacing.md),
-      ],
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: AppCard(
-          padding: EdgeInsets.zero,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // Header
+          Row(
             children: [
-              Padding(
-                padding: const EdgeInsets.all(AppSpacing.cardPadding),
+              const Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Leads', style: AppTypography.headlineSmall),
                     Text(
-                      'Manage and track all your leads.',
-                      style: AppTypography.bodySmall,
-                    ),
-                    const SizedBox(height: AppSpacing.md),
-                    SingleChildScrollView(
-                      scrollDirection: Axis.horizontal,
-                      child: Row(
-                        children: _filters
-                            .map((f) => _FilterChip(
-                                  label: f,
-                                  isActive: _activeFilter == f,
-                                  onTap: () =>
-                                      setState(() => _activeFilter = f),
-                                ))
-                            .toList(),
+                      'Leads',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 24,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
                       ),
                     ),
-                    const SizedBox(height: AppSpacing.md),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: _SearchInput(
-                            hint: 'Search leads...',
-                            onChanged: (_) {},
-                          ),
-                        ),
-                        const SizedBox(width: AppSpacing.sm),
-                        _ActionButton(
-                            icon: Icons.filter_list_outlined,
-                            label: 'Filter'),
-                        const SizedBox(width: AppSpacing.sm),
-                        _ActionButton(
-                            icon: Icons.sort_outlined,
-                            label: 'Sort'),
-                      ],
+                    SizedBox(height: 2),
+                    Text(
+                      'Manage and track all your leads.',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 13,
+                        color: AppColors.textSecondary,
+                      ),
                     ),
                   ],
                 ),
               ),
-              const Divider(height: 1),
-              AppDataTable(
-                headers: const [
-                  'Name',
-                  'Email',
-                  'Company',
-                  'Status',
-                  'Source',
-                  'Created',
-                ],
-                columnWidths: const [160, 200, 150, 110, 100, 100],
-                rows: _filteredLeads
-                    .map((lead) => [
-                          Row(
-                            children: [
-                              CircleAvatar(
-                                radius: 14,
-                                backgroundColor: AppColors.goldSurface,
-                                child: Text(
-                                  lead.name[0],
-                                  style: const TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w700,
-                                    color: AppColors.gold,
-                                  ),
-                                ),
-                              ),
-                              const SizedBox(width: 8),
-                              Expanded(
-                                child: Text(
-                                  lead.name,
-                                  style: AppTypography.titleSmall,
-                                  overflow: TextOverflow.ellipsis,
-                                ),
-                              ),
-                            ],
-                          ),
-                          Text(lead.email,
-                              style: AppTypography.bodySmall,
-                              overflow: TextOverflow.ellipsis),
-                          Text(lead.company,
-                              style: AppTypography.bodySmall,
-                              overflow: TextOverflow.ellipsis),
-                          StatusBadge.fromStatus(lead.status),
-                          Text(lead.source,
-                              style: AppTypography.bodySmall),
-                          Text(lead.created,
-                              style: AppTypography.caption),
-                        ])
-                    .toList(),
+              PrimaryButton(
+                label: 'Add Lead',
+                icon: Icons.add_rounded,
+                onPressed: () {},
               ),
             ],
           ),
+
+          const SizedBox(height: 24),
+
+          AppCard(
+            child: Column(
+              children: [
+                // Filter tabs + actions
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Expanded(
+                        child: FilterChipRow(
+                          options: _tabs,
+                          selected: _filter,
+                          onSelected: (v) => setState(() => _filter = v),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      SearchField(
+                        hint: 'Search leads...',
+                        onChanged: (v) => setState(() => _search = v),
+                      ),
+                      const SizedBox(width: 8),
+                      SecondaryButton(
+                        label: 'Filter',
+                        icon: Icons.tune_rounded,
+                        onPressed: () {},
+                        small: true,
+                      ),
+                      const SizedBox(width: 8),
+                      SecondaryButton(
+                        label: 'Sort',
+                        icon: Icons.sort_rounded,
+                        onPressed: () {},
+                        small: true,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                // Table header
+                _TableHeader(),
+
+                const Divider(height: 1),
+
+                // Rows
+                ..._filtered.asMap().entries.map((entry) => Column(
+                      children: [
+                        _LeadRow(lead: entry.value, index: entry.key),
+                        if (entry.key < _filtered.length - 1)
+                          const Divider(height: 1),
+                      ],
+                    )),
+
+                // Pagination
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                  child: Row(
+                    children: [
+                      Text(
+                        'Showing ${_filtered.length} of ${_leads.length} leads',
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const Spacer(),
+                      _PaginationButtons(),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _TableHeader extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      color: AppColors.contentBg,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: const [
+          Expanded(flex: 3, child: _HeaderCell('Name')),
+          Expanded(flex: 3, child: _HeaderCell('Email')),
+          Expanded(flex: 2, child: _HeaderCell('Company')),
+          Expanded(flex: 2, child: _HeaderCell('Status')),
+          Expanded(flex: 2, child: _HeaderCell('Source')),
+          Expanded(flex: 2, child: _HeaderCell('Created')),
+        ],
+      ),
+    );
+  }
+}
+
+class _HeaderCell extends StatelessWidget {
+  final String text;
+  const _HeaderCell(this.text);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      text.toUpperCase(),
+      style: const TextStyle(
+        fontFamily: 'Inter',
+        fontSize: 11,
+        fontWeight: FontWeight.w600,
+        color: AppColors.textSecondary,
+        letterSpacing: 0.5,
+      ),
+    );
+  }
+}
+
+class _LeadRow extends StatefulWidget {
+  final _Lead lead;
+  final int index;
+  const _LeadRow({required this.lead, required this.index});
+
+  @override
+  State<_LeadRow> createState() => _LeadRowState();
+}
+
+class _LeadRowState extends State<_LeadRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final lead = widget.lead;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        color: _hovered ? AppColors.contentBg : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.goldSurface,
+                    child: Text(
+                      lead.name[0],
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        color: AppColors.gold,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    lead.name,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(
+                lead.email,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  color: AppColors.textSecondary,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                lead.company,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            Expanded(flex: 2, child: StatusBadge.fromStatus(lead.status)),
+            Expanded(
+              flex: 2,
+              child: Row(
+                children: [
+                  const Icon(Icons.language_rounded, size: 12, color: AppColors.textTertiary),
+                  const SizedBox(width: 4),
+                  Text(
+                    lead.source,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                lead.created,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 12,
+                  color: AppColors.textTertiary,
+                ),
+              ),
+            ),
+          ],
         ),
       ),
+    );
+  }
+}
+
+class _PaginationButtons extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        for (final label in ['1', '2', '3', '...', '10'])
+          Padding(
+            padding: const EdgeInsets.only(right: 4),
+            child: Container(
+              width: 28,
+              height: 28,
+              decoration: BoxDecoration(
+                color: label == '1' ? AppColors.gold : Colors.transparent,
+                borderRadius: BorderRadius.circular(6),
+                border: Border.all(
+                  color: label == '1' ? AppColors.gold : AppColors.cardBorder,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  label,
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 12,
+                    fontWeight: FontWeight.w500,
+                    color: label == '1' ? Colors.white : AppColors.textSecondary,
+                  ),
+                ),
+              ),
+            ),
+          ),
+        Container(
+          width: 28,
+          height: 28,
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(6),
+            border: Border.all(color: AppColors.cardBorder),
+          ),
+          child: const Icon(Icons.chevron_right_rounded, size: 16, color: AppColors.textSecondary),
+        ),
+      ],
     );
   }
 }
@@ -231,112 +369,5 @@ class _Lead {
   final String status;
   final String source;
   final String created;
-
-  const _Lead({
-    required this.name,
-    required this.email,
-    required this.company,
-    required this.status,
-    required this.source,
-    required this.created,
-  });
-}
-
-class _FilterChip extends StatelessWidget {
-  final String label;
-  final bool isActive;
-  final VoidCallback onTap;
-
-  const _FilterChip({
-    required this.label,
-    required this.isActive,
-    required this.onTap,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 150),
-        margin: const EdgeInsets.only(right: 6),
-        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
-        decoration: BoxDecoration(
-          color: isActive ? AppColors.sidebarBg : Colors.transparent,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: isActive ? AppColors.sidebarBg : AppColors.border,
-          ),
-        ),
-        child: Text(
-          label,
-          style: AppTypography.labelMedium.copyWith(
-            color:
-                isActive ? AppColors.white : AppColors.textSecondary,
-            fontWeight:
-                isActive ? FontWeight.w600 : FontWeight.w400,
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _SearchInput extends StatelessWidget {
-  final String hint;
-  final ValueChanged<String> onChanged;
-
-  const _SearchInput({required this.hint, required this.onChanged});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      height: 38,
-      decoration: BoxDecoration(
-        color: AppColors.contentBg,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-      ),
-      child: Row(
-        children: [
-          const SizedBox(width: 10),
-          const Icon(Icons.search, size: 16, color: AppColors.textTertiary),
-          const SizedBox(width: 8),
-          Expanded(
-            child: TextField(
-              onChanged: onChanged,
-              style: AppTypography.bodySmall,
-              decoration: InputDecoration(
-                hintText: hint,
-                hintStyle: AppTypography.bodySmall
-                    .copyWith(color: AppColors.textTertiary),
-                border: InputBorder.none,
-                contentPadding: EdgeInsets.zero,
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-}
-
-class _ActionButton extends StatelessWidget {
-  final IconData icon;
-  final String label;
-
-  const _ActionButton({required this.icon, required this.label});
-
-  @override
-  Widget build(BuildContext context) {
-    return OutlinedButton.icon(
-      onPressed: () {},
-      icon: Icon(icon, size: 14),
-      label: Text(label),
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-        textStyle: AppTypography.labelMedium,
-      ),
-    );
-  }
+  const _Lead(this.name, this.email, this.company, this.status, this.source, this.created);
 }

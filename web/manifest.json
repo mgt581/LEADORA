@@ -3,9 +3,9 @@
     "short_name": "Leadora",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0F0F0F",
+    "background_color": "#0D0D0D",
     "theme_color": "#C9A84C",
-    "description": "Leadora - AI-powered Sales Operating System",
+    "description": "AI-powered sales operating system",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

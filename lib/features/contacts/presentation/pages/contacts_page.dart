@@ -1,163 +1,267 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
 
 class ContactsPage extends StatelessWidget {
   const ContactsPage({super.key});
 
   static const List<_Contact> _contacts = [
-    _Contact(name: 'Sarah Johnson', email: 'sarah@designco.com', phone: '+44 7700 900113', company: 'Design Co.', role: 'CEO', added: '2 days ago'),
-    _Contact(name: 'David Williams', email: 'david@techflow.com', phone: '+44 7700 900214', company: 'TechFlow', role: 'CTO', added: '3 days ago'),
-    _Contact(name: 'James Brown', email: 'james@marketplus.com', phone: '+44 7700 900315', company: 'MarketPlus', role: 'Marketing Dir.', added: '5 days ago'),
-    _Contact(name: 'Emily Davis', email: 'emily@brightidea.com', phone: '+44 7700 900416', company: 'Bright Idea', role: 'Founder', added: '1 week ago'),
-    _Contact(name: 'Michael Wilson', email: 'michael@nextgen.com', phone: '+44 7700 900517', company: 'NextGen', role: 'VP Sales', added: '1 week ago'),
-    _Contact(name: 'Jessica Taylor', email: 'jessica@creativlab.com', phone: '+44 7700 900618', company: 'Creative Lab', role: 'Designer', added: '2 weeks ago'),
-    _Contact(name: 'Robert Martinez', email: 'robert@scale.io', phone: '+44 7700 900719', company: 'Scale.io', role: 'COO', added: '2 weeks ago'),
-    _Contact(name: 'Amanda Chen', email: 'amanda@synergy.com', phone: '+44 7700 900820', company: 'Synergy Co.', role: 'CFO', added: '3 weeks ago'),
+    _Contact('Sarah Johnson', 'CEO', 'Design Co.', 'sarah@designco.com', '+44 7700 900123', 'Active'),
+    _Contact('David Williams', 'CTO', 'TechFlow', 'david@techflow.com', '+44 7700 900456', 'Active'),
+    _Contact('James Brown', 'VP Sales', 'MarketPlus', 'james@marketplus.com', '+44 7700 900789', 'Active'),
+    _Contact('Emily Davis', 'Marketing Dir.', 'Bright Idea', 'emily@brightidea.com', '+44 7700 901234', 'Inactive'),
+    _Contact('Michael Wilson', 'Founder', 'NextGen', 'michael@nextgen.com', '+44 7700 901567', 'Active'),
+    _Contact('Jessica Taylor', 'COO', 'Creative Lab', 'jessica@creativelab.com', '+44 7700 901890', 'Active'),
+    _Contact('Robert Martinez', 'Sales Dir.', 'FusionTech', 'robert@fusiontech.com', '+44 7700 902123', 'Active'),
+    _Contact('Amanda Lee', 'Head of Growth', 'Pioneer Inc.', 'amanda@pioneer.com', '+44 7700 902456', 'Inactive'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      currentRoute: '/contacts',
-      pageTitle: 'Contacts',
-      topBarActions: [
-        GoldButton(
-          label: 'Add Contact',
-          icon: Icons.add,
-          onTap: () {},
-          small: true,
-        ),
-        const SizedBox(width: AppSpacing.md),
-      ],
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: Column(
-          children: [
-            Row(
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SectionHeader(
+                  title: 'Contacts',
+                  subtitle: 'Manage your contact database.',
+                ),
+              ),
+              PrimaryButton(
+                label: 'Add Contact',
+                icon: Icons.person_add_rounded,
+                onPressed: () {},
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          // Stats row
+          Row(
+            children: const [
+              _ContactStatCard(label: 'Total Contacts', value: '1,284', icon: Icons.contacts_rounded),
+              SizedBox(width: 16),
+              _ContactStatCard(label: 'Active', value: '1,098', icon: Icons.check_circle_outline_rounded),
+              SizedBox(width: 16),
+              _ContactStatCard(label: 'New This Month', value: '47', icon: Icons.person_add_outlined),
+              SizedBox(width: 16),
+              _ContactStatCard(label: 'Companies', value: '312', icon: Icons.business_outlined),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          AppCard(
+            child: Column(
               children: [
-                Expanded(
-                  child: AppCard(
-                    child: Row(
+                // Toolbar
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const SearchField(hint: 'Search contacts...'),
+                      const Spacer(),
+                      SecondaryButton(
+                        label: 'Filter',
+                        icon: Icons.tune_rounded,
+                        onPressed: () {},
+                        small: true,
+                      ),
+                      const SizedBox(width: 8),
+                      SecondaryButton(
+                        label: 'Export',
+                        icon: Icons.download_rounded,
+                        onPressed: () {},
+                        small: true,
+                      ),
+                    ],
+                  ),
+                ),
+
+                const Divider(height: 1),
+
+                // Header
+                _buildHeader(),
+
+                const Divider(height: 1),
+
+                // Rows
+                ..._contacts.asMap().entries.map((e) => Column(
                       children: [
-                        const Icon(Icons.people_outline,
-                            color: AppColors.gold, size: 20),
-                        const SizedBox(width: 8),
-                        Text('${_contacts.length} Contacts',
-                            style: AppTypography.titleMedium),
+                        _ContactRow(contact: e.value),
+                        if (e.key < _contacts.length - 1) const Divider(height: 1),
                       ],
-                    ),
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      color: AppColors.contentBg,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: const [
+          Expanded(flex: 3, child: _H('Name')),
+          Expanded(flex: 2, child: _H('Title')),
+          Expanded(flex: 2, child: _H('Company')),
+          Expanded(flex: 3, child: _H('Email')),
+          Expanded(flex: 2, child: _H('Phone')),
+          Expanded(flex: 1, child: _H('Status')),
+        ],
+      ),
+    );
+  }
+}
+
+class _H extends StatelessWidget {
+  final String text;
+  const _H(this.text);
+  @override
+  Widget build(BuildContext context) => Text(
+        text.toUpperCase(),
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textSecondary,
+          letterSpacing: 0.5,
+        ),
+      );
+}
+
+class _ContactStatCard extends StatelessWidget {
+  final String label;
+  final String value;
+  final IconData icon;
+  const _ContactStatCard({required this.label, required this.value, required this.icon});
+
+  @override
+  Widget build(BuildContext context) {
+    return Expanded(
+      child: AppCard(
+        padding: const EdgeInsets.all(16),
+        child: Row(
+          children: [
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                color: AppColors.goldSurface,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Icon(icon, size: 18, color: AppColors.gold),
+            ),
+            const SizedBox(width: 12),
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  value,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 20,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+                Text(
+                  label,
+                  style: const TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.md),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _ContactRow extends StatefulWidget {
+  final _Contact contact;
+  const _ContactRow({required this.contact});
+
+  @override
+  State<_ContactRow> createState() => _ContactRowState();
+}
+
+class _ContactRowState extends State<_ContactRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final c = widget.contact;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        color: _hovered ? AppColors.contentBg : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
             Expanded(
-              child: AppCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: Container(
-                              height: 38,
-                              decoration: BoxDecoration(
-                                color: AppColors.contentBg,
-                                borderRadius: BorderRadius.circular(8),
-                                border: Border.all(color: AppColors.border),
-                              ),
-                              child: Row(
-                                children: [
-                                  const SizedBox(width: 10),
-                                  const Icon(Icons.search,
-                                      size: 16,
-                                      color: AppColors.textTertiary),
-                                  const SizedBox(width: 8),
-                                  Text('Search contacts...',
-                                      style: AppTypography.bodySmall.copyWith(
-                                          color: AppColors.textTertiary)),
-                                ],
-                              ),
-                            ),
-                          ),
-                          const SizedBox(width: 8),
-                          OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.filter_list_outlined,
-                                size: 14),
-                            label: const Text('Filter'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              textStyle: AppTypography.labelMedium,
-                            ),
-                          ),
-                        ],
+              flex: 3,
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.infoSurface,
+                    child: Text(
+                      c.name[0],
+                      style: const TextStyle(
+                        fontSize: 12,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.info,
                       ),
                     ),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: AppDataTable(
-                        headers: const [
-                          'Name',
-                          'Email',
-                          'Phone',
-                          'Company',
-                          'Role',
-                          'Added',
-                        ],
-                        columnWidths: const [160, 200, 160, 140, 140, 100],
-                        rows: _contacts
-                            .map((c) => [
-                                  Row(
-                                    children: [
-                                      CircleAvatar(
-                                        radius: 14,
-                                        backgroundColor: AppColors.goldSurface,
-                                        child: Text(
-                                          c.name[0],
-                                          style: const TextStyle(
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.w700,
-                                            color: AppColors.gold,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          c.name,
-                                          style: AppTypography.titleSmall,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(c.email,
-                                      style: AppTypography.bodySmall,
-                                      overflow: TextOverflow.ellipsis),
-                                  Text(c.phone,
-                                      style: AppTypography.bodySmall),
-                                  Text(c.company,
-                                      style: AppTypography.bodySmall,
-                                      overflow: TextOverflow.ellipsis),
-                                  Text(c.role,
-                                      style: AppTypography.bodySmall),
-                                  Text(c.added,
-                                      style: AppTypography.caption),
-                                ])
-                            .toList(),
-                      ),
+                  ),
+                  const SizedBox(width: 10),
+                  Text(
+                    c.name,
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                      color: AppColors.textPrimary,
                     ),
-                  ],
-                ),
+                  ),
+                ],
               ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(c.title, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.textSecondary)),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(c.company, style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.textPrimary)),
+            ),
+            Expanded(
+              flex: 3,
+              child: Text(c.email, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.textSecondary)),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(c.phone, style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.textSecondary)),
+            ),
+            Expanded(
+              flex: 1,
+              child: StatusBadge.fromStatus(c.status),
             ),
           ],
         ),
@@ -168,18 +272,10 @@ class ContactsPage extends StatelessWidget {
 
 class _Contact {
   final String name;
+  final String title;
+  final String company;
   final String email;
   final String phone;
-  final String company;
-  final String role;
-  final String added;
-
-  const _Contact({
-    required this.name,
-    required this.email,
-    required this.phone,
-    required this.company,
-    required this.role,
-    required this.added,
-  });
+  final String status;
+  const _Contact(this.name, this.title, this.company, this.email, this.phone, this.status);
 }

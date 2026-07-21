@@ -1,174 +1,258 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
 
 class DealsPage extends StatelessWidget {
   const DealsPage({super.key});
 
   static const List<_Deal> _deals = [
-    _Deal(name: 'ACME Solutions', value: '£45,000', stage: 'Proposal', owner: 'Alex Bryant', closeDate: 'Aug 15', probability: 75),
-    _Deal(name: 'TechFlow Enterprise', value: '£128,000', stage: 'Qualified', owner: 'Sarah Chen', closeDate: 'Sep 01', probability: 60),
-    _Deal(name: 'Design Co. Annual', value: '£22,500', stage: 'Won', owner: 'Alex Bryant', closeDate: 'Jul 30', probability: 100),
-    _Deal(name: 'MarketPlus Starter', value: '£8,400', stage: 'New', owner: 'James Reid', closeDate: 'Aug 30', probability: 30),
-    _Deal(name: 'NextGen Platform', value: '£96,000', stage: 'Proposal', owner: 'Alex Bryant', closeDate: 'Sep 15', probability: 65),
-    _Deal(name: 'Bright Idea Suite', value: '£18,000', stage: 'Contacted', owner: 'Sarah Chen', closeDate: 'Oct 01', probability: 45),
-    _Deal(name: 'Scale.io Growth', value: '£34,500', stage: 'Qualified', owner: 'James Reid', closeDate: 'Aug 20', probability: 55),
-    _Deal(name: 'Synergy CRM', value: '£62,000', stage: 'Won', owner: 'Alex Bryant', closeDate: 'Jul 21', probability: 100),
+    _Deal('ACME Solutions', 'Sarah Johnson', '£45,000', 'Proposal', 80, 'Jul 30, 2024'),
+    _Deal('TechFlow Enterprise', 'David Williams', '£128,000', 'Qualified', 60, 'Aug 15, 2024'),
+    _Deal('MarketPlus Retainer', 'James Brown', '£24,000', 'Won', 100, 'Jul 21, 2024'),
+    _Deal('Pioneer Analytics', 'Amanda Lee', '£67,500', 'New', 20, 'Sep 1, 2024'),
+    _Deal('Bright Idea Audit', 'Emily Davis', '£8,900', 'Contacted', 40, 'Aug 5, 2024'),
+    _Deal('FusionTech Platform', 'Robert Martinez', '£93,200', 'Won', 100, 'Jul 18, 2024'),
+    _Deal('NextGen Setup', 'Michael Wilson', '£31,700', 'Proposal', 75, 'Aug 22, 2024'),
+    _Deal('Creative Lab Branding', 'Jessica Taylor', '£19,400', 'Qualified', 55, 'Aug 10, 2024'),
   ];
 
   @override
   Widget build(BuildContext context) {
-    final totalValue = _deals.fold<double>(
-      0,
-      (sum, d) =>
-          sum +
-          double.parse(d.value
-              .replaceAll('£', '')
-              .replaceAll(',', '')),
-    );
+    final totalValue = _deals.fold<double>(0, (sum, d) {
+      final val = double.tryParse(d.value.replaceAll(RegExp(r'[£,]'), '')) ?? 0;
+      return sum + val;
+    });
 
-    return AppShell(
-      currentRoute: '/deals',
-      pageTitle: 'Deals',
-      topBarActions: [
-        GoldButton(
-          label: 'New Deal',
-          icon: Icons.add,
-          onTap: () {},
-          small: true,
-        ),
-        const SizedBox(width: AppSpacing.md),
-      ],
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: AppSpacing.md,
-              mainAxisSpacing: AppSpacing.md,
-              childAspectRatio: 2.2,
-              children: [
-                const StatCard(
-                  title: 'Total Deals',
-                  value: '67',
-                  icon: Icons.handshake_outlined,
-                ),
-                StatCard(
-                  title: 'Pipeline Value',
-                  value: '£${(totalValue / 1000).toStringAsFixed(0)}K',
-                  change: '+22% this month',
-                  isPositive: true,
-                  icon: Icons.currency_pound_outlined,
-                ),
-                const StatCard(
-                  title: 'Avg. Deal Size',
-                  value: '£54K',
-                  icon: Icons.analytics_outlined,
-                  iconColor: AppColors.info,
-                  iconBgColor: AppColors.infoLight,
-                ),
-                const StatCard(
-                  title: 'Win Rate',
-                  value: '34%',
-                  change: '+4% vs last month',
-                  isPositive: true,
-                  icon: Icons.emoji_events_outlined,
-                  iconColor: AppColors.success,
-                  iconBgColor: AppColors.successLight,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Expanded(
-              child: AppCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                      child: Row(
-                        children: [
-                          Text('All Deals', style: AppTypography.titleMedium),
-                          const Spacer(),
-                          OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.filter_list_outlined,
-                                size: 14),
-                            label: const Text('Filter'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              textStyle: AppTypography.labelMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: AppDataTable(
-                        headers: const [
-                          'Deal Name',
-                          'Value',
-                          'Stage',
-                          'Owner',
-                          'Close Date',
-                          'Probability',
-                        ],
-                        columnWidths: const [180, 120, 110, 140, 120, 100],
-                        rows: _deals
-                            .map((d) => [
-                                  Text(d.name,
-                                      style: AppTypography.titleSmall,
-                                      overflow: TextOverflow.ellipsis),
-                                  Text(d.value,
-                                      style: AppTypography.titleSmall),
-                                  StatusBadge.fromStatus(d.stage),
-                                  Text(d.owner,
-                                      style: AppTypography.bodySmall),
-                                  Text(d.closeDate,
-                                      style: AppTypography.bodySmall),
-                                  Row(
-                                    children: [
-                                      Expanded(
-                                        child: ClipRRect(
-                                          borderRadius:
-                                              BorderRadius.circular(4),
-                                          child: LinearProgressIndicator(
-                                            value: d.probability / 100,
-                                            backgroundColor:
-                                                AppColors.borderLight,
-                                            valueColor:
-                                                AlwaysStoppedAnimation<Color>(
-                                              d.probability == 100
-                                                  ? AppColors.success
-                                                  : AppColors.gold,
-                                            ),
-                                            minHeight: 6,
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 6),
-                                      Text(
-                                        '${d.probability}%',
-                                        style: AppTypography.caption,
-                                      ),
-                                    ],
-                                  ),
-                                ])
-                            .toList(),
-                      ),
-                    ),
-                  ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SectionHeader(
+                  title: 'Deals',
+                  subtitle: 'Track your deal pipeline and revenue.',
                 ),
               ),
+              PrimaryButton(
+                label: 'New Deal',
+                icon: Icons.add_rounded,
+                onPressed: () {},
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          // Summary cards
+          Row(
+            children: [
+              Expanded(
+                child: StatCard(
+                  title: 'Total Deal Value',
+                  value: '£${(totalValue / 1000).toStringAsFixed(0)}k',
+                  delta: '+18% vs last month',
+                  deltaPositive: true,
+                  icon: Icons.monetization_on_outlined,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: StatCard(
+                  title: 'Open Deals',
+                  value: '67',
+                  delta: '+8 this week',
+                  deltaPositive: true,
+                  icon: Icons.pending_actions_outlined,
+                  iconColor: AppColors.badgeProposal,
+                  iconBackground: AppColors.warningSurface,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: StatCard(
+                  title: 'Deals Won',
+                  value: '23',
+                  delta: '+5 this month',
+                  deltaPositive: true,
+                  icon: Icons.emoji_events_outlined,
+                  iconColor: AppColors.success,
+                  iconBackground: AppColors.successSurface,
+                ),
+              ),
+              const SizedBox(width: 16),
+              const Expanded(
+                child: StatCard(
+                  title: 'Avg. Deal Size',
+                  value: '£54,337',
+                  delta: '+12% vs last month',
+                  deltaPositive: true,
+                  icon: Icons.analytics_outlined,
+                  iconColor: AppColors.info,
+                  iconBackground: AppColors.infoSurface,
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          AppCard(
+            child: Column(
+              children: [
+                Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: Row(
+                    children: [
+                      const SearchField(hint: 'Search deals...'),
+                      const Spacer(),
+                      SecondaryButton(
+                        label: 'Filter',
+                        icon: Icons.tune_rounded,
+                        onPressed: () {},
+                        small: true,
+                      ),
+                    ],
+                  ),
+                ),
+                const Divider(height: 1),
+                _buildHeader(),
+                const Divider(height: 1),
+                ..._deals.asMap().entries.map((e) => Column(
+                      children: [
+                        _DealRow(deal: e.value),
+                        if (e.key < _deals.length - 1) const Divider(height: 1),
+                      ],
+                    )),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildHeader() {
+    return Container(
+      color: AppColors.contentBg,
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      child: Row(
+        children: const [
+          Expanded(flex: 3, child: _H('Deal')),
+          Expanded(flex: 2, child: _H('Contact')),
+          Expanded(flex: 2, child: _H('Value')),
+          Expanded(flex: 2, child: _H('Stage')),
+          Expanded(flex: 3, child: _H('Probability')),
+          Expanded(flex: 2, child: _H('Close Date')),
+        ],
+      ),
+    );
+  }
+}
+
+class _H extends StatelessWidget {
+  final String text;
+  const _H(this.text);
+  @override
+  Widget build(BuildContext context) => Text(
+        text.toUpperCase(),
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 11,
+          fontWeight: FontWeight.w600,
+          color: AppColors.textSecondary,
+          letterSpacing: 0.5,
+        ),
+      );
+}
+
+class _DealRow extends StatefulWidget {
+  final _Deal deal;
+  const _DealRow({required this.deal});
+
+  @override
+  State<_DealRow> createState() => _DealRowState();
+}
+
+class _DealRowState extends State<_DealRow> {
+  bool _hovered = false;
+
+  @override
+  Widget build(BuildContext context) {
+    final d = widget.deal;
+    return MouseRegion(
+      onEnter: (_) => setState(() => _hovered = true),
+      onExit: (_) => setState(() => _hovered = false),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 100),
+        color: _hovered ? AppColors.contentBg : Colors.transparent,
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        child: Row(
+          children: [
+            Expanded(
+              flex: 3,
+              child: Text(
+                d.name,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w500,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(d.contact,
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 13, color: AppColors.textSecondary)),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(
+                d.value,
+                style: const TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+            ),
+            Expanded(flex: 2, child: StatusBadge.fromStatus(d.stage)),
+            Expanded(
+              flex: 3,
+              child: Row(
+                children: [
+                  Expanded(
+                    child: LinearProgressIndicator(
+                      value: d.probability / 100,
+                      backgroundColor: AppColors.contentBg,
+                      valueColor: AlwaysStoppedAnimation<Color>(
+                        d.probability == 100 ? AppColors.success : AppColors.gold,
+                      ),
+                      minHeight: 6,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Text(
+                    '${d.probability}%',
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Expanded(
+              flex: 2,
+              child: Text(d.closeDate,
+                  style: const TextStyle(fontFamily: 'Inter', fontSize: 12, color: AppColors.textTertiary)),
             ),
           ],
         ),
@@ -179,18 +263,10 @@ class DealsPage extends StatelessWidget {
 
 class _Deal {
   final String name;
+  final String contact;
   final String value;
   final String stage;
-  final String owner;
-  final String closeDate;
   final int probability;
-
-  const _Deal({
-    required this.name,
-    required this.value,
-    required this.stage,
-    required this.owner,
-    required this.closeDate,
-    required this.probability,
-  });
+  final String closeDate;
+  const _Deal(this.name, this.contact, this.value, this.stage, this.probability, this.closeDate);
 }

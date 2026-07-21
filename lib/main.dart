@@ -1,16 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'core/theme/app_theme.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'core/router/app_router.dart';
+import 'core/theme/app_theme.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
-  SystemChrome.setSystemUIOverlayStyle(
-    const SystemUiOverlayStyle(
-      statusBarColor: Colors.transparent,
-    ),
-  );
-  runApp(const LeadoraApp());
+  // Pre-cache Inter from Google Fonts
+  GoogleFonts.config.allowRuntimeFetching = true;
+  runApp(const ProviderScope(child: LeadoraApp()));
 }
 
 class LeadoraApp extends StatelessWidget {
@@ -21,8 +19,8 @@ class LeadoraApp extends StatelessWidget {
     return MaterialApp.router(
       title: 'Leadora',
       debugShowCheckedModeBanner: false,
-      theme: AppTheme.lightTheme,
-      routerConfig: appRouter,
+      theme: AppTheme.light,
+      routerConfig: AppRouter.router,
     );
   }
 }

@@ -1,137 +1,284 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
 
 class AiAgentsPage extends StatelessWidget {
   const AiAgentsPage({super.key});
 
   static const List<_Agent> _agents = [
     _Agent(
-      name: 'Lead Qualifier',
-      description: 'Automatically qualifies incoming leads based on ICP criteria',
-      status: 'Active',
-      runs: 1248,
-      successRate: 94,
-      icon: Icons.person_search_outlined,
+      'Lead Qualifier',
+      'Automatically scores and qualifies new leads based on fit criteria.',
+      Icons.person_search_rounded,
+      AppColors.info,
+      'Active',
+      '1,284 leads processed',
+      '94.2% accuracy',
     ),
     _Agent(
-      name: 'Email Writer',
-      description: 'Generates personalised outreach emails using prospect data',
-      status: 'Active',
-      runs: 862,
-      successRate: 88,
-      icon: Icons.edit_note_outlined,
+      'Email Personaliser',
+      'Generates hyper-personalised email content for each prospect.',
+      Icons.auto_fix_high_rounded,
+      AppColors.gold,
+      'Active',
+      '8,472 emails written',
+      '67.4% open rate',
     ),
     _Agent(
-      name: 'Meeting Scheduler',
-      description: 'Books discovery calls based on lead engagement signals',
-      status: 'Active',
-      runs: 324,
-      successRate: 91,
-      icon: Icons.calendar_month_outlined,
+      'Meeting Scheduler',
+      'Books meetings automatically based on prospect intent signals.',
+      Icons.calendar_today_rounded,
+      AppColors.success,
+      'Active',
+      '312 meetings booked',
+      '78.1% show rate',
     ),
     _Agent(
-      name: 'Follow-up Agent',
-      description: 'Sends timely follow-ups to unresponsive prospects',
-      status: 'Paused',
-      runs: 540,
-      successRate: 76,
-      icon: Icons.replay_outlined,
+      'Deal Forecaster',
+      'Predicts deal close probability using historical data patterns.',
+      Icons.analytics_rounded,
+      AppColors.badgeProposal,
+      'Active',
+      '523 deals scored',
+      '±8% margin of error',
     ),
     _Agent(
-      name: 'CRM Enrichment',
-      description: 'Enriches contact records with public data sources',
-      status: 'Active',
-      runs: 2840,
-      successRate: 97,
-      icon: Icons.auto_fix_high_outlined,
+      'Churn Detector',
+      'Identifies at-risk accounts and triggers retention workflows.',
+      Icons.warning_amber_rounded,
+      AppColors.error,
+      'Paused',
+      '89 accounts flagged',
+      '88.6% precision',
     ),
     _Agent(
-      name: 'Churn Predictor',
-      description: 'Flags at-risk accounts before they churn',
-      status: 'Draft',
-      runs: 0,
-      successRate: 0,
-      icon: Icons.warning_amber_outlined,
+      'Content Generator',
+      'Creates blog posts, case studies and social content at scale.',
+      Icons.edit_note_rounded,
+      AppColors.badgeNew,
+      'Active',
+      '214 pieces created',
+      '4.2 min avg.',
     ),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      currentRoute: '/ai-agents',
-      pageTitle: 'AI Agents',
-      topBarActions: [
-        GoldButton(
-          label: 'New Agent',
-          icon: Icons.add,
-          onTap: () {},
-          small: true,
-        ),
-        const SizedBox(width: AppSpacing.md),
-      ],
-      body: SingleChildScrollView(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: AppSpacing.md,
-              mainAxisSpacing: AppSpacing.md,
-              childAspectRatio: 2.2,
-              children: const [
-                StatCard(
-                  title: 'Active Agents',
-                  value: '4',
-                  icon: Icons.smart_toy_outlined,
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SectionHeader(
+                  title: 'AI Agents',
+                  subtitle: 'Deploy autonomous AI agents to automate your sales process.',
                 ),
-                StatCard(
-                  title: 'Total Runs',
-                  value: '5,814',
-                  change: '+24% this week',
-                  isPositive: true,
-                  icon: Icons.play_circle_outline,
-                  iconColor: AppColors.info,
-                  iconBgColor: AppColors.infoLight,
+              ),
+              PrimaryButton(
+                label: 'Deploy Agent',
+                icon: Icons.add_rounded,
+                onPressed: () {},
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          // Promo banner
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+                colors: [Color(0xFF0D0D0D), Color(0xFF1A1A1A)],
+              ),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: AppColors.gold.withValues(alpha: 0.15),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.smart_toy_rounded, size: 24, color: AppColors.gold),
                 ),
-                StatCard(
-                  title: 'Avg. Success Rate',
-                  value: '89%',
-                  change: '+3% vs last week',
-                  isPositive: true,
-                  icon: Icons.check_circle_outline,
-                  iconColor: AppColors.success,
-                  iconBgColor: AppColors.successLight,
+                const SizedBox(width: 20),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: const [
+                      Text(
+                        'Your AI agents are running 24/7',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Automated 2,483 tasks this week — saving 146 hours of manual work.',
+                        style: TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          color: AppColors.sidebarText,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-                StatCard(
-                  title: 'Time Saved',
-                  value: '48h',
-                  change: 'This week',
-                  isPositive: true,
-                  icon: Icons.timer_outlined,
+                const SizedBox(width: 20),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  children: [
+                    const Text(
+                      '146h',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 28,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.gold,
+                      ),
+                    ),
+                    const Text(
+                      'saved this week',
+                      style: TextStyle(
+                        fontFamily: 'Inter',
+                        fontSize: 11,
+                        color: AppColors.sidebarText,
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-            const SizedBox(height: AppSpacing.lg),
-            Text('Your Agents', style: AppTypography.titleLarge),
-            const SizedBox(height: AppSpacing.md),
-            GridView.count(
-              crossAxisCount: 3,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: AppSpacing.md,
-              mainAxisSpacing: AppSpacing.md,
-              childAspectRatio: 2.2,
-              children:
-                  _agents.map((a) => _AgentCard(agent: a)).toList(),
+          ),
+
+          const SizedBox(height: 24),
+
+          LayoutBuilder(builder: (context, constraints) {
+            final cardWidth = (constraints.maxWidth - 20) / 2;
+            return Wrap(
+              spacing: 20,
+              runSpacing: 20,
+              children: _agents.map((a) => SizedBox(
+                width: cardWidth,
+                child: _AgentCard(agent: a),
+              )).toList(),
+            );
+          }),
+        ],
+      ),
+    );
+  }
+}
+
+class _AgentCard extends StatefulWidget {
+  final _Agent agent;
+  const _AgentCard({required this.agent});
+
+  @override
+  State<_AgentCard> createState() => _AgentCardState();
+}
+
+class _AgentCardState extends State<_AgentCard> {
+  bool _active = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _active = widget.agent.status == 'Active';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final a = widget.agent;
+    return AppCard(
+      padding: const EdgeInsets.all(20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 44,
+                height: 44,
+                decoration: BoxDecoration(
+                  color: a.color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child: Icon(a.icon, size: 22, color: a.color),
+              ),
+              const Spacer(),
+              Switch(
+                value: _active,
+                onChanged: (v) => setState(() => _active = v),
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            a.name,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
             ),
-          ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            a.description,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              height: 1.5,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              _Metric(label: a.metric1),
+              const SizedBox(width: 16),
+              _Metric(label: a.metric2),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class _Metric extends StatelessWidget {
+  final String label;
+  const _Metric({required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: AppColors.contentBg,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Text(
+        label,
+        style: const TextStyle(
+          fontFamily: 'Inter',
+          fontSize: 11,
+          fontWeight: FontWeight.w500,
+          color: AppColors.textSecondary,
         ),
       ),
     );
@@ -141,121 +288,10 @@ class AiAgentsPage extends StatelessWidget {
 class _Agent {
   final String name;
   final String description;
-  final String status;
-  final int runs;
-  final int successRate;
   final IconData icon;
-
-  const _Agent({
-    required this.name,
-    required this.description,
-    required this.status,
-    required this.runs,
-    required this.successRate,
-    required this.icon,
-  });
-}
-
-class _AgentCard extends StatefulWidget {
-  final _Agent agent;
-
-  const _AgentCard({required this.agent});
-
-  @override
-  State<_AgentCard> createState() => _AgentCardState();
-}
-
-class _AgentCardState extends State<_AgentCard> {
-  bool _enabled = true;
-
-  @override
-  Widget build(BuildContext context) {
-    final a = widget.agent;
-    return AppCard(
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            children: [
-              Container(
-                width: 36,
-                height: 36,
-                decoration: BoxDecoration(
-                  color: AppColors.goldSurface,
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: Icon(a.icon, size: 18, color: AppColors.gold),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(a.name, style: AppTypography.titleSmall),
-                    StatusBadge(
-                      label: a.status,
-                      color: a.status == 'Active'
-                          ? AppColors.success
-                          : a.status == 'Paused'
-                              ? AppColors.warning
-                              : AppColors.textTertiary,
-                      bgColor: a.status == 'Active'
-                          ? AppColors.successLight
-                          : a.status == 'Paused'
-                              ? AppColors.warningLight
-                              : AppColors.borderLight,
-                    ),
-                  ],
-                ),
-              ),
-              if (a.status != 'Draft')
-                Switch(
-                  value: _enabled && a.status == 'Active',
-                  onChanged: (v) => setState(() => _enabled = v),
-                  activeColor: AppColors.gold,
-                  materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                ),
-            ],
-          ),
-          const SizedBox(height: 8),
-          Text(
-            a.description,
-            style: AppTypography.caption,
-            maxLines: 2,
-            overflow: TextOverflow.ellipsis,
-          ),
-          if (a.runs > 0) ...[
-            const SizedBox(height: 8),
-            Row(
-              children: [
-                _AgentStat(label: '${a.runs}', sublabel: 'Runs'),
-                const SizedBox(width: 16),
-                _AgentStat(
-                    label: '${a.successRate}%', sublabel: 'Success'),
-              ],
-            ),
-          ],
-        ],
-      ),
-    );
-  }
-}
-
-class _AgentStat extends StatelessWidget {
-  final String label;
-  final String sublabel;
-
-  const _AgentStat({required this.label, required this.sublabel});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(label,
-            style: AppTypography.titleSmall.copyWith(color: AppColors.gold)),
-        Text(sublabel, style: AppTypography.caption),
-      ],
-    );
-  }
+  final Color color;
+  final String status;
+  final String metric1;
+  final String metric2;
+  const _Agent(this.name, this.description, this.icon, this.color, this.status, this.metric1, this.metric2);
 }

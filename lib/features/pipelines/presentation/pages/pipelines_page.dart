@@ -1,236 +1,116 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
+import '../../../../core/widgets/charts/chart_widgets.dart';
 
 class PipelinesPage extends StatelessWidget {
   const PipelinesPage({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return AppShell(
-      currentRoute: '/pipelines',
-      pageTitle: 'Pipelines',
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              children: [
-                Text('Sales Pipeline', style: AppTypography.headlineSmall),
-                const Spacer(),
-                GoldButton(
-                  label: 'Add Stage',
-                  icon: Icons.add,
-                  onTap: () {},
-                  small: true,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.lg),
-            Expanded(
-              child: LayoutBuilder(
-                builder: (context, constraints) {
-                  return Row(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: const [
-                      _KanbanColumn(
-                        title: 'New Leads',
-                        count: 24,
-                        color: AppColors.chart1,
-                        deals: [
-                          _KanbanDeal('ACME Corp', '£12,000', 'Sarah J.'),
-                          _KanbanDeal('Tech Startup', '£8,500', 'David W.'),
-                          _KanbanDeal('Media Group', '£22,000', 'James B.'),
-                        ],
-                      ),
-                      SizedBox(width: AppSpacing.md),
-                      _KanbanColumn(
-                        title: 'Contacted',
-                        count: 18,
-                        color: AppColors.gold,
-                        deals: [
-                          _KanbanDeal('Design Agency', '£15,000', 'Emily D.'),
-                          _KanbanDeal('Retail Chain', '£45,000', 'Michael W.'),
-                          _KanbanDeal('FinTech Ltd', '£28,000', 'Jessica T.'),
-                        ],
-                      ),
-                      SizedBox(width: AppSpacing.md),
-                      _KanbanColumn(
-                        title: 'Qualified',
-                        count: 12,
-                        color: AppColors.info,
-                        deals: [
-                          _KanbanDeal('Enterprise Co', '£96,000', 'Alex B.'),
-                          _KanbanDeal('Scale.io', '£34,500', 'Robert M.'),
-                        ],
-                      ),
-                      SizedBox(width: AppSpacing.md),
-                      _KanbanColumn(
-                        title: 'Proposal',
-                        count: 8,
-                        color: AppColors.warning,
-                        deals: [
-                          _KanbanDeal('NextGen', '£96,000', 'Alex B.'),
-                          _KanbanDeal('ACME Solutions', '£45,000', 'Alex B.'),
-                        ],
-                      ),
-                      SizedBox(width: AppSpacing.md),
-                      _KanbanColumn(
-                        title: 'Won',
-                        count: 5,
-                        color: AppColors.success,
-                        deals: [
-                          _KanbanDeal('Design Co.', '£22,500', 'Alex B.'),
-                          _KanbanDeal('Synergy CRM', '£62,000', 'Alex B.'),
-                        ],
-                      ),
-                    ],
-                  );
-                },
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _KanbanDeal {
-  final String name;
-  final String value;
-  final String owner;
-
-  const _KanbanDeal(this.name, this.value, this.owner);
-}
-
-class _KanbanColumn extends StatelessWidget {
-  final String title;
-  final int count;
-  final Color color;
-  final List<_KanbanDeal> deals;
-
-  const _KanbanColumn({
-    required this.title,
-    required this.count,
-    required this.color,
-    required this.deals,
-  });
+  static const List<_PipelineStage> _stages = [
+    _PipelineStage('New Leads', AppColors.badgeNew, AppColors.badgeNewSurface, [
+      _PipelineCard('Pioneer Analytics', 'Amanda Lee', '£67,500', '20%'),
+      _PipelineCard('Chris Anderson', 'VisionEx', '£14,000', '15%'),
+    ]),
+    _PipelineStage('Contacted', AppColors.badgeContacted, AppColors.badgeContactedSurface, [
+      _PipelineCard('Bright Idea Audit', 'Emily Davis', '£8,900', '40%'),
+      _PipelineCard('Jessica Taylor', 'Creative Lab', '£19,400', '35%'),
+    ]),
+    _PipelineStage('Qualified', AppColors.badgeQualified, AppColors.badgeQualifiedSurface, [
+      _PipelineCard('TechFlow Enterprise', 'David Williams', '£128,000', '60%'),
+      _PipelineCard('Amanda Lee', 'Pioneer Inc.', '£34,000', '55%'),
+    ]),
+    _PipelineStage('Proposal', AppColors.badgeProposal, AppColors.warningSurface, [
+      _PipelineCard('ACME Solutions', 'Sarah Johnson', '£45,000', '80%'),
+      _PipelineCard('NextGen Setup', 'Michael Wilson', '£31,700', '75%'),
+    ]),
+    _PipelineStage('Won', AppColors.badgeWon, AppColors.badgeWonSurface, [
+      _PipelineCard('MarketPlus Retainer', 'James Brown', '£24,000', '100%'),
+      _PipelineCard('FusionTech Platform', 'Robert Martinez', '£93,200', '100%'),
+    ]),
+  ];
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: Container(
-        decoration: BoxDecoration(
-          color: AppColors.white,
-          borderRadius: BorderRadius.circular(AppSpacing.cardRadius),
-          border: Border.all(color: AppColors.border),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Container(
-              padding: const EdgeInsets.all(AppSpacing.md),
-              decoration: BoxDecoration(
-                border: Border(bottom: BorderSide(color: AppColors.border)),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 10,
-                    height: 10,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  Text(title, style: AppTypography.titleSmall),
-                  const Spacer(),
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                        horizontal: 8, vertical: 2),
-                    decoration: BoxDecoration(
-                      color: color.withOpacity(0.1),
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    child: Text(
-                      '$count',
-                      style: AppTypography.labelSmall.copyWith(
-                        color: color,
-                        fontWeight: FontWeight.w700,
-                      ),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            Expanded(
-              child: ListView(
-                padding: const EdgeInsets.all(AppSpacing.sm),
-                children: [
-                  ...deals.map((d) => _DealCard(deal: d, color: color)),
-                  const SizedBox(height: 8),
-                  DottedAddButton(onTap: () {}),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _DealCard extends StatelessWidget {
-  final _KanbanDeal deal;
-  final Color color;
-
-  const _DealCard({required this.deal, required this.color});
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 8),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: AppColors.border),
-        boxShadow: const [
-          BoxShadow(
-            color: AppColors.shadowColor,
-            blurRadius: 4,
-            offset: Offset(0, 1),
-          ),
-        ],
-      ),
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(deal.name, style: AppTypography.titleSmall),
-          const SizedBox(height: 4),
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(deal.value,
-                  style: AppTypography.bodySmall
-                      .copyWith(color: AppColors.gold, fontWeight: FontWeight.w600)),
-              Text(deal.owner, style: AppTypography.caption),
+              const Expanded(
+                child: SectionHeader(
+                  title: 'Pipelines',
+                  subtitle: 'Visual overview of your deal pipeline stages.',
+                ),
+              ),
+              PrimaryButton(
+                label: 'New Deal',
+                icon: Icons.add_rounded,
+                onPressed: () {},
+              ),
             ],
           ),
-          const SizedBox(height: 8),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: 0.6,
-              backgroundColor: AppColors.borderLight,
-              valueColor: AlwaysStoppedAnimation<Color>(color),
-              minHeight: 4,
+
+          const SizedBox(height: 4),
+
+          // Funnel overview
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: FunnelCard(
+                  title: 'Pipeline Funnel',
+                  stages: const [
+                    FunnelStage(label: 'New Leads', count: 248, color: AppColors.badgeNew),
+                    FunnelStage(label: 'Contacted', count: 166, color: AppColors.badgeContacted),
+                    FunnelStage(label: 'Qualified', count: 89, color: AppColors.badgeQualified),
+                    FunnelStage(label: 'Proposal', count: 43, color: AppColors.badgeProposal),
+                    FunnelStage(label: 'Won', count: 23, color: AppColors.badgeWon),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 20),
+              Expanded(
+                flex: 3,
+                child: TrendLineChart(
+                  title: 'Deal Velocity',
+                  values: [12, 18, 15, 22, 19, 28, 24, 31, 27, 35, 30, 42, 38, 45],
+                  labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                  period: 'This Week',
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 24),
+
+          // Kanban board
+          const Text(
+            'Kanban Board',
+            style: TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 12),
+
+          SizedBox(
+            height: 480,
+            child: ListView.builder(
+              scrollDirection: Axis.horizontal,
+              itemCount: _stages.length,
+              itemBuilder: (context, i) {
+                final stage = _stages[i];
+                return Container(
+                  width: 240,
+                  margin: EdgeInsets.only(right: i < _stages.length - 1 ? 16 : 0),
+                  child: _KanbanColumn(stage: stage),
+                );
+              },
             ),
           ),
         ],
@@ -239,28 +119,172 @@ class _DealCard extends StatelessWidget {
   }
 }
 
-class DottedAddButton extends StatelessWidget {
-  final VoidCallback onTap;
-
-  const DottedAddButton({super.key, required this.onTap});
+class _KanbanColumn extends StatelessWidget {
+  final _PipelineStage stage;
+  const _KanbanColumn({required this.stage});
 
   @override
   Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        height: 40,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(
-            color: AppColors.border,
-            style: BorderStyle.solid,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // Column header
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: stage.surface,
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Row(
+            children: [
+              Container(
+                width: 8,
+                height: 8,
+                decoration: BoxDecoration(color: stage.color, shape: BoxShape.circle),
+              ),
+              const SizedBox(width: 8),
+              Text(
+                stage.label,
+                style: TextStyle(
+                  fontFamily: 'Inter',
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                  color: stage.color,
+                ),
+              ),
+              const Spacer(),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                decoration: BoxDecoration(
+                  color: stage.color.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(100),
+                ),
+                child: Text(
+                  stage.cards.length.toString(),
+                  style: TextStyle(
+                    fontFamily: 'Inter',
+                    fontSize: 11,
+                    fontWeight: FontWeight.w600,
+                    color: stage.color,
+                  ),
+                ),
+              ),
+            ],
           ),
         ),
-        child: const Center(
-          child: Icon(Icons.add, size: 18, color: AppColors.textTertiary),
+        const SizedBox(height: 8),
+        Expanded(
+          child: ListView.builder(
+            itemCount: stage.cards.length + 1,
+            itemBuilder: (context, i) {
+              if (i == stage.cards.length) {
+                return Padding(
+                  padding: const EdgeInsets.only(top: 4),
+                  child: InkWell(
+                    onTap: () {},
+                    borderRadius: BorderRadius.circular(8),
+                    child: Container(
+                      height: 36,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: AppColors.cardBorder,
+                          style: BorderStyle.solid,
+                        ),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: const [
+                          Icon(Icons.add_rounded, size: 14, color: AppColors.textTertiary),
+                          SizedBox(width: 4),
+                          Text(
+                            'Add deal',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              color: AppColors.textTertiary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                );
+              }
+              final card = stage.cards[i];
+              return Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: AppCard(
+                  padding: const EdgeInsets.all(14),
+                  onTap: () {},
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        card.name,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 13,
+                          fontWeight: FontWeight.w600,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        card.contact,
+                        style: const TextStyle(
+                          fontFamily: 'Inter',
+                          fontSize: 11,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          Text(
+                            card.value,
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 14,
+                              fontWeight: FontWeight.w700,
+                              color: AppColors.gold,
+                            ),
+                          ),
+                          const Spacer(),
+                          Text(
+                            card.probability,
+                            style: const TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 11,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ),
+              );
+            },
+          ),
         ),
-      ),
+      ],
     );
   }
+}
+
+class _PipelineStage {
+  final String label;
+  final Color color;
+  final Color surface;
+  final List<_PipelineCard> cards;
+  const _PipelineStage(this.label, this.color, this.surface, this.cards);
+}
+
+class _PipelineCard {
+  final String name;
+  final String contact;
+  final String value;
+  final String probability;
+  const _PipelineCard(this.name, this.contact, this.value, this.probability);
 }

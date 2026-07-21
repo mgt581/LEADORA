@@ -1,181 +1,156 @@
 import 'package:flutter/material.dart';
-import '../../../../core/constants/app_colors.dart';
-import '../../../../core/constants/app_spacing.dart';
-import '../../../../core/constants/app_typography.dart';
-import '../../../../core/widgets/app_shell.dart';
-import '../../../../core/widgets/app_widgets.dart';
+import '../../../../core/theme/app_colors.dart';
+import '../../../../core/widgets/cards/app_card.dart';
 
 class CompaniesPage extends StatelessWidget {
   const CompaniesPage({super.key});
 
   static const List<_Company> _companies = [
-    _Company(name: 'Design Co.', industry: 'Creative', employees: '12', revenue: '£450K', status: 'Active', location: 'London'),
-    _Company(name: 'TechFlow', industry: 'Technology', employees: '85', revenue: '£2.1M', status: 'Active', location: 'Manchester'),
-    _Company(name: 'MarketPlus', industry: 'Marketing', employees: '34', revenue: '£890K', status: 'Active', location: 'Birmingham'),
-    _Company(name: 'Bright Idea', industry: 'Consulting', employees: '8', revenue: '£320K', status: 'Prospect', location: 'Bristol'),
-    _Company(name: 'NextGen', industry: 'SaaS', employees: '120', revenue: '£5.4M', status: 'Active', location: 'London'),
-    _Company(name: 'Creative Lab', industry: 'Design', employees: '22', revenue: '£670K', status: 'Active', location: 'Leeds'),
-    _Company(name: 'Scale.io', industry: 'Technology', employees: '45', revenue: '£1.2M', status: 'Active', location: 'Edinburgh'),
-    _Company(name: 'Synergy Co.', industry: 'Finance', employees: '67', revenue: '£3.2M', status: 'Prospect', location: 'London'),
+    _Company('Design Co.', 'Technology', '1-10', 'sarah@designco.com', '£12,500', 'Active', 3),
+    _Company('TechFlow', 'Software', '11-50', 'info@techflow.com', '£28,000', 'Active', 7),
+    _Company('MarketPlus', 'Marketing', '51-200', 'hello@marketplus.com', '£45,200', 'Active', 12),
+    _Company('Bright Idea', 'Consulting', '1-10', 'emily@brightidea.com', '£8,900', 'Inactive', 2),
+    _Company('NextGen', 'Technology', '11-50', 'michael@nextgen.com', '£31,700', 'Active', 5),
+    _Company('Creative Lab', 'Design', '1-10', 'jessica@creativelab.com', '£19,400', 'Active', 4),
+    _Company('FusionTech', 'Software', '51-200', 'robert@fusiontech.com', '£67,800', 'Active', 15),
+    _Company('Pioneer Inc.', 'Retail', '200+', 'amanda@pioneer.com', '£93,200', 'Active', 22),
   ];
 
   @override
   Widget build(BuildContext context) {
-    return AppShell(
-      currentRoute: '/companies',
-      pageTitle: 'Companies',
-      topBarActions: [
-        GoldButton(
-          label: 'Add Company',
-          icon: Icons.add,
-          onTap: () {},
-          small: true,
-        ),
-        const SizedBox(width: AppSpacing.md),
-      ],
-      body: Padding(
-        padding: const EdgeInsets.all(AppSpacing.contentPadding),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            GridView.count(
-              crossAxisCount: 4,
-              shrinkWrap: true,
-              physics: const NeverScrollableScrollPhysics(),
-              crossAxisSpacing: AppSpacing.md,
-              mainAxisSpacing: AppSpacing.md,
-              childAspectRatio: 2.2,
-              children: const [
-                StatCard(
-                  title: 'Total Companies',
-                  value: '284',
-                  icon: Icons.business_outlined,
-                ),
-                StatCard(
-                  title: 'Active Accounts',
-                  value: '196',
-                  change: '+12% this month',
-                  isPositive: true,
-                  icon: Icons.trending_up,
-                  iconColor: AppColors.success,
-                  iconBgColor: AppColors.successLight,
-                ),
-                StatCard(
-                  title: 'Total Revenue',
-                  value: '£14.2M',
-                  change: '+8% vs last month',
-                  isPositive: true,
-                  icon: Icons.currency_pound_outlined,
-                ),
-                StatCard(
-                  title: 'Avg. Deal Size',
-                  value: '£48K',
-                  icon: Icons.bar_chart_outlined,
-                  iconColor: AppColors.info,
-                  iconBgColor: AppColors.infoLight,
-                ),
-              ],
-            ),
-            const SizedBox(height: AppSpacing.md),
-            Expanded(
-              child: AppCard(
-                padding: EdgeInsets.zero,
-                child: Column(
-                  children: [
-                    Padding(
-                      padding: const EdgeInsets.all(AppSpacing.cardPadding),
-                      child: Row(
-                        children: [
-                          Text('All Companies',
-                              style: AppTypography.titleMedium),
-                          const Spacer(),
-                          OutlinedButton.icon(
-                            onPressed: () {},
-                            icon: const Icon(Icons.filter_list_outlined,
-                                size: 14),
-                            label: const Text('Filter'),
-                            style: OutlinedButton.styleFrom(
-                              padding: const EdgeInsets.symmetric(
-                                  horizontal: 12, vertical: 8),
-                              textStyle: AppTypography.labelMedium,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const Divider(height: 1),
-                    Expanded(
-                      child: AppDataTable(
-                        headers: const [
-                          'Company',
-                          'Industry',
-                          'Employees',
-                          'Revenue',
-                          'Status',
-                          'Location',
-                        ],
-                        columnWidths: const [180, 140, 100, 120, 110, 120],
-                        rows: _companies
-                            .map((c) => [
-                                  Row(
-                                    children: [
-                                      Container(
-                                        width: 28,
-                                        height: 28,
-                                        decoration: BoxDecoration(
-                                          color: AppColors.goldSurface,
-                                          borderRadius:
-                                              BorderRadius.circular(6),
-                                        ),
-                                        child: Center(
-                                          child: Text(
-                                            c.name[0],
-                                            style: const TextStyle(
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w700,
-                                              color: AppColors.gold,
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: Text(
-                                          c.name,
-                                          style: AppTypography.titleSmall,
-                                          overflow: TextOverflow.ellipsis,
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                  Text(c.industry,
-                                      style: AppTypography.bodySmall),
-                                  Text(c.employees,
-                                      style: AppTypography.bodySmall),
-                                  Text(c.revenue,
-                                      style: AppTypography.titleSmall),
-                                  StatusBadge(
-                                    label: c.status,
-                                    color: c.status == 'Active'
-                                        ? AppColors.success
-                                        : AppColors.gold,
-                                    bgColor: c.status == 'Active'
-                                        ? AppColors.successLight
-                                        : AppColors.goldSurface,
-                                  ),
-                                  Text(c.location,
-                                      style: AppTypography.bodySmall),
-                                ])
-                            .toList(),
-                      ),
-                    ),
-                  ],
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(28),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Expanded(
+                child: SectionHeader(
+                  title: 'Companies',
+                  subtitle: 'Track and manage your company relationships.',
                 ),
               ),
-            ),
-          ],
-        ),
+              PrimaryButton(
+                label: 'Add Company',
+                icon: Icons.add_business_rounded,
+                onPressed: () {},
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 4),
+
+          LayoutBuilder(builder: (context, c) {
+            return Wrap(
+              spacing: 16,
+              runSpacing: 16,
+              children: _companies.map((company) => SizedBox(
+                width: (c.maxWidth - 48) / 4,
+                child: _CompanyCard(company: company),
+              )).toList(),
+            );
+          }),
+        ],
       ),
+    );
+  }
+}
+
+class _CompanyCard extends StatelessWidget {
+  final _Company company;
+  const _CompanyCard({required this.company});
+
+  @override
+  Widget build(BuildContext context) {
+    return AppCard(
+      padding: const EdgeInsets.all(20),
+      onTap: () {},
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                width: 40,
+                height: 40,
+                decoration: BoxDecoration(
+                  gradient: const LinearGradient(
+                    begin: Alignment.topLeft,
+                    end: Alignment.bottomRight,
+                    colors: [AppColors.gold, AppColors.goldDark],
+                  ),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Center(
+                  child: Text(
+                    company.name[0],
+                    style: const TextStyle(
+                      fontFamily: 'Inter',
+                      fontSize: 18,
+                      fontWeight: FontWeight.w700,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+              ),
+              const Spacer(),
+              StatusBadge.fromStatus(company.status),
+            ],
+          ),
+          const SizedBox(height: 14),
+          Text(
+            company.name,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 15,
+              fontWeight: FontWeight.w700,
+              color: AppColors.textPrimary,
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            company.industry,
+            style: const TextStyle(
+              fontFamily: 'Inter',
+              fontSize: 12,
+              color: AppColors.textSecondary,
+            ),
+          ),
+          const SizedBox(height: 16),
+          const Divider(height: 1),
+          const SizedBox(height: 12),
+          _CompanyMeta(icon: Icons.people_outline_rounded, label: '${company.size} employees'),
+          const SizedBox(height: 6),
+          _CompanyMeta(icon: Icons.attach_money_rounded, label: company.revenue),
+          const SizedBox(height: 6),
+          _CompanyMeta(icon: Icons.person_outline_rounded, label: '${company.contacts} contacts'),
+        ],
+      ),
+    );
+  }
+}
+
+class _CompanyMeta extends StatelessWidget {
+  final IconData icon;
+  final String label;
+  const _CompanyMeta({required this.icon, required this.label});
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Icon(icon, size: 13, color: AppColors.textTertiary),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            fontFamily: 'Inter',
+            fontSize: 12,
+            color: AppColors.textSecondary,
+          ),
+        ),
+      ],
     );
   }
 }
@@ -183,17 +158,10 @@ class CompaniesPage extends StatelessWidget {
 class _Company {
   final String name;
   final String industry;
-  final String employees;
+  final String size;
+  final String email;
   final String revenue;
   final String status;
-  final String location;
-
-  const _Company({
-    required this.name,
-    required this.industry,
-    required this.employees,
-    required this.revenue,
-    required this.status,
-    required this.location,
-  });
+  final int contacts;
+  const _Company(this.name, this.industry, this.size, this.email, this.revenue, this.status, this.contacts);
 }
