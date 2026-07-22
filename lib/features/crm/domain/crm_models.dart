@@ -1,7 +1,5 @@
 enum LeadStatus { newLead, contacted, qualified, proposal, won, lost }
 
-bool isValidEmail(String value) => RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$').hasMatch(value.trim());
-
 extension LeadStatusLabel on LeadStatus {
   String get label => switch (this) {
         LeadStatus.newLead => 'New',

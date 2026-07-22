@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/cards/app_card.dart';
+import '../../../../core/validation/input_validators.dart';
 import '../../../crm/data/crm_repository.dart';
 import '../../../crm/domain/crm_models.dart';
 
@@ -125,6 +126,8 @@ class ContactsPage extends ConsumerWidget {
       );
       if (shouldAdd == true && name.text.trim().isNotEmpty && isValidEmail(email.text)) {
         ref.read(crmRepositoryProvider).addContact(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
+      } else if (shouldAdd == true && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a name and valid email address.')));
       }
     } finally {
       name.dispose();

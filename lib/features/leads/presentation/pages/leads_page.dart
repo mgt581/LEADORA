@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/cards/app_card.dart';
+import '../../../../core/validation/input_validators.dart';
 import '../../../crm/data/crm_repository.dart';
 import '../../../crm/domain/crm_models.dart';
 
@@ -34,7 +35,8 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
 
   String _relativeDate(DateTime date, DateTime now) {
     final minutes = now.difference(date).inMinutes;
-    if (minutes <= 0) return 'Just now';
+    if (minutes < 0) return 'Scheduled';
+    if (minutes == 0) return 'Just now';
     if (minutes < 60) return '$minutes min ago';
     final hours = minutes ~/ 60;
     if (hours < 24) return '$hours h ago';
@@ -202,6 +204,8 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
       );
       if (shouldAdd == true && name.text.trim().isNotEmpty && isValidEmail(email.text)) {
         ref.read(crmRepositoryProvider).addLead(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
+      } else if (shouldAdd == true && mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a name and valid email address.')));
       }
     } finally {
       name.dispose();
