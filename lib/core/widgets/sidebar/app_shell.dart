@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../auth/auth_controller.dart';
 import '../../theme/app_colors.dart';
 import 'sidebar_item.dart';
 
@@ -155,9 +156,12 @@ class _Sidebar extends StatelessWidget {
 
           // Collapsed toggle
           if (collapsed)
-            Padding(
+            InkWell(
+              onTap: authController.signOut,
+              child: Padding(
               padding: const EdgeInsets.all(8),
               child: _CollapseButton(onTap: onToggle, collapsed: collapsed),
+              ),
             ),
 
           Container(height: 1, color: AppColors.sidebarDivider),

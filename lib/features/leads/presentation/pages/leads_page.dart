@@ -1,15 +1,18 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/cards/app_card.dart';
+import '../../../crm/data/crm_repository.dart';
+import '../../../crm/domain/crm_models.dart';
 
-class LeadsPage extends StatefulWidget {
+class LeadsPage extends ConsumerStatefulWidget {
   const LeadsPage({super.key});
 
   @override
   State<LeadsPage> createState() => _LeadsPageState();
 }
 
-class _LeadsPageState extends State<LeadsPage> {
+class _LeadsPageState extends ConsumerState<LeadsPage> {
   String _filter = 'All Leads';
   String _search = '';
 
@@ -17,18 +20,19 @@ class _LeadsPageState extends State<LeadsPage> {
     'All Leads', 'New', 'Contacted', 'Qualified', 'Proposal', 'Won', 'Lost',
   ];
 
-  static const List<_Lead> _leads = [
-    _Lead('Sarah Johnson', 'sarah@designco.com', 'Design Co.', 'New', 'Website', '2 min ago'),
-    _Lead('David Williams', 'david@techflow.com', 'TechFlow', 'Contacted', 'LinkedIn', '1 h ago'),
-    _Lead('James Brown', 'james@marketplus.com', 'MarketPlus', 'Qualified', 'Referral', '1 h ago'),
-    _Lead('Emily Davis', 'emily@brightidea.com', 'Bright Idea', 'Proposal', 'Website', '5 h ago'),
-    _Lead('Michael Wilson', 'michael@nextgen.com', 'NextGen', 'New', 'Ads', '1 d ago'),
-    _Lead('Jessica Taylor', 'jessica@creativelab.com', 'Creative Lab', 'Contacted', 'LinkedIn', '1 d ago'),
-    _Lead('Robert Martinez', 'robert@fusiontech.com', 'FusionTech', 'Won', 'Website', '2 d ago'),
-    _Lead('Amanda Lee', 'amanda@pioneer.com', 'Pioneer Inc.', 'Qualified', 'Referral', '2 d ago'),
-    _Lead('Chris Anderson', 'chris@visionex.com', 'VisionEx', 'New', 'Ads', '3 d ago'),
-    _Lead('Laura Thompson', 'laura@apex.com', 'Apex Solutions', 'Lost', 'Email', '4 d ago'),
-  ];
+  List<_Lead> get _leads => ref.watch(crmRepositoryProvider).leads.map((lead) => _Lead(
+        lead.name,
+        lead.email,
+        lead.company,
+        lead.status.label,
+        lead.source,
+        _relativeDate(lead.createdAt),
+      )).toList();
+
+  String _relativeDate(DateTime date) {
+    final minutes = DateTime.now().difference(date).inMinutes;
+    return minutes < 60 ? '$minutes min ago' : '${minutes ~/ 60} h ago';
+  }
 
   List<_Lead> get _filtered {
     return _leads.where((lead) {
@@ -79,7 +83,7 @@ class _LeadsPageState extends State<LeadsPage> {
               PrimaryButton(
                 label: 'Add Lead',
                 icon: Icons.add_rounded,
-                onPressed: () {},
+                onPressed: () => _showAddLeadDialog(context),
               ),
             ],
           ),
@@ -164,6 +168,36 @@ class _LeadsPageState extends State<LeadsPage> {
         ],
       ),
     );
+  }
+
+  Future<void> _showAddLeadDialog(BuildContext context) async {
+    final name = TextEditingController();
+    final email = TextEditingController();
+    final company = TextEditingController();
+    final shouldAdd = await showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Add lead'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: name, decoration: const InputDecoration(labelText: 'Name')),
+            TextField(controller: email, decoration: const InputDecoration(labelText: 'Email')),
+            TextField(controller: company, decoration: const InputDecoration(labelText: 'Company')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Add lead')),
+        ],
+      ),
+    );
+    if (shouldAdd == true && name.text.trim().isNotEmpty && email.text.trim().isNotEmpty) {
+      ref.read(crmRepositoryProvider).addLead(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
+    }
+    name.dispose();
+    email.dispose();
+    company.dispose();
   }
 }
 
