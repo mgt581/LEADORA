@@ -6,8 +6,9 @@ class AuthController extends ChangeNotifier {
   bool get isAuthenticated => _isAuthenticated;
 
   void signIn(String email, String password) {
-    if (email.trim().isEmpty || password.isEmpty) {
-      throw const FormatException('Email and password are required.');
+    final emailPattern = RegExp(r'^[^@\s]+@[^@\s]+\.[^@\s]+$');
+    if (!emailPattern.hasMatch(email.trim()) || password.length < 6) {
+      throw const FormatException('Enter a valid email and a password of at least 6 characters.');
     }
     _isAuthenticated = true;
     notifyListeners();
