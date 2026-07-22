@@ -55,3 +55,4 @@ app.*.map.json
 # Firebase files
 google-services.json
 GoogleService-Info.plist
+node_modules
