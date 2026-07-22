@@ -29,7 +29,7 @@ class CrmRepository extends ChangeNotifier {
   }
 
   void addContact({required String name, required String email, required String company}) {
-    contacts.insert(0, Contact(id: 'contact-${_nextContactId++}', name: name, title: 'New contact', company: company, email: email, phone: '—'));
+    contacts.insert(0, Contact(id: 'contact-${_nextContactId++}', name: name, title: 'New Contact', company: company, email: email, phone: '—'));
     notifyListeners();
   }
 }

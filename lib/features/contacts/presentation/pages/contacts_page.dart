@@ -107,7 +107,7 @@ class ContactsPage extends ConsumerWidget {
       final shouldAdd = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-        title: const Text('Add contact'),
+        title: const Text('Add Contact'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -118,7 +118,7 @@ class ContactsPage extends ConsumerWidget {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Add contact')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Add Contact')),
         ],
         ),
       );

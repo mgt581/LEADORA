@@ -181,7 +181,7 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
       final shouldAdd = await showDialog<bool>(
         context: context,
         builder: (context) => AlertDialog(
-        title: const Text('Add lead'),
+        title: const Text('Add Lead'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -192,7 +192,7 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
         ),
         actions: [
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
-          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Add lead')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Add Lead')),
         ],
         ),
       );

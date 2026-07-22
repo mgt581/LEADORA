@@ -202,7 +202,7 @@ class _Sidebar extends StatelessWidget {
                             overflow: TextOverflow.ellipsis,
                           ),
                           Text(
-                            'Admin · Sign out',
+                            'Admin · Sign Out',
                             style: TextStyle(
                               fontFamily: 'Inter',
                               fontSize: 11,
