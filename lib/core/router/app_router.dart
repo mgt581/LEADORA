@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../../core/auth/auth_controller.dart';
+import '../../features/auth/presentation/pages/login_page.dart';
 import '../../features/dashboard/presentation/pages/dashboard_page.dart';
 import '../../features/leads/presentation/pages/leads_page.dart';
 import '../../features/contacts/presentation/pages/contacts_page.dart';
@@ -20,7 +22,18 @@ class AppRouter {
 
   static final GoRouter router = GoRouter(
     initialLocation: '/dashboard',
+    refreshListenable: authController,
+    redirect: (context, state) {
+      final isLoginPage = state.matchedLocation == '/login';
+      if (!authController.isAuthenticated && !isLoginPage) return '/login';
+      if (authController.isAuthenticated && isLoginPage) return '/dashboard';
+      return null;
+    },
     routes: [
+      GoRoute(
+        path: '/login',
+        pageBuilder: (context, state) => _fade(state, const LoginPage()),
+      ),
       ShellRoute(
         builder: (context, state, child) => AppShell(child: child),
         routes: [

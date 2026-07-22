@@ -1,23 +1,19 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/cards/app_card.dart';
+import '../../../../core/validation/input_validators.dart';
+import '../../../crm/data/crm_repository.dart';
+import '../../../crm/domain/crm_models.dart';
 
-class ContactsPage extends StatelessWidget {
+class ContactsPage extends ConsumerWidget {
   const ContactsPage({super.key});
 
-  static const List<_Contact> _contacts = [
-    _Contact('Sarah Johnson', 'CEO', 'Design Co.', 'sarah@designco.com', '+44 7700 900123', 'Active'),
-    _Contact('David Williams', 'CTO', 'TechFlow', 'david@techflow.com', '+44 7700 900456', 'Active'),
-    _Contact('James Brown', 'VP Sales', 'MarketPlus', 'james@marketplus.com', '+44 7700 900789', 'Active'),
-    _Contact('Emily Davis', 'Marketing Dir.', 'Bright Idea', 'emily@brightidea.com', '+44 7700 901234', 'Inactive'),
-    _Contact('Michael Wilson', 'Founder', 'NextGen', 'michael@nextgen.com', '+44 7700 901567', 'Active'),
-    _Contact('Jessica Taylor', 'COO', 'Creative Lab', 'jessica@creativelab.com', '+44 7700 901890', 'Active'),
-    _Contact('Robert Martinez', 'Sales Dir.', 'FusionTech', 'robert@fusiontech.com', '+44 7700 902123', 'Active'),
-    _Contact('Amanda Lee', 'Head of Growth', 'Pioneer Inc.', 'amanda@pioneer.com', '+44 7700 902456', 'Inactive'),
-  ];
-
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
+    final contacts = ref.watch(crmRepositoryProvider).contacts
+        .map((contact) => _Contact(contact.name, contact.title, contact.company, contact.email, contact.phone, contact.active ? 'Active' : 'Inactive'))
+        .toList();
     return SingleChildScrollView(
       padding: const EdgeInsets.all(28),
       child: Column(
@@ -34,7 +30,7 @@ class ContactsPage extends StatelessWidget {
               PrimaryButton(
                 label: 'Add Contact',
                 icon: Icons.person_add_rounded,
-                onPressed: () {},
+                onPressed: () => _showAddContactDialog(context, ref),
               ),
             ],
           ),
@@ -91,10 +87,10 @@ class ContactsPage extends StatelessWidget {
                 const Divider(height: 1),
 
                 // Rows
-                ..._contacts.asMap().entries.map((e) => Column(
+                ...contacts.asMap().entries.map((e) => Column(
                       children: [
                         _ContactRow(contact: e.value),
-                        if (e.key < _contacts.length - 1) const Divider(height: 1),
+                        if (e.key < contacts.length - 1) const Divider(height: 1),
                       ],
                     )),
               ],
@@ -103,6 +99,41 @@ class ContactsPage extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  Future<void> _showAddContactDialog(BuildContext context, WidgetRef ref) async {
+    final name = TextEditingController();
+    final email = TextEditingController();
+    final company = TextEditingController();
+    try {
+      final shouldAdd = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
+        title: const Text('Add Contact'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(controller: name, decoration: const InputDecoration(labelText: 'Name')),
+            TextField(controller: email, decoration: const InputDecoration(labelText: 'Email')),
+            TextField(controller: company, decoration: const InputDecoration(labelText: 'Company')),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
+          ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Add Contact')),
+        ],
+        ),
+      );
+      if (shouldAdd == true && name.text.trim().isNotEmpty && isValidEmail(email.text)) {
+        ref.read(crmRepositoryProvider).addContact(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
+      } else if (shouldAdd == true && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Enter a name and valid email address.')));
+      }
+    } finally {
+      name.dispose();
+      email.dispose();
+      company.dispose();
+    }
   }
 
   Widget _buildHeader() {
