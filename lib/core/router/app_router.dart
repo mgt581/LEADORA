@@ -24,9 +24,9 @@ class AppRouter {
     initialLocation: '/dashboard',
     refreshListenable: authController,
     redirect: (context, state) {
-      final onLogin = state.matchedLocation == '/login';
-      if (!authController.isAuthenticated && !onLogin) return '/login';
-      if (authController.isAuthenticated && onLogin) return '/dashboard';
+      final isLoginPage = state.matchedLocation == '/login';
+      if (!authController.isAuthenticated && !isLoginPage) return '/login';
+      if (authController.isAuthenticated && isLoginPage) return '/dashboard';
       return null;
     },
     routes: [

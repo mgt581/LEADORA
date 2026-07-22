@@ -164,9 +164,12 @@ class _Sidebar extends StatelessWidget {
           Container(height: 1, color: AppColors.sidebarDivider),
 
           // User avatar
-          InkWell(
-            onTap: authController.signOut,
-            child: Padding(
+          Semantics(
+            button: true,
+            label: 'Sign out',
+            child: InkWell(
+              onTap: authController.signOut,
+              child: Padding(
               padding: EdgeInsets.symmetric(
                 horizontal: collapsed ? 12 : 16,
                 vertical: 12,
@@ -182,6 +185,7 @@ class _Sidebar extends StatelessWidget {
                         fontSize: 11,
                         fontWeight: FontWeight.w700,
                         color: AppColors.gold,
+                        ),
                       ),
                     ),
                   ),

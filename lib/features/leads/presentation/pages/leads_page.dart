@@ -34,6 +34,7 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
 
   String _relativeDate(DateTime date, DateTime now) {
     final minutes = now.difference(date).inMinutes;
+    if (minutes <= 0) return 'Just now';
     if (minutes < 60) return '$minutes min ago';
     final hours = minutes ~/ 60;
     if (hours < 24) return '$hours h ago';
