@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../theme/app_colors.dart';
+import '../../theme/app_colors.dart';
 
 /// Standard white card panel with soft shadow and rounded corners.
 class AppCard extends StatelessWidget {
