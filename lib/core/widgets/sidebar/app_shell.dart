@@ -156,65 +156,65 @@ class _Sidebar extends StatelessWidget {
 
           // Collapsed toggle
           if (collapsed)
-            InkWell(
-              onTap: authController.signOut,
-              child: Padding(
+            Padding(
               padding: const EdgeInsets.all(8),
               child: _CollapseButton(onTap: onToggle, collapsed: collapsed),
-              ),
             ),
 
           Container(height: 1, color: AppColors.sidebarDivider),
 
           // User avatar
-          Padding(
-            padding: EdgeInsets.symmetric(
-              horizontal: collapsed ? 12 : 16,
-              vertical: 12,
-            ),
-            child: Row(
-              children: [
-                CircleAvatar(
-                  radius: 16,
-                  backgroundColor: AppColors.gold.withValues(alpha: 0.2),
-                  child: const Text(
-                    'AB',
-                    style: TextStyle(
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                      color: AppColors.gold,
+          InkWell(
+            onTap: authController.signOut,
+            child: Padding(
+              padding: EdgeInsets.symmetric(
+                horizontal: collapsed ? 12 : 16,
+                vertical: 12,
+              ),
+              child: Row(
+                children: [
+                  CircleAvatar(
+                    radius: 16,
+                    backgroundColor: AppColors.gold.withValues(alpha: 0.2),
+                    child: const Text(
+                      'AB',
+                      style: TextStyle(
+                        fontSize: 11,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.gold,
+                      ),
                     ),
                   ),
-                ),
-                if (!collapsed) ...[
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Alex Bryant',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                            color: Colors.white,
+                  if (!collapsed) ...[
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: const [
+                          Text(
+                            'Alex Bryant',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                            overflow: TextOverflow.ellipsis,
                           ),
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                        Text(
-                          'Admin',
-                          style: TextStyle(
-                            fontFamily: 'Inter',
-                            fontSize: 11,
-                            color: AppColors.sidebarText,
+                          Text(
+                            'Admin · Sign out',
+                            style: TextStyle(
+                              fontFamily: 'Inter',
+                              fontSize: 11,
+                              color: AppColors.sidebarText,
+                            ),
                           ),
-                        ),
-                      ],
+                        ],
+                      ),
                     ),
-                  ),
+                  ],
                 ],
-              ],
+              ),
             ),
           ),
         ],

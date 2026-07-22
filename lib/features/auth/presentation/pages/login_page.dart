@@ -57,7 +57,7 @@ class _LoginPageState extends State<LoginPage> {
                   mainAxisSize: MainAxisSize.min,
                   crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    _Logo(),
+                    const _Logo(),
                     const SizedBox(height: 28),
                     const Text('Welcome back', style: TextStyle(fontSize: 26, fontWeight: FontWeight.w700, color: AppColors.textPrimary)),
                     const SizedBox(height: 6),
@@ -100,6 +100,8 @@ class _LoginPageState extends State<LoginPage> {
 }
 
 class _Logo extends StatelessWidget {
+  const _Logo();
+
   @override
   Widget build(BuildContext context) => Row(
         mainAxisSize: MainAxisSize.min,

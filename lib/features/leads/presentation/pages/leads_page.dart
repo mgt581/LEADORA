@@ -31,7 +31,10 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
 
   String _relativeDate(DateTime date) {
     final minutes = DateTime.now().difference(date).inMinutes;
-    return minutes < 60 ? '$minutes min ago' : '${minutes ~/ 60} h ago';
+    if (minutes < 60) return '$minutes min ago';
+    final hours = minutes ~/ 60;
+    if (hours < 24) return '$hours h ago';
+    return '${hours ~/ 24} d ago';
   }
 
   List<_Lead> get _filtered {
@@ -174,9 +177,10 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
     final name = TextEditingController();
     final email = TextEditingController();
     final company = TextEditingController();
-    final shouldAdd = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
+    try {
+      final shouldAdd = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
         title: const Text('Add lead'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -190,14 +194,16 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Add lead')),
         ],
-      ),
-    );
-    if (shouldAdd == true && name.text.trim().isNotEmpty && email.text.trim().isNotEmpty) {
-      ref.read(crmRepositoryProvider).addLead(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
+        ),
+      );
+      if (shouldAdd == true && name.text.trim().isNotEmpty && email.text.trim().isNotEmpty) {
+        ref.read(crmRepositoryProvider).addLead(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
+      }
+    } finally {
+      name.dispose();
+      email.dispose();
+      company.dispose();
     }
-    name.dispose();
-    email.dispose();
-    company.dispose();
   }
 }
 

@@ -103,9 +103,10 @@ class ContactsPage extends ConsumerWidget {
     final name = TextEditingController();
     final email = TextEditingController();
     final company = TextEditingController();
-    final shouldAdd = await showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
+    try {
+      final shouldAdd = await showDialog<bool>(
+        context: context,
+        builder: (context) => AlertDialog(
         title: const Text('Add contact'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
@@ -119,14 +120,16 @@ class ContactsPage extends ConsumerWidget {
           TextButton(onPressed: () => Navigator.pop(context), child: const Text('Cancel')),
           ElevatedButton(onPressed: () => Navigator.pop(context, true), child: const Text('Add contact')),
         ],
-      ),
-    );
-    if (shouldAdd == true && name.text.trim().isNotEmpty && email.text.trim().isNotEmpty) {
-      ref.read(crmRepositoryProvider).addContact(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
+        ),
+      );
+      if (shouldAdd == true && name.text.trim().isNotEmpty && email.text.trim().isNotEmpty) {
+        ref.read(crmRepositoryProvider).addContact(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
+      }
+    } finally {
+      name.dispose();
+      email.dispose();
+      company.dispose();
     }
-    name.dispose();
-    email.dispose();
-    company.dispose();
   }
 
   Widget _buildHeader() {

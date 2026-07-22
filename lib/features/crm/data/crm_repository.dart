@@ -4,6 +4,7 @@ import '../domain/crm_models.dart';
 final crmRepositoryProvider = ChangeNotifierProvider<CrmRepository>((ref) => CrmRepository.seeded());
 
 class CrmRepository extends ChangeNotifier {
+  static int _nextId = 0;
   CrmRepository(this.leads, this.contacts);
 
   final List<Lead> leads;
@@ -22,12 +23,12 @@ class CrmRepository extends ChangeNotifier {
       );
 
   void addLead({required String name, required String email, required String company}) {
-    leads.insert(0, Lead(id: 'lead-${DateTime.now().microsecondsSinceEpoch}', name: name, email: email, company: company, status: LeadStatus.newLead, source: 'Manual', createdAt: DateTime.now()));
+    leads.insert(0, Lead(id: 'lead-${_nextId++}', name: name, email: email, company: company, status: LeadStatus.newLead, source: 'Manual', createdAt: DateTime.now()));
     notifyListeners();
   }
 
   void addContact({required String name, required String email, required String company}) {
-    contacts.insert(0, Contact(id: 'contact-${DateTime.now().microsecondsSinceEpoch}', name: name, title: 'New contact', company: company, email: email, phone: '—'));
+    contacts.insert(0, Contact(id: 'contact-${_nextId++}', name: name, title: 'New contact', company: company, email: email, phone: '—'));
     notifyListeners();
   }
 }
