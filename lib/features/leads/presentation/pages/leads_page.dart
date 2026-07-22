@@ -20,17 +20,20 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
     'All Leads', 'New', 'Contacted', 'Qualified', 'Proposal', 'Won', 'Lost',
   ];
 
-  List<_Lead> get _leads => ref.watch(crmRepositoryProvider).leads.map((lead) => _Lead(
+  List<_Lead> get _leads {
+    final now = DateTime.now();
+    return ref.watch(crmRepositoryProvider).leads.map((lead) => _Lead(
         lead.name,
         lead.email,
         lead.company,
         lead.status.label,
         lead.source,
-        _relativeDate(lead.createdAt),
-      )).toList();
+        _relativeDate(lead.createdAt, now),
+        )).toList();
+  }
 
-  String _relativeDate(DateTime date) {
-    final minutes = DateTime.now().difference(date).inMinutes;
+  String _relativeDate(DateTime date, DateTime now) {
+    final minutes = now.difference(date).inMinutes;
     if (minutes < 60) return '$minutes min ago';
     final hours = minutes ~/ 60;
     if (hours < 24) return '$hours h ago';
@@ -196,7 +199,7 @@ class _LeadsPageState extends ConsumerState<LeadsPage> {
         ],
         ),
       );
-      if (shouldAdd == true && name.text.trim().isNotEmpty && email.text.trim().isNotEmpty) {
+      if (shouldAdd == true && name.text.trim().isNotEmpty && isValidEmail(email.text)) {
         ref.read(crmRepositoryProvider).addLead(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
       }
     } finally {

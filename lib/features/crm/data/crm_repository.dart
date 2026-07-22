@@ -4,8 +4,10 @@ import '../domain/crm_models.dart';
 final crmRepositoryProvider = ChangeNotifierProvider<CrmRepository>((ref) => CrmRepository.seeded());
 
 class CrmRepository extends ChangeNotifier {
-  int _nextLeadId = 4;
-  int _nextContactId = 3;
+  static const _seedLeadCount = 3;
+  static const _seedContactCount = 2;
+  int _nextLeadId = _seedLeadCount + 1;
+  int _nextContactId = _seedContactCount + 1;
   CrmRepository(this.leads, this.contacts);
 
   final List<Lead> leads;

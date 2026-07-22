@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/widgets/cards/app_card.dart';
 import '../../../crm/data/crm_repository.dart';
+import '../../../crm/domain/crm_models.dart';
 
 class ContactsPage extends ConsumerWidget {
   const ContactsPage({super.key});
@@ -122,7 +123,7 @@ class ContactsPage extends ConsumerWidget {
         ],
         ),
       );
-      if (shouldAdd == true && name.text.trim().isNotEmpty && email.text.trim().isNotEmpty) {
+      if (shouldAdd == true && name.text.trim().isNotEmpty && isValidEmail(email.text)) {
         ref.read(crmRepositoryProvider).addContact(name: name.text.trim(), email: email.text.trim(), company: company.text.trim());
       }
     } finally {
