@@ -66,6 +66,15 @@ lib/
 
 ## Getting Started
 
+### Deployment
+
+LEADORA must run on a serverless host such as Vercel because the Gmail OAuth
+routes exchange and encrypt tokens on the server. GitHub Pages is static-only
+and cannot run these routes. Configure `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and
+`VERCEL_PROJECT_ID` as GitHub Actions secrets, then add the variables in
+`.env.example` to the Vercel project. Set the Google redirect URI to
+`https://<your-domain>/api/gmail/callback`.
+
 ### Prerequisites
 
 - Flutter SDK ≥ 3.24.0
@@ -109,4 +118,3 @@ flutter build web --release
 - **Analytics** — Charts, funnels, channel performance
 - **Reports** — Revenue trends, sales rep leaderboard
 - **Settings** — Profile, security (2FA, sessions), billing
-
