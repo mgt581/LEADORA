@@ -8,8 +8,6 @@ import {
   Settings, Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search
 } from 'lucide-react';
 
-const BASE = process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && window.location.pathname.startsWith('/LEADORA') ? '/LEADORA' : '';
-
 type Lead = { name:string; email:string; company:string; status:string; source:string; created:string };
 type Contact = { name:string; email:string; company:string; phone:string; status:string };
 type BusinessProfile = { id:string; name:string; description:string; services:string[]; serviceArea:string; website:string; signature:string; tone:string; idealCustomer:string; industries:string[]; dailyLimit:number; followUp:string };
@@ -78,7 +76,7 @@ export function LeadoraApp({ route='dashboard' }: { route?:string }) {
   return <div className="shell">
     <aside className={`sidebar ${menu?'open':''}`}>
       <div className="brand"><div className="brand-mark">L◉</div><span>LEADORA</span></div>
-      <nav className="nav">{nav.map(([slug,label,Icon])=><Link key={slug} href={`${BASE}/${slug}/`} className={`nav-link ${route===slug?'active':''}`} onClick={()=>setMenu(false)}><Icon size={16}/><span>{label}</span></Link>)}</nav>
+      <nav className="nav">{nav.map(([slug,label,Icon])=><Link key={slug} href={`/${slug}/`} className={`nav-link ${route===slug?'active':''}`} onClick={()=>setMenu(false)}><Icon size={16}/><span>{label}</span></Link>)}</nav>
       <button className="sidebar-user" onClick={()=>setAuth(false)}><div className="avatar">AB</div><div><b>Alex Bryant</b><br/><span style={{color:'#8792a3'}}>Admin · Sign out</span></div><LogOut size={14}/></button>
     </aside>
     <main className="main">
@@ -203,6 +201,6 @@ function GenericPage({route}:{route:string}) { const config:Record<string,[strin
  'ai-agents':['AI Agents','Deploy autonomous agents across your sales operation.',['Agent','Purpose','Runs','Success Rate','Status']],
  };
  const [title,sub,headers]=config[route]??['LEADORA','Your sales operating system.',['Item','Owner','Performance','Status']];
- const rows=useMemo(()=>Array.from({length:6},(_,i)=>headers.map((h,j)=>j===0?(route==='website-audits'?<a href={`${BASE}/index.html`}>{`${title.slice(0,-1)} ${i+1}`}</a>:`${title.slice(0,-1)} ${i+1}`):j===headers.length-1?<span className="badge" key={h}>Active</span>:j===2?`${82-i*4}%`:`${h} data`)),[headers,title,route]);
+ const rows=useMemo(()=>Array.from({length:6},(_,i)=>headers.map((h,j)=>j===0?(route==='website-audits'?<Link href="/">{`${title.slice(0,-1)} ${i+1}`}</Link>:`${title.slice(0,-1)} ${i+1}`):j===headers.length-1?<span className="badge" key={h}>Active</span>:j===2?`${82-i*4}%`:`${h} data`)),[headers,title,route]);
  return <><Header title={title} sub={sub} action={<button className="btn">+ New {title.slice(0,-1)}</button>}/><DataTable headers={headers} rows={rows}/></>;
 }
