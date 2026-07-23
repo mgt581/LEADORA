@@ -33,6 +33,8 @@ jobs:
         run: rm -rf app/api
 
       - name: Build Next.js application
+        env:
+          DEPLOYMENT_TARGET: pages
         run: npm run build
 
       - name: Configure GitHub Pages

@@ -1,12 +1,12 @@
 /** @type {import('next').NextConfig} */
-const isGitHub = process.env.GITHUB_ACTIONS === 'true';
+const isPages = process.env.DEPLOYMENT_TARGET === 'pages';
 
 const nextConfig = {
-  ...(isGitHub ? { output: 'export' } : {}),
+  ...(isPages ? { output: 'export' } : {}),
   trailingSlash: true,
   images: { unoptimized: true },
-  basePath: isGitHub ? '/LEADORA' : '',
-  assetPrefix: isGitHub ? '/LEADORA/' : undefined,
+  basePath: isPages ? '/LEADORA' : '',
+  assetPrefix: isPages ? '/LEADORA/' : undefined,
 };
 
 export default nextConfig;

@@ -12,6 +12,7 @@ LEADORA uses server-side OAuth with `gmail.send` and `gmail.readonly` only. Toke
 6. Configure the production HTTPS URL and production callback before deployment.
 
 Run `openssl rand -base64 32` for `GMAIL_TOKEN_ENCRYPTION_KEY`, then configure every variable in `.env.example` in the deployment environment. Never commit the client secret or encryption key.
+For Cloudflare deployments, configure `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_D1_DATABASE_ID`. `GOOGLE_OAUTH_REDIRECT_URL` must exactly equal `${NEXT_PUBLIC_APP_URL}/api/gmail/callback` (including HTTPS and path).
 
 Google may require verification before external users can use Gmail restricted scopes. This integration deliberately does not request full mailbox access or `mail.google.com`.
 
