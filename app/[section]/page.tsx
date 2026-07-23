@@ -2,7 +2,7 @@ import { LeadoraApp } from '@/components/leadora-app';
 
 const sections = [
   'login','dashboard','leads','contacts','companies','deals','pipelines',
-  'email-outreach','outreach-history','website-audits','ai-agents','automations','analytics','reports','settings'
+  'email-outreach','outreach-history','inbox','website-audits','ai-agents','automations','analytics','reports','settings'
 ];
 
 export function generateStaticParams() {

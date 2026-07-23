@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, Users, ContactRound, Building2, Handshake, Columns3,
   Mail, SearchCheck, Bot, Workflow, ChartNoAxesCombined, FileChartColumn,
-  Settings, Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search
+  Settings, Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search, Inbox, RefreshCw
 } from 'lucide-react';
 
 type Lead = { name:string; email:string; company:string; status:string; source:string; created:string };
@@ -14,6 +14,7 @@ type BusinessProfile = { id:string; name:string; description:string; services:st
 type Prospect = { id:string; businessId:string; name:string; website:string; email:string; location:string; industry:string; contactUrl:string; score:number; reasons:string[]; discoveredAt:string; contacted:boolean };
 type Draft = { id:string; prospectId:string; businessId:string; subject:string; body:string; generatedAt:string; status:'pending'|'approved'|'rejected'|'sent'|'edited' };
 type Outreach = { id:string; prospectId:string; businessId:string; date:string; time:string; status:'sent'|'pending'|'rejected'|'follow-up due' };
+type GmailMessage = { id:string; threadId:string; from:string; to:string; cc:string; subject:string; body:string; internalDate:string; labelIds:string[]; businessId?:string|null; isRead?:boolean };
 
 const seedLeads: Lead[] = [
   {name:'Sarah Johnson',email:'sarah@designco.com',company:'Design Co.',status:'New',source:'Website',created:'2 min ago'},
@@ -48,7 +49,7 @@ const nav = [
   ['dashboard','Dashboard',LayoutDashboard],['leads','Leads',Users],['contacts','Contacts',ContactRound],
   ['companies','Companies',Building2],['deals','Deals',Handshake],['pipelines','Pipelines',Columns3],
   ['email-outreach','Email Outreach',Mail],['website-audits','Website Audits',SearchCheck],
-  ['outreach-history','Outreach History',History],
+  ['outreach-history','Outreach History',History],['inbox','Inbox',Inbox],
   ['ai-agents','AI Agents',Bot],['automations','Automations',Workflow],['analytics','Analytics',ChartNoAxesCombined],
   ['reports','Reports',FileChartColumn],['settings','Settings',Settings],
 ] as const;
@@ -68,6 +69,7 @@ export function LeadoraApp({ route='dashboard' }: { route?:string }) {
   const [prospects,setProspects] = useStoredState<Prospect[]>('leadora-prospects',[]);
   const [drafts,setDrafts] = useStoredState<Draft[]>('leadora-drafts',[]);
   const [outreach,setOutreach] = useStoredState<Outreach[]>('leadora-outreach',[]);
+  const [gmailMessages,setGmailMessages] = useStoredState<GmailMessage[]>('leadora-gmail-messages',[]);
   const [menu,setMenu] = useState(false);
 
   if(route==='login' || !auth) return <Login onLogin={()=>setAuth(true)} />;
@@ -85,7 +87,7 @@ export function LeadoraApp({ route='dashboard' }: { route?:string }) {
         <input className="search" placeholder="Search everything…" />
         <div style={{display:'flex',alignItems:'center',gap:13}}><button className="btn" aria-label="Create"><Plus size={16}/></button><Bell size={18}/><div className="avatar">AB</div></div>
       </header>
-      <section className="content"><Page route={active[0]} leads={leads} setLeads={setLeads} contacts={contacts} setContacts={setContacts} businesses={businesses} setBusinesses={setBusinesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach}/></section>
+      <section className="content"><Page route={active[0]} leads={leads} setLeads={setLeads} contacts={contacts} setContacts={setContacts} businesses={businesses} setBusinesses={setBusinesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach} gmailMessages={gmailMessages} setGmailMessages={setGmailMessages}/></section>
     </main>
   </div>;
 }
@@ -103,7 +105,7 @@ function Login({onLogin}:{onLogin:()=>void}) {
   </form></main>;
 }
 
-function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach}:{route:string;leads:Lead[];setLeads:(v:Lead[])=>void;contacts:Contact[];setContacts:(v:Contact[])=>void;businesses:BusinessProfile[];setBusinesses:(v:BusinessProfile[])=>void;prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void}) {
+function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach,gmailMessages,setGmailMessages}:{route:string;leads:Lead[];setLeads:(v:Lead[])=>void;contacts:Contact[];setContacts:(v:Contact[])=>void;businesses:BusinessProfile[];setBusinesses:(v:BusinessProfile[])=>void;prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void;gmailMessages:GmailMessage[];setGmailMessages:(v:GmailMessage[])=>void}) {
   if(route==='dashboard') return <Dashboard leads={leads} prospects={prospects} drafts={drafts} outreach={outreach}/>;
   if(route==='leads') return <Leads leads={leads} setLeads={setLeads}/>;
   if(route==='contacts') return <Contacts contacts={contacts} setContacts={setContacts}/>;
@@ -111,6 +113,7 @@ function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesse
   if(route==='automations') return <Automations/>;
   if(route==='analytics'||route==='reports') return <Reports title={route==='analytics'?'Analytics':'Reports'}/>;
   if(route==='settings') return <SettingsPage/>;
+  if(route==='inbox') return <InboxPage messages={gmailMessages} setMessages={setGmailMessages} businesses={businesses}/>;
   if(route==='email-outreach') return <OutreachPage businesses={businesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach}/>;
   if(route==='outreach-history') return <HistoryPage businesses={businesses} prospects={prospects} outreach={outreach}/>;
   return <GenericPage route={route}/>;
@@ -148,7 +151,7 @@ function Automations(){const rows=[['New Lead Welcome','Welcome a new lead','124
 function Reports({title}:{title:string}){return <><Header title={title} sub="Track your performance and growth." action={<button className="btn secondary">Jul 14 – Jul 21, 2026</button>}/><div className="grid kpis"><Kpi label="Total Leads" value="248" change="18%"/><Kpi label="Conversions" value="23" change="8%"/><Kpi label="Conversion Rate" value="9.3%" change="2.1%"/><Kpi label="Revenue" value="£12,540" change="22%"/></div><div className="grid dashboard-grid"><div className="card"><b>Leads Over Time</b><div className="chart-bars">{[22,45,86,52,68,38,91,61,73,49,80,57].map((h,i)=><div className="bar" key={i} style={{height:`${h}%`}}/>)}</div></div><div className="card"><b>Leads by Source</b><div style={{width:190,height:190,borderRadius:'50%',margin:'28px auto',background:'conic-gradient(#c9a84c 0 42%,#0b1220 42% 70%,#e8d8ae 70% 87%,#dfe2e8 87%)',display:'grid',placeItems:'center'}}><div style={{width:105,height:105,borderRadius:'50%',background:'#fff',display:'grid',placeItems:'center',fontWeight:800,fontSize:25}}>248</div></div></div></div></>}
 
 function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach}:{businesses:BusinessProfile[];prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void}) {
-  const [businessId,setBusinessId]=useState(businesses[0]?.id||''); const [busy,setBusy]=useState(false);
+  const [businessId,setBusinessId]=useState(businesses[0]?.id||''); const [busy,setBusy]=useState(false); const [sending,setSending]=useState<string|null>(null); const [sendError,setSendError]=useState('');
   const pending=drafts.filter(d=>d.status==='pending');
   function discover() {
     const business=businesses.find(b=>b.id===businessId); if(!business)return; setBusy(true);
@@ -173,25 +176,53 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
   }
   function approve(id:string){setDrafts(drafts.map(d=>d.id===id?{...d,status:'approved'}:d));}
   function remove(id:string){setDrafts(drafts.filter(d=>d.id!==id));}
-  function send(id:string){
+  async function send(id:string){
     const d=drafts.find(x=>x.id===id); const p=prospects.find(x=>x.id===d?.prospectId);
     if(!d||!p)return;
-    const now=new Date();
-    const record:Outreach={id:`out-${crypto.randomUUID()}`,prospectId:p.id,businessId:d.businessId,date:now.toLocaleDateString(),time:now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),status:'sent'};
-    setDrafts(drafts.map(x=>x.id===id?{...x,status:'sent'}:x)); setProspects(prospects.map(x=>x.id===p.id?{...x,contacted:true}:x)); setOutreach([...outreach,record]);
+    if(d.status!=='approved'||sending)return;
+    const mappings=JSON.parse(localStorage.getItem('leadora-business-email-mappings')||'{}') as Record<string,string>;
+    const from=mappings[d.businessId]; if(!from){setSendError('Add a mapped business email in Settings before sending.');return;}
+    setSending(id);setSendError('');
+    try {
+      const response=await fetch('/api/gmail/send',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({from,to:p.email,subject:d.subject,body:d.body})});
+      const result=await response.json(); if(!response.ok)throw new Error(result.error||'Gmail send failed.');
+      if(drafts.some(x=>x.status==='sent'&&x.id===id))return;
+      const now=new Date();
+      const record:Outreach={id:`out-${crypto.randomUUID()}`,prospectId:p.id,businessId:d.businessId,date:now.toLocaleDateString(),time:now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),status:'sent'};
+      setDrafts(drafts.map(x=>x.id===id?{...x,status:'sent'}:x)); setProspects(prospects.map(x=>x.id===p.id?{...x,contacted:true}:x)); setOutreach([...outreach,record]);
+    } catch(e) { setSendError(e instanceof Error?e.message:'Gmail send failed.'); } finally { setSending(null); }
   }
   const prospectMap = new Map(prospects.map(p=>[p.id,p])); const businessMap = new Map(businesses.map(b=>[b.id,b]));
-  return <><Header title="AI Outreach Approval Queue" sub="Discover public business contacts and review every email before sending." action={<div style={{display:'flex',gap:8}}><select className="field" style={{margin:0,width:220}} value={businessId} onChange={e=>setBusinessId(e.target.value)}>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><button className="btn" onClick={discover} disabled={busy}>{busy?'Discovering…':'Find prospects'}</button></div>}/><div className="card" style={{marginBottom:16}}><b><Sparkles size={15} style={{verticalAlign:'middle',marginRight:6}}/>Approval queue</b><span className="muted" style={{marginLeft:10}}>{pending.length} pending · emails are never sent automatically</span>{pending.length>0&&<button className="btn secondary" style={{float:'right'}} onClick={()=>setDrafts(drafts.map(d=>d.status==='pending'?{...d,status:'approved'}:d))}>Approve All</button>}</div>{pending.length===0?<div className="card" style={{textAlign:'center',padding:40}}><ClipboardCheck size={30} color="#c9a84c"/><p><b>No emails awaiting approval</b></p><p className="muted">Choose a business and find prospects to create personalised drafts.</p></div>:<div className="grid">{pending.map(d=>{const p=prospectMap.get(d.prospectId);const b=businessMap.get(d.businessId);if(!p||!b)return null;return <div className="card" key={d.id}><div style={{display:'flex',justifyContent:'space-between',gap:15}}><div><b>{p.name}</b><div className="muted">{b.name} · {p.email} · Score {p.score}/100</div></div><span className="badge">Pending approval</span></div><h3 style={{fontSize:14,marginBottom:8}}>{d.subject}</h3><p style={{whiteSpace:'pre-line',fontSize:13,lineHeight:1.6}}>{d.body}</p><div className="muted" style={{marginBottom:12}}>Why chosen: {p.reasons.join(' · ')}</div><div style={{display:'flex',gap:8}}><button className="btn" onClick={()=>approve(d.id)}><ClipboardCheck size={14}/> Approve</button><button className="btn secondary" onClick={()=>{const subject=prompt('Edit subject',d.subject)||d.subject;setDrafts(drafts.map(x=>x.id===d.id?{...x,subject,status:'edited'}:x))}}><Pencil size={14}/> Edit</button><button className="btn secondary" onClick={()=>remove(d.id)}><Trash2 size={14}/> Delete</button></div></div>})}</div>}{drafts.filter(d=>d.status==='approved').length>0&&<div className="card" style={{marginTop:16}}><b>Approved and ready to send</b>{drafts.filter(d=>d.status==='approved').map(d=><div key={d.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid #eee'}}><span>{prospectMap.get(d.prospectId)?.name}<span className="muted"> · {d.subject}</span></span><button className="btn" onClick={()=>send(d.id)}><Send size={14}/> Send now</button></div>)}</div>}</>;
+  return <><Header title="AI Outreach Approval Queue" sub="Discover public business contacts and review every email before sending." action={<div style={{display:'flex',gap:8}}><select className="field" style={{margin:0,width:220}} value={businessId} onChange={e=>setBusinessId(e.target.value)}>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><button className="btn" onClick={discover} disabled={busy}>{busy?'Discovering…':'Find prospects'}</button></div>}/>{sendError&&<div className="card" style={{color:'#b42318',marginBottom:16}}>{sendError}</div>}<div className="card" style={{marginBottom:16}}><b><Sparkles size={15} style={{verticalAlign:'middle',marginRight:6}}/>Approval queue</b><span className="muted" style={{marginLeft:10}}>{pending.length} pending · emails are never sent automatically</span>{pending.length>0&&<button className="btn secondary" style={{float:'right'}} onClick={()=>setDrafts(drafts.map(d=>d.status==='pending'?{...d,status:'approved'}:d))}>Approve All</button>}</div>{pending.length===0?<div className="card" style={{textAlign:'center',padding:40}}><ClipboardCheck size={30} color="#c9a84c"/><p><b>No emails awaiting approval</b></p><p className="muted">Choose a business and find prospects to create personalised drafts.</p></div>:<div className="grid">{pending.map(d=>{const p=prospectMap.get(d.prospectId);const b=businessMap.get(d.businessId);if(!p||!b)return null;return <div className="card" key={d.id}><div style={{display:'flex',justifyContent:'space-between',gap:15}}><div><b>{p.name}</b><div className="muted">{b.name} · {p.email} · Score {p.score}/100</div></div><span className="badge">Pending approval</span></div><h3 style={{fontSize:14,marginBottom:8}}>{d.subject}</h3><p style={{whiteSpace:'pre-line',fontSize:13,lineHeight:1.6}}>{d.body}</p><div className="muted" style={{marginBottom:12}}>Why chosen: {p.reasons.join(' · ')}</div><div style={{display:'flex',gap:8}}><button className="btn" onClick={()=>approve(d.id)}><ClipboardCheck size={14}/> Approve</button><button className="btn secondary" onClick={()=>{const subject=prompt('Edit subject',d.subject)||d.subject;setDrafts(drafts.map(x=>x.id===d.id?{...x,subject,status:'edited'}:x))}}><Pencil size={14}/> Edit</button><button className="btn secondary" onClick={()=>remove(d.id)}><Trash2 size={14}/> Delete</button></div></div>})}</div>}{drafts.filter(d=>d.status==='approved').length>0&&<div className="card" style={{marginTop:16}}><b>Approved and ready to send</b>{drafts.filter(d=>d.status==='approved').map(d=><div key={d.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid #eee'}}><span>{prospectMap.get(d.prospectId)?.name}<span className="muted"> · {d.subject}</span></span><button className="btn" onClick={()=>send(d.id)} disabled={sending!==null}><Send size={14}/> {sending===d.id?'Sending…':'Send now'}</button></div>)}</div>}</>;
 }
 
 function HistoryPage({businesses,prospects,outreach}:{businesses:BusinessProfile[];prospects:Prospect[];outreach:Outreach[]}) {
   return <><Header title="Outreach History" sub="A complete record of sent, pending and follow-up activity."/><DataTable headers={['Date','Time','Business','Prospect','Email','Status']} rows={outreach.map(o=>{const p=prospects.find(x=>x.id===o.prospectId);return [o.date,o.time,businesses.find(b=>b.id===o.businessId)?.name||'—',p?.name||'—',p?.email||'—',<span className="badge" key={o.id}>{o.status}</span>]})}/>{outreach.length===0&&<div className="card" style={{textAlign:'center',marginTop:16}}><History size={28} color="#c9a84c"/><p className="muted">No outreach has been sent yet.</p></div>}</>;
 }
 
+function InboxPage({messages,setMessages,businesses}:{messages:GmailMessage[];setMessages:(v:GmailMessage[])=>void;businesses:BusinessProfile[]}) {
+  const [filter,setFilter]=useState('all'); const [busy,setBusy]=useState(false); const [error,setError]=useState('');
+  async function sync() {
+    setBusy(true); setError('');
+    try {
+      const mappings=JSON.parse(localStorage.getItem('leadora-business-email-mappings')||'{}') as Record<string,string>;
+      const response=await fetch('/api/gmail/sync',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mappings:Object.fromEntries(Object.entries(mappings).map(([id,address])=>[id,address?[address]:[]]))})});
+      const data=await response.json(); if(!response.ok) throw new Error(data.error||'Synchronisation failed.');
+      const existing=new Map(messages.map(m=>[m.id,m])); (data.messages as GmailMessage[]).forEach(m=>existing.set(m.id,m)); setMessages([...existing.values()]);
+    } catch (e) { setError(e instanceof Error?e.message:'Synchronisation failed.'); } finally { setBusy(false); }
+  }
+  const visible=messages.filter(m=>filter==='all'||filter==='unread'&&!m.isRead||filter==='replied'&&m.labelIds.includes('SENT')||filter==='unassigned'&&!m.businessId);
+  return <><Header title="Inbox & conversations" sub="Gmail conversations matched to your prospects and businesses." action={<button className="btn" onClick={sync} disabled={busy}><RefreshCw size={14}/> {busy?'Syncing…':'Sync now'}</button>}/>{error&&<div className="card" style={{color:'#b42318',marginBottom:16}}>{error}</div>}<div className="tabs">{[['all','All'],['unread','Unread'],['replied','Replied'],['unassigned','Unassigned']].map(([key,label])=><button className={`tab ${filter===key?'active':''}`} key={key} onClick={()=>setFilter(key)}>{label}</button>)}</div>{visible.length===0?<div className="card" style={{textAlign:'center',padding:40}}><Inbox size={30} color="#c9a84c"/><p><b>No conversations imported</b></p><p className="muted">Connect Gmail in Settings, then choose Sync now.</p></div>:<div className="grid">{visible.map(m=><div className="card" key={m.id}><div style={{display:'flex',justifyContent:'space-between',gap:12}}><div><b>{m.subject||'(no subject)'}</b><div className="muted">{m.from} · {new Date(Number(m.internalDate)||m.internalDate).toLocaleString()}</div></div><span className="badge">{businesses.find(b=>b.id===m.businessId)?.name||'Business not identified'}</span></div><p style={{whiteSpace:'pre-line',fontSize:13,lineHeight:1.5}}>{m.body.slice(0,320)}{m.body.length>320?'…':''}</p><div className="muted">Thread {m.threadId} · {m.labelIds.includes('SENT')?'Sent outreach':'Incoming reply'}</div></div>)}</div>}</>;
+}
+
 function SettingsPage(){
-  const [daily,setDaily]=useState('10'); const [style,setStyle]=useState('Professional and warm'); const [saved,setSaved]=useState(''); 
+  const [daily,setDaily]=useState('10'); const [style,setStyle]=useState('Professional and warm'); const [saved,setSaved]=useState('');
+  const [gmail,setGmail]=useState<{connected:boolean;emailAddress?:string;error?:string}>({connected:false}); const [mapping,setMapping]=useState<Record<string,string>>({}); const [syncing,setSyncing]=useState(false);
+  useEffect(()=>{fetch('/api/gmail/status').then(r=>r.json()).then(setGmail).catch(()=>setGmail({connected:false,error:'Unable to check Gmail status.'})); const savedMapping=localStorage.getItem('leadora-business-email-mappings'); if(savedMapping) try{setMapping(JSON.parse(savedMapping));}catch{}},[]);
   function save(){const limit=Number(daily); if(!Number.isInteger(limit)||limit<1){setSaved('Enter a positive whole number');return;} try { localStorage.setItem('leadora-outreach-settings',JSON.stringify({dailyLimit:limit,style})); setSaved('Saved'); } catch { setSaved('Unable to save preferences'); }}
-  return <><Header title="Settings" sub="Manage your workspace, account and security."/><div className="tabs">{['Profile','Team','Billing','Integrations','Preferences','Security'].map((x,i)=><div className={`tab ${i===5?'active':''}`} key={x}>{x}</div>)}</div><div className="grid dashboard-grid"><div className="card"><b>AI outreach preferences</b><label className="form-row" style={{display:'block',fontSize:12}}>Daily prospect limit<input className="field" type="number" value={daily} onChange={e=>setDaily(e.target.value)}/></label><label className="form-row" style={{display:'block',fontSize:12}}>Writing style<select className="field" value={style} onChange={e=>setStyle(e.target.value)}><option>Professional and warm</option><option>Friendly and helpful</option><option>Clear and consultative</option></select></label><label className="form-row" style={{display:'block',fontSize:12}}>Working hours<input className="field" defaultValue="09:00 – 17:00"/></label><button className="btn" onClick={save}>Save preferences</button>{saved&&<span className={saved==='Saved'?'up':'muted'} style={{marginLeft:10}}>{saved}</span>}</div><div className="card"><b>Change Password</b>{['Current Password','New Password','Confirm New Password'].map(x=><label className="form-row" style={{display:'block',fontSize:12}} key={x}>{x}<input className="field" type="password"/></label>)}<button className="btn">Update Password</button></div></div></>}
+  function saveMappings(){localStorage.setItem('leadora-business-email-mappings',JSON.stringify(mapping));setSaved('Mappings saved');}
+  async function disconnect(){setSyncing(true);await fetch('/api/gmail/disconnect',{method:'POST'});setGmail({connected:false});setSyncing(false);}
+  return <><Header title="Settings" sub="Manage your workspace, account and security."/><div className="tabs">{['Profile','Team','Billing','Integrations','Preferences','Security'].map((x,i)=><div className={`tab ${i===5?'active':''}`} key={x}>{x}</div>)}</div><div className="grid dashboard-grid"><div className="card"><b>Gmail integration</b><p className="muted">Send only approved outreach and synchronise incoming replies securely.</p>{gmail.connected?<><div className="badge" style={{margin:'8px 0'}}>Connected · {gmail.emailAddress}</div><p className="muted">Tokens are handled server-side. Last synchronisation is shown in Inbox.</p><button className="btn secondary" onClick={()=>location.href='/api/gmail/auth'}>Reconnect Gmail</button><button className="btn secondary" style={{marginLeft:8}} onClick={disconnect} disabled={syncing}>Disconnect</button></>:<button className="btn" onClick={()=>location.href='/api/gmail/auth'}>Connect Gmail</button>}{gmail.error&&<p style={{color:'#b42318',fontSize:12}}>{gmail.error}</p>}</div><div className="card"><b>Business email mappings</b><p className="muted">Use forwarded headers to identify the correct LEADORA business.</p>{['bryant-cleaning','bryant-construction','bryant-digital'].map(id=><label className="form-row" style={{display:'block',fontSize:12}} key={id}>{id==='bryant-cleaning'?'Bryant & Co Cleaning':id==='bryant-construction'?'Bryant Construction Group':'Bryant Digital Solutions'}<input className="field" value={mapping[id]??''} placeholder="info@example.com" onChange={e=>setMapping({...mapping,[id]:e.target.value})}/></label>)}<button className="btn" onClick={saveMappings}>Save mappings</button></div><div className="card"><b>AI outreach preferences</b><label className="form-row" style={{display:'block',fontSize:12}}>Daily prospect limit<input className="field" type="number" value={daily} onChange={e=>setDaily(e.target.value)}/></label><label className="form-row" style={{display:'block',fontSize:12}}>Writing style<select className="field" value={style} onChange={e=>setStyle(e.target.value)}><option>Professional and warm</option><option>Friendly and helpful</option><option>Clear and consultative</option></select></label><button className="btn" onClick={save}>Save preferences</button>{saved&&<span className="up" style={{marginLeft:10}}>{saved}</span>}</div><div className="card"><b>Change Password</b>{['Current Password','New Password','Confirm New Password'].map(x=><label className="form-row" style={{display:'block',fontSize:12}} key={x}>{x}<input className="field" type="password"/></label>)}<button className="btn">Update Password</button></div></div></>}
 
 function GenericPage({route}:{route:string}) { const config:Record<string,[string,string,string[]]>={
  'companies':['Companies','Manage organisations and account relationships.',['Company','Primary Contact','Industry','Revenue','Status']],
