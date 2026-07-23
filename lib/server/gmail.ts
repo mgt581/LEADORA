@@ -9,6 +9,71 @@ const TOKEN_COOKIE = 'leadora-gmail-token';
 const STATE_COOKIE = 'leadora-gmail-oauth-state';
 
 type TokenSet = { access_token: string; refresh_token?: string; expiry_date?: number; token_type?: string };
+export type GmailErrorCode =
+  | 'GOOGLE_OAUTH_NOT_CONFIGURED'
+  | 'MISSING_CLIENT_ID'
+  | 'MISSING_CLIENT_SECRET'
+  | 'MISSING_ENCRYPTION_KEY'
+  | 'MISSING_REDIRECT_URI'
+  | 'MISSING_CLOUDFLARE_ENV'
+  | 'USER_NOT_AUTHENTICATED'
+  | 'OAUTH_TOKEN_MISSING'
+  | 'OAUTH_TOKEN_EXPIRED'
+  | 'GMAIL_API_UNAVAILABLE'
+  | 'INVALID_AUTHORIZATION'
+  | 'REDIRECT_URI_MISMATCH';
+export class GmailIntegrationError extends Error {
+  constructor(public readonly code: GmailErrorCode, message: string) {
+    super(message);
+    this.name = 'GmailIntegrationError';
+  }
+}
+export const GMAIL_REQUIRED_ENV_VARS = [
+  'GOOGLE_OAUTH_CLIENT_ID',
+  'GOOGLE_OAUTH_CLIENT_SECRET',
+  'GOOGLE_OAUTH_REDIRECT_URL',
+  'GMAIL_TOKEN_ENCRYPTION_KEY',
+  'NEXT_PUBLIC_APP_URL',
+  'CLOUDFLARE_ACCOUNT_ID',
+  'CLOUDFLARE_API_TOKEN',
+  'CLOUDFLARE_D1_DATABASE_ID',
+] as const;
+const friendlyMessages: Record<GmailErrorCode, string> = {
+  GOOGLE_OAUTH_NOT_CONFIGURED: 'Google OAuth is not configured. Add the Google OAuth environment variables to the deployment.',
+  MISSING_CLIENT_ID: 'Google OAuth Client ID is missing.',
+  MISSING_CLIENT_SECRET: 'Google OAuth Client Secret is missing.',
+  MISSING_ENCRYPTION_KEY: 'The Gmail token encryption key is missing.',
+  MISSING_REDIRECT_URI: 'The Google OAuth redirect URI is missing.',
+  MISSING_CLOUDFLARE_ENV: 'Cloudflare environment variables are missing. Configure the account, API token and D1 database ID.',
+  USER_NOT_AUTHENTICATED: 'Sign in to LEADORA before connecting Gmail.',
+  OAUTH_TOKEN_MISSING: 'No Gmail OAuth token was found. Connect a Gmail account.',
+  OAUTH_TOKEN_EXPIRED: 'The Gmail OAuth token has expired. Reconnect Gmail.',
+  GMAIL_API_UNAVAILABLE: 'The Gmail API is unavailable right now. Try again shortly.',
+  INVALID_AUTHORIZATION: 'The Google authorization response was invalid. Start the connection again.',
+  REDIRECT_URI_MISMATCH: 'The OAuth callback URL does not match this deployment URL.',
+};
+export function gmailErrorMessage(code: GmailErrorCode) { return friendlyMessages[code]; }
+export type GmailDiagnostic = { name: string; configured: boolean };
+export function getGmailDiagnostics(): GmailDiagnostic[] {
+  return GMAIL_REQUIRED_ENV_VARS.map(name => ({ name, configured: Boolean(process.env[name]) }));
+}
+export function configurationError(): GmailIntegrationError | null {
+  const id = Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID);
+  const secretValue = Boolean(process.env.GOOGLE_OAUTH_CLIENT_SECRET);
+  const redirect = Boolean(process.env.GOOGLE_OAUTH_REDIRECT_URL);
+  const encryption = Boolean(process.env.GMAIL_TOKEN_ENCRYPTION_KEY);
+  const appUrl = Boolean(process.env.NEXT_PUBLIC_APP_URL);
+  const cloudflare = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_D1_DATABASE_ID'].every(name => Boolean(process.env[name]));
+  if (!id && !secretValue && !redirect) return new GmailIntegrationError('GOOGLE_OAUTH_NOT_CONFIGURED', gmailErrorMessage('GOOGLE_OAUTH_NOT_CONFIGURED'));
+  if (!id) return new GmailIntegrationError('MISSING_CLIENT_ID', gmailErrorMessage('MISSING_CLIENT_ID'));
+  if (!secretValue) return new GmailIntegrationError('MISSING_CLIENT_SECRET', gmailErrorMessage('MISSING_CLIENT_SECRET'));
+  if (!encryption) return new GmailIntegrationError('MISSING_ENCRYPTION_KEY', gmailErrorMessage('MISSING_ENCRYPTION_KEY'));
+  if (!redirect || !appUrl) return new GmailIntegrationError('MISSING_REDIRECT_URI', gmailErrorMessage('MISSING_REDIRECT_URI'));
+  const expected = `${process.env.NEXT_PUBLIC_APP_URL!.replace(/\/$/, '')}/api/gmail/callback`;
+  if (process.env.GOOGLE_OAUTH_REDIRECT_URL !== expected) return new GmailIntegrationError('REDIRECT_URI_MISMATCH', gmailErrorMessage('REDIRECT_URI_MISMATCH'));
+  if (!cloudflare) return new GmailIntegrationError('MISSING_CLOUDFLARE_ENV', gmailErrorMessage('MISSING_CLOUDFLARE_ENV'));
+  return null;
+}
 export type GmailHeader = { name: string; value: string };
 export type ParsedGmailMessage = {
   id: string; threadId: string; labelIds: string[]; headers: GmailHeader[];
@@ -18,7 +83,7 @@ export type ParsedGmailMessage = {
 
 function secret() {
   const value = process.env.GMAIL_TOKEN_ENCRYPTION_KEY;
-  if (!value) throw new Error('GMAIL_TOKEN_ENCRYPTION_KEY is not configured');
+  if (!value) throw new GmailIntegrationError('MISSING_ENCRYPTION_KEY', gmailErrorMessage('MISSING_ENCRYPTION_KEY'));
   return createHash('sha256').update(value).digest();
 }
 function seal(value: string) {
@@ -42,6 +107,8 @@ export function oauthStateMatches(expected: string, actual: string | undefined) 
 }
 export function createOAuthState() { return randomBytes(32).toString('base64url'); }
 export function getAuthorizationUrl(state: string) {
+  const error = configurationError();
+  if (error) throw error;
   const params = new URLSearchParams({
     client_id: process.env.GOOGLE_OAUTH_CLIENT_ID ?? '',
     redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URL ?? '',
@@ -54,6 +121,8 @@ export function encryptTokenSet(tokens: TokenSet) { return seal(JSON.stringify(t
 export function decryptTokenSet(value: string): TokenSet { return JSON.parse(unseal(value)) as TokenSet; }
 
 export async function exchangeCode(code: string): Promise<TokenSet> {
+  const error = configurationError();
+  if (error) throw error;
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -62,13 +131,14 @@ export async function exchangeCode(code: string): Promise<TokenSet> {
       redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URL ?? '', grant_type: 'authorization_code',
     }),
   });
-  if (!response.ok) throw new Error(`Google authorization failed (${response.status})`);
+  if (!response.ok) throw new GmailIntegrationError('GMAIL_API_UNAVAILABLE', `Google authorization failed (${response.status})`);
   return await response.json() as TokenSet;
 }
 
 export async function accessToken(tokens: TokenSet): Promise<TokenSet> {
+  if (!tokens.access_token) throw new GmailIntegrationError('OAUTH_TOKEN_MISSING', gmailErrorMessage('OAUTH_TOKEN_MISSING'));
   if (tokens.expiry_date && tokens.expiry_date > Date.now() + 60_000) return tokens;
-  if (!tokens.refresh_token) throw new Error('Gmail authorization has expired; reconnect Gmail.');
+  if (!tokens.refresh_token) throw new GmailIntegrationError('OAUTH_TOKEN_EXPIRED', gmailErrorMessage('OAUTH_TOKEN_EXPIRED'));
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
@@ -77,7 +147,7 @@ export async function accessToken(tokens: TokenSet): Promise<TokenSet> {
       refresh_token: tokens.refresh_token, grant_type: 'refresh_token',
     }),
   });
-  if (!response.ok) throw new Error('Gmail authorization has expired; reconnect Gmail.');
+  if (!response.ok) throw new GmailIntegrationError('OAUTH_TOKEN_EXPIRED', gmailErrorMessage('OAUTH_TOKEN_EXPIRED'));
   const next = await response.json() as TokenSet;
   return { ...tokens, ...next, expiry_date: Date.now() + ((next as { expires_in?: number }).expires_in ?? 3600) * 1000 };
 }
@@ -114,7 +184,7 @@ export async function gmailRequest(path: string, tokens: TokenSet, init?: Reques
   const response = await fetch(`https://gmail.googleapis.com/gmail/v1/users/me/${path}`, {
     ...init, headers: { ...(init?.headers ?? {}), authorization: 'Bearer ' + current.access_token },
   });
-  if (response.status === 401) throw new Error('Gmail authorization has expired; reconnect Gmail.');
-  if (!response.ok) throw new Error(`Gmail request failed (${response.status})`);
+  if (response.status === 401) throw new GmailIntegrationError('OAUTH_TOKEN_EXPIRED', gmailErrorMessage('OAUTH_TOKEN_EXPIRED'));
+  if (!response.ok) throw new GmailIntegrationError('GMAIL_API_UNAVAILABLE', `Gmail request failed (${response.status})`);
   return { response, tokens: current };
 }

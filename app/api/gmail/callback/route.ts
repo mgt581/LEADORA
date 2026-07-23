@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { encryptTokenSet, exchangeCode, oauthStateMatches, STATE_COOKIE, TOKEN_COOKIE } from '@/lib/server/gmail';
+import { encryptTokenSet, exchangeCode, GmailIntegrationError, oauthStateMatches, STATE_COOKIE, TOKEN_COOKIE } from '@/lib/server/gmail';
 
 export const runtime = 'nodejs';
 export async function GET(request: NextRequest) {
@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
     response.cookies.set(TOKEN_COOKIE, encryptTokenSet(tokens), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24 * 30, path: '/' });
     response.cookies.delete(STATE_COOKIE);
     return response;
-  } catch {
-    return NextResponse.redirect(new URL('/settings/?gmail=error&reason=authorization_failed', request.url));
+  } catch (error) {
+    const reason = error instanceof GmailIntegrationError ? error.code : 'GMAIL_API_UNAVAILABLE';
+    return NextResponse.redirect(new URL(`/settings/?gmail=error&reason=${reason}`, request.url));
   }
 }
