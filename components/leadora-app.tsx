@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, Users, ContactRound, Building2, Handshake, Columns3,
   Mail, SearchCheck, Bot, Workflow, ChartNoAxesCombined, FileChartColumn,
-  Settings, Menu, Bell, Plus, LogOut, Target, CirclePoundSterling
+  Settings, Menu, Bell, Plus, LogOut, Target
 } from 'lucide-react';
 
 const BASE = process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && window.location.pathname.startsWith('/LEADORA') ? '/LEADORA' : '';
