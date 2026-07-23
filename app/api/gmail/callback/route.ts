@@ -6,7 +6,7 @@ export async function GET(request: NextRequest) {
   const { searchParams } = new URL(request.url);
   const code = searchParams.get('code'); const state = searchParams.get('state');
   if (!code || !oauthStateMatches(request.cookies.get(STATE_COOKIE)?.value ?? '', state ?? undefined)) {
-    return NextResponse.redirect(new URL('/settings/?gmail=error&reason=invalid_authorization', request.url));
+    return NextResponse.redirect(new URL('/settings/?gmail=error&reason=INVALID_AUTHORIZATION', request.url));
   }
   try {
     const tokens = await exchangeCode(code);
