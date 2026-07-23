@@ -5,13 +5,17 @@ import Link from 'next/link';
 import {
   LayoutDashboard, Users, ContactRound, Building2, Handshake, Columns3,
   Mail, SearchCheck, Bot, Workflow, ChartNoAxesCombined, FileChartColumn,
-  Settings, Menu, Bell, Plus, LogOut, Target
+  Settings, Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search
 } from 'lucide-react';
 
 const BASE = process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && window.location.pathname.startsWith('/LEADORA') ? '/LEADORA' : '';
 
 type Lead = { name:string; email:string; company:string; status:string; source:string; created:string };
 type Contact = { name:string; email:string; company:string; phone:string; status:string };
+type BusinessProfile = { id:string; name:string; description:string; services:string[]; serviceArea:string; website:string; signature:string; tone:string; idealCustomer:string; industries:string[]; dailyLimit:number; followUp:string };
+type Prospect = { id:string; businessId:string; name:string; website:string; email:string; location:string; industry:string; contactUrl:string; score:number; reasons:string[]; discoveredAt:string; contacted:boolean };
+type Draft = { id:string; prospectId:string; businessId:string; subject:string; body:string; generatedAt:string; status:'pending'|'approved'|'rejected'|'sent'|'edited' };
+type Outreach = { id:string; prospectId:string; businessId:string; date:string; time:string; status:'sent'|'pending'|'rejected'|'follow-up due' };
 
 const seedLeads: Lead[] = [
   {name:'Sarah Johnson',email:'sarah@designco.com',company:'Design Co.',status:'New',source:'Website',created:'2 min ago'},
@@ -25,11 +29,28 @@ const seedContacts: Contact[] = [
   {name:'David Williams',email:'david@techflow.com',company:'TechFlow',phone:'+44 7700 900456',status:'Active'},
   {name:'Emily Davis',email:'emily@brightidea.com',company:'Bright Idea',phone:'+44 7700 901234',status:'Inactive'},
 ];
+const seedBusinesses: BusinessProfile[] = [
+  {id:'bryant-construction',name:'Bryant Construction Group',description:'Trusted construction and renovation specialists.',services:['Extensions','Renovations','New builds'],serviceArea:'Bournemouth, Poole and Dorset',website:'bryantconstructiongroup.co.uk',signature:'Alex Bryant\nBryant Construction Group',tone:'Professional and warm',idealCustomer:'Homeowners and property developers',industries:['Construction','Property'],dailyLimit:10,followUp:'3 days, then 7 days'},
+  {id:'bryant-cleaning',name:'Bryant & Co Cleaning',description:'Reliable commercial and domestic cleaning teams.',services:['Commercial cleaning','End of tenancy','Deep cleaning'],serviceArea:'Bournemouth and surrounding areas',website:'bryantandcocleaning.co.uk',signature:'Alex Bryant\nBryant & Co Cleaning',tone:'Friendly and helpful',idealCustomer:'Busy homeowners and local businesses',industries:['Hospitality','Property','Offices'],dailyLimit:10,followUp:'4 days, then 10 days'},
+  {id:'bryant-digital',name:'Bryant Digital Solutions',description:'Practical digital marketing for growing businesses.',services:['Websites','SEO','Lead generation'],serviceArea:'UK-wide',website:'bryantdigital.co.uk',signature:'Alex Bryant\nBryant Digital Solutions',tone:'Clear and consultative',idealCustomer:'Owner-led SMEs',industries:['Professional services','Retail','Hospitality'],dailyLimit:10,followUp:'3 days, then 7 days'},
+  {id:'mr-white-teeth',name:'Mr White Teeth Whitening Bournemouth',description:'Safe, professional teeth whitening in Bournemouth.',services:['Teeth whitening','Smile consultations'],serviceArea:'Bournemouth and Poole',website:'mrwhiteteeth.co.uk',signature:'Alex Bryant\nMr White Teeth Whitening Bournemouth',tone:'Reassuring and upbeat',idealCustomer:'Adults seeking a brighter smile',industries:['Beauty','Healthcare'],dailyLimit:10,followUp:'5 days, then 10 days'},
+];
+const discoveryPool = [
+  ['Harbour View Builders','harbourviewbuilders.co.uk','hello@harbourviewbuilders.co.uk','Bournemouth','Construction','https://harbourviewbuilders.co.uk/contact'],
+  ['Seaside Property Care','seasidepropertycare.co.uk','info@seasidepropertycare.co.uk','Poole','Property services','https://seasidepropertycare.co.uk/contact'],
+  ['The Dorset Kitchen','thedorsetkitchen.co.uk','hello@thedorsetkitchen.co.uk','Dorset','Hospitality','https://thedorsetkitchen.co.uk/contact'],
+  ['Pine & Oak Interiors','pineandoakinteriors.co.uk','studio@pineandoakinteriors.co.uk','Bournemouth','Interior design','https://pineandoakinteriors.co.uk/contact'],
+  ['South Coast Wellness','southcoastwellness.co.uk','hello@southcoastwellness.co.uk','Poole','Wellness','https://southcoastwellness.co.uk/contact'],
+  ['Brightline Accountants','brightlineaccountants.co.uk','enquiries@brightlineaccountants.co.uk','Dorset','Professional services','https://brightlineaccountants.co.uk/contact'],
+  ['Cedar Lane Dental','cedarlanedental.co.uk','reception@cedarlanedental.co.uk','Bournemouth','Healthcare','https://cedarlanedental.co.uk/contact'],
+  ['Coastal Lettings','coastallettings.co.uk','info@coastallettings.co.uk','Poole','Property','https://coastallettings.co.uk/contact'],
+] as const;
 
 const nav = [
   ['dashboard','Dashboard',LayoutDashboard],['leads','Leads',Users],['contacts','Contacts',ContactRound],
   ['companies','Companies',Building2],['deals','Deals',Handshake],['pipelines','Pipelines',Columns3],
   ['email-outreach','Email Outreach',Mail],['website-audits','Website Audits',SearchCheck],
+  ['outreach-history','Outreach History',History],
   ['ai-agents','AI Agents',Bot],['automations','Automations',Workflow],['analytics','Analytics',ChartNoAxesCombined],
   ['reports','Reports',FileChartColumn],['settings','Settings',Settings],
 ] as const;
@@ -45,6 +66,10 @@ export function LeadoraApp({ route='dashboard' }: { route?:string }) {
   const [auth,setAuth] = useStoredState('leadora-auth',false);
   const [leads,setLeads] = useStoredState<Lead[]>('leadora-leads',seedLeads);
   const [contacts,setContacts] = useStoredState<Contact[]>('leadora-contacts',seedContacts);
+  const [businesses,setBusinesses] = useStoredState<BusinessProfile[]>('leadora-businesses',seedBusinesses);
+  const [prospects,setProspects] = useStoredState<Prospect[]>('leadora-prospects',[]);
+  const [drafts,setDrafts] = useStoredState<Draft[]>('leadora-drafts',[]);
+  const [outreach,setOutreach] = useStoredState<Outreach[]>('leadora-outreach',[]);
   const [menu,setMenu] = useState(false);
 
   if(route==='login' || !auth) return <Login onLogin={()=>setAuth(true)} />;
@@ -62,7 +87,7 @@ export function LeadoraApp({ route='dashboard' }: { route?:string }) {
         <input className="search" placeholder="Search everything…" />
         <div style={{display:'flex',alignItems:'center',gap:13}}><button className="btn" aria-label="Create"><Plus size={16}/></button><Bell size={18}/><div className="avatar">AB</div></div>
       </header>
-      <section className="content"><Page route={active[0]} leads={leads} setLeads={setLeads} contacts={contacts} setContacts={setContacts}/></section>
+      <section className="content"><Page route={active[0]} leads={leads} setLeads={setLeads} contacts={contacts} setContacts={setContacts} businesses={businesses} setBusinesses={setBusinesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach}/></section>
     </main>
   </div>;
 }
@@ -80,27 +105,29 @@ function Login({onLogin}:{onLogin:()=>void}) {
   </form></main>;
 }
 
-function Page({route,leads,setLeads,contacts,setContacts}:{route:string;leads:Lead[];setLeads:(v:Lead[])=>void;contacts:Contact[];setContacts:(v:Contact[])=>void}) {
-  if(route==='dashboard') return <Dashboard leads={leads}/>;
+function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach}:{route:string;leads:Lead[];setLeads:(v:Lead[])=>void;contacts:Contact[];setContacts:(v:Contact[])=>void;businesses:BusinessProfile[];setBusinesses:(v:BusinessProfile[])=>void;prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void}) {
+  if(route==='dashboard') return <Dashboard leads={leads} prospects={prospects} drafts={drafts} outreach={outreach}/>;
   if(route==='leads') return <Leads leads={leads} setLeads={setLeads}/>;
   if(route==='contacts') return <Contacts contacts={contacts} setContacts={setContacts}/>;
   if(route==='pipelines') return <Pipelines leads={leads}/>;
   if(route==='automations') return <Automations/>;
   if(route==='analytics'||route==='reports') return <Reports title={route==='analytics'?'Analytics':'Reports'}/>;
   if(route==='settings') return <SettingsPage/>;
+  if(route==='email-outreach') return <OutreachPage businesses={businesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach}/>;
+  if(route==='outreach-history') return <HistoryPage businesses={businesses} prospects={prospects} outreach={outreach}/>;
   return <GenericPage route={route}/>;
 }
 
 function Header({title,sub,action}:{title:string;sub:string;action?:React.ReactNode}){return <div className="heading-row"><div><h1>{title}</h1><div className="muted">{sub}</div></div>{action}</div>}
 function Kpi({label,value,change}:{label:string;value:string;change:string}){return <div className="card"><div className="kpi-label">{label}</div><div className="kpi-value">{value}</div><div className="up">↑ {change} vs last 7 days</div></div>}
 
-function Dashboard({leads}:{leads:Lead[]}) {
+function Dashboard({leads,prospects,drafts,outreach}:{leads:Lead[];prospects:Prospect[];drafts:Draft[];outreach:Outreach[]}) {
   const bars=[48,72,55,79,62,88,42];
   return <><Header title="Good morning, Alex 👋" sub="Here’s what’s happening with your business today." action={<button className="btn secondary">Jul 14 – Jul 21, 2026</button>}/>
     <div className="grid kpis"><Kpi label="New Leads" value={String(248+leads.length)} change="18%"/><Kpi label="Open Deals" value="67" change="12%"/><Kpi label="Conversions" value="23" change="8%"/><Kpi label="Revenue" value="£12,540" change="22%"/></div>
     <div className="grid dashboard-grid"><div className="card"><b>Leads Overview</b><div className="chart-bars">{bars.map((h,i)=><div key={i} className="bar" style={{height:`${h}%`}}/>)}</div><div style={{display:'flex',justifyContent:'space-between'}}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=><span className="muted" key={x}>{x}</span>)}</div></div>
     <div className="card"><b>Recent Activity</b><div className="activity" style={{marginTop:18}}>{['New lead: Sarah Johnson','Email opened: Proposal Follow-up','Deal won: ACME Solutions','Task completed: Call with James','New lead: David Williams'].map((x,i)=><div className="activity-row" key={x}><i className="dot"/><span>{x}</span><span className="muted">{i+1}h</span></div>)}</div></div></div>
-    <div className="grid dashboard-grid"><div className="card"><b>Top Performing Campaigns</b>{['Summer Promotion','Email Outreach','Social Media Ads'].map((x,i)=><div className="activity-row" style={{marginTop:17}} key={x}><Target size={16} color="#c9a84c"/><span>{x}<br/><span className="muted">{121-i*28} leads</span></span><span className="up">↑ {24-i*4}%</span></div>)}</div><div className="card"><b>Tasks Due Today</b>{['Follow up with Sarah','Call David Williams','Email proposal to ACME','Team meeting'].map((x,i)=><label key={x} style={{display:'flex',gap:10,marginTop:16,fontSize:12}}><input type="checkbox"/>{x}<span className="muted" style={{marginLeft:'auto'}}>{9+i}:00</span></label>)}</div></div>
+    <div className="grid dashboard-grid"><div className="card"><b>Today’s Prospecting</b><div className="grid kpis" style={{gridTemplateColumns:'repeat(4,1fr)',marginTop:14}}><Kpi label="Prospects found" value={String(prospects.length)} change="today"/><Kpi label="Emails drafted" value={String(drafts.length)} change="today"/><Kpi label="Pending approval" value={String(drafts.filter(d=>d.status==='pending').length)} change="today"/><Kpi label="Sent today" value={String(outreach.filter(o=>o.status==='sent').length)} change="today"/></div></div><div className="card"><b>Tasks Due Today</b>{['Review new AI drafts','Approve outreach queue','Follow up with prospects','Team meeting'].map((x,i)=><label key={x} style={{display:'flex',gap:10,marginTop:16,fontSize:12}}><input type="checkbox"/>{x}<span className="muted" style={{marginLeft:'auto'}}>{9+i}:00</span></label>)}</div></div>
   </>;
 }
 
@@ -122,7 +149,24 @@ function Automations(){const rows=[['New Lead Welcome','Welcome a new lead','124
 
 function Reports({title}:{title:string}){return <><Header title={title} sub="Track your performance and growth." action={<button className="btn secondary">Jul 14 – Jul 21, 2026</button>}/><div className="grid kpis"><Kpi label="Total Leads" value="248" change="18%"/><Kpi label="Conversions" value="23" change="8%"/><Kpi label="Conversion Rate" value="9.3%" change="2.1%"/><Kpi label="Revenue" value="£12,540" change="22%"/></div><div className="grid dashboard-grid"><div className="card"><b>Leads Over Time</b><div className="chart-bars">{[22,45,86,52,68,38,91,61,73,49,80,57].map((h,i)=><div className="bar" key={i} style={{height:`${h}%`}}/>)}</div></div><div className="card"><b>Leads by Source</b><div style={{width:190,height:190,borderRadius:'50%',margin:'28px auto',background:'conic-gradient(#c9a84c 0 42%,#0b1220 42% 70%,#e8d8ae 70% 87%,#dfe2e8 87%)',display:'grid',placeItems:'center'}}><div style={{width:105,height:105,borderRadius:'50%',background:'#fff',display:'grid',placeItems:'center',fontWeight:800,fontSize:25}}>248</div></div></div></div></>}
 
-function SettingsPage(){return <><Header title="Settings" sub="Manage your workspace, account and security."/><div className="tabs">{['Profile','Team','Billing','Integrations','Preferences','Security'].map((x,i)=><div className={`tab ${i===5?'active':''}`} key={x}>{x}</div>)}</div><div className="grid dashboard-grid"><div className="card"><b>Change Password</b>{['Current Password','New Password','Confirm New Password'].map(x=><label className="form-row" style={{display:'block',fontSize:12}} key={x}>{x}<input className="field" type="password"/></label>)}<button className="btn">Update Password</button></div><div className="card"><b>Two-Factor Authentication</b><p className="muted">Add an extra layer of security to your account.</p><span className="badge">Enabled</span><hr style={{border:0,borderTop:'1px solid #eee',margin:'24px 0'}}/><b>Active Sessions</b><p className="muted">Manage your active sessions across devices.</p><button className="btn secondary">Manage Sessions</button></div></div></>}
+function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach}:{businesses:BusinessProfile[];prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void}) {
+  const [businessId,setBusinessId]=useState(businesses[0]?.id||''); const [busy,setBusy]=useState(false);
+  const pending=drafts.filter(d=>d.status==='pending');
+  function discover() {
+    const business=businesses.find(b=>b.id===businessId); if(!business)return; setBusy(true);
+    setTimeout(()=>{const existing=new Set(prospects.map(p=>p.website)); const found=discoveryPool.filter((_,i)=>i<Math.min(8,business.dailyLimit)).filter(row=>!existing.has(row[1])).map((row,i):Prospect=>({id:`${business.id}-${Date.now()}-${i}`,businessId:business.id,name:row[0],website:row[1],email:row[2],location:row[3],industry:row[4],contactUrl:row[5],score:78-i*3,reasons:[`Located inside ${business.serviceArea}`, 'Public business email found', i%2?'Relevant industry':'Website opportunity identified'],discoveredAt:new Date().toISOString(),contacted:false})); const newDrafts=found.map((p):Draft=>({id:`draft-${p.id}`,prospectId:p.id,businessId:p.businessId,subject:`A practical idea for ${p.name}`,body:`Hi there,\n\nI came across ${p.name} while looking at businesses in ${business.serviceArea}. ${business.description} We help organisations like yours with ${business.services.slice(0,2).join(' and ')} and I noticed there may be a straightforward opportunity to support your next stage of growth.\n\nWould a quick conversation be useful? I’m happy to share a few relevant ideas with no obligation.\n\n${business.signature}`,generatedAt:new Date().toISOString(),status:'pending'})); setProspects([...prospects,...found]); setDrafts([...drafts,...newDrafts]); setBusy(false);},500);
+  }
+  function approve(id:string){setDrafts(drafts.map(d=>d.id===id?{...d,status:'approved'}:d));}
+  function remove(id:string){setDrafts(drafts.filter(d=>d.id!==id));}
+  function send(id:string){const d=drafts.find(x=>x.id===id); const p=prospects.find(x=>x.id===d?.prospectId); if(!d||!p)return; const now=new Date(); setDrafts(drafts.map(x=>x.id===id?{...x,status:'sent'}:x)); setProspects(prospects.map(x=>x.id===p.id?{...x,contacted:true}:x)); setOutreach([...outreach,{id:`out-${id}`,prospectId:p.id,businessId:d.businessId,date:now.toLocaleDateString(),time:now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),status:'sent'}]);}
+  return <><Header title="AI Outreach Approval Queue" sub="Discover public business contacts and review every email before sending." action={<div style={{display:'flex',gap:8}}><select className="field" style={{margin:0,width:220}} value={businessId} onChange={e=>setBusinessId(e.target.value)}>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><button className="btn" onClick={discover} disabled={busy}>{busy?'Discovering…':'Find prospects'}</button></div>}/><div className="card" style={{marginBottom:16}}><b><Sparkles size={15} style={{verticalAlign:'middle',marginRight:6}}/>Approval queue</b><span className="muted" style={{marginLeft:10}}>{pending.length} pending · emails are never sent automatically</span>{pending.length>0&&<button className="btn secondary" style={{float:'right'}} onClick={()=>setDrafts(drafts.map(d=>d.status==='pending'?{...d,status:'approved'}:d))}>Approve All</button>}</div>{pending.length===0?<div className="card" style={{textAlign:'center',padding:40}}><ClipboardCheck size={30} color="#c9a84c"/><p><b>No emails awaiting approval</b></p><p className="muted">Choose a business and find prospects to create personalised drafts.</p></div>:<div className="grid">{pending.map(d=>{const p=prospects.find(x=>x.id===d.prospectId);const b=businesses.find(x=>x.id===d.businessId);if(!p||!b)return null;return <div className="card" key={d.id}><div style={{display:'flex',justifyContent:'space-between',gap:15}}><div><b>{p.name}</b><div className="muted">{b.name} · {p.email} · Score {p.score}/100</div></div><span className="badge">Pending approval</span></div><h3 style={{fontSize:14,marginBottom:8}}>{d.subject}</h3><p style={{whiteSpace:'pre-line',fontSize:13,lineHeight:1.6}}>{d.body}</p><div className="muted" style={{marginBottom:12}}>Why chosen: {p.reasons.join(' · ')}</div><div style={{display:'flex',gap:8}}><button className="btn" onClick={()=>approve(d.id)}><ClipboardCheck size={14}/> Approve</button><button className="btn secondary" onClick={()=>{const subject=prompt('Edit subject',d.subject)||d.subject;setDrafts(drafts.map(x=>x.id===d.id?{...x,subject,status:'edited'}:x))}}><Pencil size={14}/> Edit</button><button className="btn secondary" onClick={()=>remove(d.id)}><Trash2 size={14}/> Delete</button></div></div>})}</div>}{drafts.filter(d=>d.status==='approved').length>0&&<div className="card" style={{marginTop:16}}><b>Approved and ready to send</b>{drafts.filter(d=>d.status==='approved').map(d=><div key={d.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid #eee'}}><span>{prospects.find(p=>p.id===d.prospectId)?.name}<span className="muted"> · {d.subject}</span></span><button className="btn" onClick={()=>send(d.id)}><Send size={14}/> Send now</button></div>)}</div>}</>;
+}
+
+function HistoryPage({businesses,prospects,outreach}:{businesses:BusinessProfile[];prospects:Prospect[];outreach:Outreach[]}) {
+  return <><Header title="Outreach History" sub="A complete record of sent, pending and follow-up activity."/><DataTable headers={['Date','Time','Business','Prospect','Email','Status']} rows={outreach.map(o=>{const p=prospects.find(x=>x.id===o.prospectId);return [o.date,o.time,businesses.find(b=>b.id===o.businessId)?.name||'—',p?.name||'—',p?.email||'—',<span className="badge" key={o.id}>{o.status}</span>]})}/>{outreach.length===0&&<div className="card" style={{textAlign:'center',marginTop:16}}><History size={28} color="#c9a84c"/><p className="muted">No outreach has been sent yet.</p></div>}</>;
+}
+
+function SettingsPage(){const [daily,setDaily]=useState('10');const [style,setStyle]=useState('Professional and warm');return <><Header title="Settings" sub="Manage your workspace, account and security."/><div className="tabs">{['Profile','Team','Billing','Integrations','Preferences','Security'].map((x,i)=><div className={`tab ${i===5?'active':''}`} key={x}>{x}</div>)}</div><div className="grid dashboard-grid"><div className="card"><b>AI outreach preferences</b><label className="form-row" style={{display:'block',fontSize:12}}>Daily prospect limit<input className="field" type="number" value={daily} onChange={e=>setDaily(e.target.value)}/></label><label className="form-row" style={{display:'block',fontSize:12}}>Writing style<select className="field" value={style} onChange={e=>setStyle(e.target.value)}><option>Professional and warm</option><option>Friendly and helpful</option><option>Clear and consultative</option></select></label><label className="form-row" style={{display:'block',fontSize:12}}>Working hours<input className="field" defaultValue="09:00 – 17:00"/></label><button className="btn" onClick={()=>alert('Outreach preferences saved')}>Save preferences</button></div><div className="card"><b>Change Password</b>{['Current Password','New Password','Confirm New Password'].map(x=><label className="form-row" style={{display:'block',fontSize:12}} key={x}>{x}<input className="field" type="password"/></label>)}<button className="btn">Update Password</button></div></div></>}
 
 function GenericPage({route}:{route:string}) { const config:Record<string,[string,string,string[]]>={
  'companies':['Companies','Manage organisations and account relationships.',['Company','Primary Contact','Industry','Revenue','Status']],
