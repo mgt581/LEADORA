@@ -1,5 +1,5 @@
 /** @type {import('next').NextConfig} */
-const isPages = process.env.DEPLOYMENT_TARGET === 'pages';
+const isPages = process.env.DEPLOYMENT_TARGET === 'pages' || process.env.GITHUB_ACTIONS === 'true';
 
 const nextConfig = {
   ...(isPages ? { output: 'export' } : {}),

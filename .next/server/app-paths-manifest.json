@@ -1,0 +1,12 @@
+{
+  "/_not-found/page": "app/_not-found/page.js",
+  "/api/gmail/disconnect/route": "app/api/gmail/disconnect/route.js",
+  "/api/gmail/auth/route": "app/api/gmail/auth/route.js",
+  "/api/gmail/callback/route": "app/api/gmail/callback/route.js",
+  "/api/gmail/send/route": "app/api/gmail/send/route.js",
+  "/api/gmail/status/route": "app/api/gmail/status/route.js",
+  "/api/gmail/sync/route": "app/api/gmail/sync/route.js",
+  "/api/system/status/route": "app/api/system/status/route.js",
+  "/page": "app/page.js",
+  "/[section]/page": "app/[section]/page.js"
+}

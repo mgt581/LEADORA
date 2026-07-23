@@ -62,14 +62,14 @@ export function configurationError(): GmailIntegrationError | null {
   const secretValue = Boolean(process.env.GOOGLE_OAUTH_CLIENT_SECRET);
   const redirect = Boolean(process.env.GOOGLE_OAUTH_REDIRECT_URL);
   const encryption = Boolean(process.env.GMAIL_TOKEN_ENCRYPTION_KEY);
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL;
+  const appUrlValue = process.env.NEXT_PUBLIC_APP_URL;
   const cloudflare = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_D1_DATABASE_ID'].every(name => Boolean(process.env[name]));
   if (!id && !secretValue && !redirect) return new GmailIntegrationError('GOOGLE_OAUTH_NOT_CONFIGURED', gmailErrorMessage('GOOGLE_OAUTH_NOT_CONFIGURED'));
   if (!id) return new GmailIntegrationError('MISSING_CLIENT_ID', gmailErrorMessage('MISSING_CLIENT_ID'));
   if (!secretValue) return new GmailIntegrationError('MISSING_CLIENT_SECRET', gmailErrorMessage('MISSING_CLIENT_SECRET'));
   if (!encryption) return new GmailIntegrationError('MISSING_ENCRYPTION_KEY', gmailErrorMessage('MISSING_ENCRYPTION_KEY'));
-  if (!redirect || !appUrl) return new GmailIntegrationError('MISSING_REDIRECT_URI', gmailErrorMessage('MISSING_REDIRECT_URI'));
-  const expected = `${appUrl.replace(/\/$/, '')}/api/gmail/callback`;
+  if (!redirect || !appUrlValue) return new GmailIntegrationError('MISSING_REDIRECT_URI', gmailErrorMessage('MISSING_REDIRECT_URI'));
+  const expected = `${appUrlValue.replace(/\/$/, '')}/api/gmail/callback`;
   if (process.env.GOOGLE_OAUTH_REDIRECT_URL !== expected) return new GmailIntegrationError('REDIRECT_URI_MISMATCH', gmailErrorMessage('REDIRECT_URI_MISMATCH'));
   if (!cloudflare) return new GmailIntegrationError('MISSING_CLOUDFLARE_ENV', gmailErrorMessage('MISSING_CLOUDFLARE_ENV'));
   return null;

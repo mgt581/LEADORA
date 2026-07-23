@@ -17,6 +17,7 @@ type Outreach = { id:string; prospectId:string; businessId:string; date:string; 
 type GmailMessage = { id:string; threadId:string; from:string; to:string; cc:string; subject:string; body:string; internalDate:string; labelIds:string[]; businessId?:string|null; isRead?:boolean };
 type SystemCheck = { ok:boolean; detail:string };
 type SystemStatus = Record<'cloudflare'|'backend'|'database'|'googleOAuth'|'gmailApi'|'connectedAccount',SystemCheck>;
+type GmailStatus = {connected:boolean;emailAddress?:string;error?:string;code?:string;diagnostics?:Array<{name:string;configured:boolean}>};
 
 const seedLeads: Lead[] = [
   {name:'Sarah Johnson',email:'sarah@designco.com',company:'Design Co.',status:'New',source:'Website',created:'2 min ago'},
@@ -123,6 +124,10 @@ function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesse
 
 function Header({title,sub,action}:{title:string;sub:string;action?:React.ReactNode}){return <div className="heading-row"><div><h1>{title}</h1><div className="muted">{sub}</div></div>{action}</div>}
 function Kpi({label,value,change}:{label:string;value:string;change:string}){return <div className="card"><div className="kpi-label">{label}</div><div className="kpi-value">{value}</div><div className="up">↑ {change} vs last 7 days</div></div>}
+async function fetchIntegrationStatus() {
+  const [gmailResponse,systemResponse]=await Promise.all([fetch('/api/gmail/status?authenticated=true'),fetch('/api/system/status')]);
+  return {gmailStatus:await gmailResponse.json() as GmailStatus,systemStatus:await systemResponse.json() as {statuses:SystemStatus}};
+}
 
 function Dashboard({leads,prospects,drafts,outreach}:{leads:Lead[];prospects:Prospect[];drafts:Draft[];outreach:Outreach[]}) {
   const bars=[48,72,55,79,62,88,42];
@@ -219,9 +224,10 @@ function InboxPage({messages,setMessages,businesses}:{messages:GmailMessage[];se
 
 function SettingsPage(){
   const [daily,setDaily]=useState('10'); const [style,setStyle]=useState('Professional and warm'); const [saved,setSaved]=useState('');
-  const [gmail,setGmail]=useState<{connected:boolean;emailAddress?:string;error?:string;code?:string;diagnostics?:Array<{name:string;configured:boolean}>}>({connected:false}); const [mapping,setMapping]=useState<Record<string,string>>({}); const [syncing,setSyncing]=useState(false);
+  const [gmail,setGmail]=useState<GmailStatus>({connected:false}); const [mapping,setMapping]=useState<Record<string,string>>({}); const [syncing,setSyncing]=useState(false);
   const [system,setSystem]=useState<SystemStatus|null>(null);
-  useEffect(()=>{async function loadStatus(){try{const [gmailResponse,systemResponse]=await Promise.all([fetch('/api/gmail/status?authenticated=true'),fetch('/api/system/status')]); const gmailStatus=await gmailResponse.json(); const systemStatus=await systemResponse.json(); setGmail(gmailStatus); setSystem({...systemStatus.statuses,connectedAccount:{ok:gmailStatus.connected,detail:gmailStatus.connected?`Connected · ${gmailStatus.emailAddress}`:'No Gmail account connected'},gmailApi:{ok:gmailStatus.connected,detail:gmailStatus.connected?'Profile check passed':gmailStatus.error}});}catch{setGmail({connected:false,code:'GMAIL_API_UNAVAILABLE',error:'The status service is unavailable. Try again shortly.'});}} loadStatus(); const savedMapping=localStorage.getItem('leadora-business-email-mappings'); if(savedMapping) try{setMapping(JSON.parse(savedMapping));}catch{}},[]);
+  useEffect(()=>{fetchIntegrationStatus().then(({gmailStatus,systemStatus})=>{setGmail(gmailStatus); setSystem({...systemStatus.statuses,connectedAccount:{ok:gmailStatus.connected,detail:gmailStatus.connected?`Connected · ${gmailStatus.emailAddress}`:'No Gmail account connected'},gmailApi:{ok:gmailStatus.connected,detail:gmailStatus.connected?'Profile check passed':gmailStatus.error}});}).catch(()=>setGmail({connected:false,code:'GMAIL_API_UNAVAILABLE',error:'The status service is unavailable. Try again shortly.'}));},[]);
+  useEffect(()=>{const savedMapping=localStorage.getItem('leadora-business-email-mappings'); if(savedMapping) try{setMapping(JSON.parse(savedMapping));}catch{}},[]);
   function save(){const limit=Number(daily); if(!Number.isInteger(limit)||limit<1){setSaved('Enter a positive whole number');return;} try { localStorage.setItem('leadora-outreach-settings',JSON.stringify({dailyLimit:limit,style})); setSaved('Saved'); } catch { setSaved('Unable to save preferences'); }}
   function saveMappings(){localStorage.setItem('leadora-business-email-mappings',JSON.stringify(mapping));setSaved('Mappings saved');}
   async function disconnect(){setSyncing(true);await fetch('/api/gmail/disconnect',{method:'POST'});setGmail({connected:false});setSyncing(false);}
