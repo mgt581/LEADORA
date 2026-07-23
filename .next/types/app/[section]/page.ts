@@ -1,4 +1,4 @@
-// File: /workspaces/LEADORA/app/[section]/page.tsx
+// File: /home/runner/work/LEADORA/LEADORA/app/[section]/page.tsx
 import * as entry from '../../../../app/[section]/page.js'
 import type { ResolvingMetadata, ResolvingViewport } from 'next/dist/lib/metadata/types/metadata-interface.js'
 

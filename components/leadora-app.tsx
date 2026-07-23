@@ -5,7 +5,7 @@ import Link from 'next/link';
 import {
   LayoutDashboard, Users, ContactRound, Building2, Handshake, Columns3,
   Mail, SearchCheck, Bot, Workflow, ChartNoAxesCombined, FileChartColumn,
-  Settings, Menu, Bell, Plus, LogOut, Target, CirclePoundSterling
+  Settings, Menu, Bell, Plus, LogOut, Target
 } from 'lucide-react';
 
 const BASE = process.env.NODE_ENV === 'production' && typeof window !== 'undefined' && window.location.pathname.startsWith('/LEADORA') ? '/LEADORA' : '';
@@ -132,6 +132,6 @@ function GenericPage({route}:{route:string}) { const config:Record<string,[strin
  'ai-agents':['AI Agents','Deploy autonomous agents across your sales operation.',['Agent','Purpose','Runs','Success Rate','Status']],
  };
  const [title,sub,headers]=config[route]??['LEADORA','Your sales operating system.',['Item','Owner','Performance','Status']];
- const rows=useMemo(()=>Array.from({length:6},(_,i)=>headers.map((h,j)=>j===0?`${title.slice(0,-1)} ${i+1}`:j===headers.length-1?<span className="badge" key={h}>Active</span>:j===2?`${82-i*4}%`:`${h} data`)),[headers,title]);
+ const rows=useMemo(()=>Array.from({length:6},(_,i)=>headers.map((h,j)=>j===0?(route==='website-audits'?<a href={`${BASE}/index.html`}>{`${title.slice(0,-1)} ${i+1}`}</a>:`${title.slice(0,-1)} ${i+1}`):j===headers.length-1?<span className="badge" key={h}>Active</span>:j===2?`${82-i*4}%`:`${h} data`)),[headers,title,route]);
  return <><Header title={title} sub={sub} action={<button className="btn">+ New {title.slice(0,-1)}</button>}/><DataTable headers={headers} rows={rows}/></>;
 }
