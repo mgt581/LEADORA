@@ -2,11 +2,11 @@
   "version": 1,
   "functions": {
     "/api/gmail/auth": {},
+    "/api/gmail/disconnect": {},
     "/api/gmail/callback": {},
     "/api/gmail/send": {},
     "/api/gmail/status": {},
     "/api/gmail/sync": {},
-    "/api/system/status": {},
-    "/api/gmail/disconnect": {}
+    "/api/system/status": {}
   }
 }

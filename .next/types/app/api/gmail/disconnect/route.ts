@@ -1,4 +1,4 @@
-// File: /home/runner/work/LEADORA/LEADORA/app/api/gmail/disconnect/route.ts
+// File: /workspaces/LEADORA/app/api/gmail/disconnect/route.ts
 import * as entry from '../../../../../../app/api/gmail/disconnect/route.js'
 import type { NextRequest } from 'next/server.js'
 

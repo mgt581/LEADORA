@@ -26,6 +26,30 @@
         "x-next-revalidate-tag-token"
       ]
     },
+    "/": {
+      "experimentalBypassFor": [
+        {
+          "type": "header",
+          "key": "next-action"
+        },
+        {
+          "type": "header",
+          "key": "content-type",
+          "value": "multipart/form-data;.*"
+        }
+      ],
+      "initialRevalidateSeconds": false,
+      "srcRoute": "/",
+      "dataRoute": "/index.rsc",
+      "allowHeader": [
+        "host",
+        "x-matched-path",
+        "x-prerender-revalidate",
+        "x-prerender-revalidate-if-generated",
+        "x-next-revalidated-tags",
+        "x-next-revalidate-tag-token"
+      ]
+    },
     "/ai-agents": {
       "experimentalBypassFor": [
         {
@@ -409,30 +433,6 @@
         "x-next-revalidated-tags",
         "x-next-revalidate-tag-token"
       ]
-    },
-    "/": {
-      "experimentalBypassFor": [
-        {
-          "type": "header",
-          "key": "next-action"
-        },
-        {
-          "type": "header",
-          "key": "content-type",
-          "value": "multipart/form-data;.*"
-        }
-      ],
-      "initialRevalidateSeconds": false,
-      "srcRoute": "/",
-      "dataRoute": "/index.rsc",
-      "allowHeader": [
-        "host",
-        "x-matched-path",
-        "x-prerender-revalidate",
-        "x-prerender-revalidate-if-generated",
-        "x-next-revalidated-tags",
-        "x-next-revalidate-tag-token"
-      ]
     }
   },
   "dynamicRoutes": {
@@ -464,8 +464,8 @@
   },
   "notFoundRoutes": [],
   "preview": {
-    "previewModeId": "a62e84aa2325289b1eabee2ce0581336",
-    "previewModeSigningKey": "d6267be5d1883f25ef75ee8375845e1f13e89ddf73d4d4e09aa32d931d81d68e",
-    "previewModeEncryptionKey": "3ed84ac3e2bc8c295eabe4cd3bea8950cc87aea9daf474791c94f123327afb68"
+    "previewModeId": "83876ff4c4968c3e4fc0488a92120c38",
+    "previewModeSigningKey": "475499f3202b968ed70b2a50aaeee30eeced74bd6ffaf9f84bb7b7f2298d7d64",
+    "previewModeEncryptionKey": "b9e521fce1c9cb96d2acd284debb4b8f6d0371d0201cdfb280c1c43f227ec294"
   }
 }

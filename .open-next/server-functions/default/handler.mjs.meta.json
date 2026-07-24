@@ -3247,42 +3247,42 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route_client-reference-manifest.js": {
-      "bytes": 5394,
+      "bytes": 5046,
       "imports": [],
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/callback/route_client-reference-manifest.js": {
-      "bytes": 5390,
+      "bytes": 5042,
       "imports": [],
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/system/status/route_client-reference-manifest.js": {
-      "bytes": 5388,
+      "bytes": 5040,
       "imports": [],
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/status/route_client-reference-manifest.js": {
-      "bytes": 5386,
+      "bytes": 5038,
       "imports": [],
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/sync/route_client-reference-manifest.js": {
-      "bytes": 5382,
+      "bytes": 5034,
       "imports": [],
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/send/route_client-reference-manifest.js": {
-      "bytes": 5382,
+      "bytes": 5034,
       "imports": [],
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/auth/route_client-reference-manifest.js": {
-      "bytes": 5382,
+      "bytes": 5034,
       "imports": [],
       "format": "cjs"
     },
     ".open-next/server-functions/default/node_modules/next/dist/server/load-manifest.external.js": {
-      "bytes": 45986,
+      "bytes": 45110,
       "imports": [
         {
           "path": "path",
@@ -3307,37 +3307,37 @@
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route_client-reference-manifest.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route_client-reference-manifest.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route_client-reference-manifest.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/callback/route_client-reference-manifest.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/callback/route_client-reference-manifest.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/callback/route_client-reference-manifest.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/system/status/route_client-reference-manifest.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/system/status/route_client-reference-manifest.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/system/status/route_client-reference-manifest.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/status/route_client-reference-manifest.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/status/route_client-reference-manifest.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/status/route_client-reference-manifest.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/sync/route_client-reference-manifest.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/sync/route_client-reference-manifest.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/sync/route_client-reference-manifest.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/send/route_client-reference-manifest.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/send/route_client-reference-manifest.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/send/route_client-reference-manifest.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/auth/route_client-reference-manifest.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/auth/route_client-reference-manifest.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/auth/route_client-reference-manifest.js"
         }
       ],
       "format": "cjs"
@@ -3564,7 +3564,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/node_modules/next/dist/compiled/next-server/app-page.runtime.prod.js": {
-      "bytes": 521340,
+      "bytes": 521298,
       "imports": [
         {
           "path": "url",
@@ -3684,17 +3684,17 @@
         {
           "path": ".open-next/server-functions/default/composable-cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/composable-cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/cache.cjs"
         }
       ],
       "format": "cjs"
@@ -3722,7 +3722,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/node_modules/next/dist/compiled/next-server/app-route.runtime.prod.js": {
-      "bytes": 162006,
+      "bytes": 161964,
       "imports": [
         {
           "path": "url",
@@ -3807,17 +3807,17 @@
         {
           "path": ".open-next/server-functions/default/composable-cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/composable-cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/server/app-render/after-task-async-storage.external.js",
@@ -3863,13 +3863,13 @@
       ],
       "format": "cjs"
     },
-    ".open-next/server-functions/default/.next/server/chunks/763.js": {
-      "bytes": 35575,
+    ".open-next/server-functions/default/.next/server/chunks/655.js": {
+      "bytes": 35548,
       "imports": [],
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/chunks/773.js": {
-      "bytes": 250380,
+      "bytes": 250254,
       "imports": [],
       "format": "cjs"
     },
@@ -3897,9 +3897,9 @@
           "original": "./chunks/611.js"
         },
         {
-          "path": ".open-next/server-functions/default/.next/server/chunks/763.js",
+          "path": ".open-next/server-functions/default/.next/server/chunks/655.js",
           "kind": "require-call",
-          "original": "./chunks/763.js"
+          "original": "./chunks/655.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/chunks/773.js",
@@ -3910,7 +3910,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route.js": {
-      "bytes": 13677,
+      "bytes": 13661,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -3966,7 +3966,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/callback/route.js": {
-      "bytes": 13995,
+      "bytes": 13981,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4022,7 +4022,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/system/status/route.js": {
-      "bytes": 14111,
+      "bytes": 14097,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4078,7 +4078,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/status/route.js": {
-      "bytes": 14158,
+      "bytes": 14144,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4134,7 +4134,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/auth/route.js": {
-      "bytes": 13662,
+      "bytes": 13648,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4190,7 +4190,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/send/route.js": {
-      "bytes": 14009,
+      "bytes": 13995,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4246,7 +4246,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/api/gmail/sync/route.js": {
-      "bytes": 14333,
+      "bytes": 14319,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4302,7 +4302,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/_not-found/page.js": {
-      "bytes": 17029,
+      "bytes": 17001,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4368,7 +4368,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/[section]/page.js": {
-      "bytes": 15554,
+      "bytes": 15512,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4560,7 +4560,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/node_modules/next/dist/compiled/next-server/pages.runtime.prod.js": {
-      "bytes": 129876,
+      "bytes": 129834,
       "imports": [
         {
           "path": "url",
@@ -4660,17 +4660,17 @@
         {
           "path": ".open-next/server-functions/default/composable-cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/composable-cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/node_modules/react/jsx-runtime.js",
@@ -4779,7 +4779,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/.next/server/app/page.js": {
-      "bytes": 15155,
+      "bytes": 15113,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/shared/lib/router/utils/app-paths.js",
@@ -4845,7 +4845,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/node_modules/next/dist/server/require.js": {
-      "bytes": 14189,
+      "bytes": 14007,
       "imports": [
         {
           "path": "path",
@@ -4895,67 +4895,67 @@
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/callback/route.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/callback/route.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/callback/route.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/system/status/route.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/system/status/route.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/system/status/route.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/status/route.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/status/route.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/status/route.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/auth/route.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/auth/route.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/auth/route.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/send/route.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/send/route.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/send/route.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/api/gmail/sync/route.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/sync/route.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/api/gmail/sync/route.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/_not-found/page.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/_not-found/page.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/_not-found/page.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/[section]/page.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/[section]/page.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/[section]/page.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/pages/_document.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/pages/_document.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/pages/_document.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/pages/_error.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/pages/_error.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/pages/_error.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/pages/_app.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/pages/_app.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/pages/_app.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/app/page.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/app/page.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/app/page.js"
         }
       ],
       "format": "cjs"
@@ -5457,22 +5457,22 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/node_modules/next/dist/server/lib/module-loader/node-module-loader.js": {
-      "bytes": 887,
+      "bytes": 845,
       "imports": [
         {
           "path": ".open-next/server-functions/default/.next/server/pages/_document.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/pages/_document.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/pages/_document.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/pages/_error.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/pages/_error.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/pages/_error.js"
         },
         {
           "path": ".open-next/server-functions/default/.next/server/pages/_app.js",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/.next/server/pages/_app.js"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/.next/server/pages/_app.js"
         }
       ],
       "format": "cjs"
@@ -5551,7 +5551,7 @@
       "format": "cjs"
     },
     ".open-next/server-functions/default/node_modules/next/dist/server/next-server.js": {
-      "bytes": 52354,
+      "bytes": 52312,
       "imports": [
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/server/node-environment.js",
@@ -5856,17 +5856,17 @@
         {
           "path": ".open-next/server-functions/default/composable-cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/composable-cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/composable-cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/cache.cjs",
           "kind": "require-call",
-          "original": "/home/runner/work/LEADORA/LEADORA/.open-next/server-functions/default/cache.cjs"
+          "original": "/workspaces/LEADORA/.open-next/server-functions/default/cache.cjs"
         },
         {
           "path": ".open-next/server-functions/default/node_modules/next/dist/experimental/testmode/server.js",
@@ -5882,7 +5882,7 @@
       "format": "esm"
     },
     ".open-next/server-functions/default/index.mjs": {
-      "bytes": 90453,
+      "bytes": 90425,
       "imports": [
         {
           "path": "node:module",
@@ -7017,28 +7017,28 @@
           "bytesInOutput": 586
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route_client-reference-manifest.js": {
-          "bytesInOutput": 5025
+          "bytesInOutput": 4677
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/callback/route_client-reference-manifest.js": {
-          "bytesInOutput": 5020
+          "bytesInOutput": 4672
         },
         ".open-next/server-functions/default/.next/server/app/api/system/status/route_client-reference-manifest.js": {
-          "bytesInOutput": 5017
+          "bytesInOutput": 4669
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/status/route_client-reference-manifest.js": {
-          "bytesInOutput": 5014
+          "bytesInOutput": 4666
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/sync/route_client-reference-manifest.js": {
-          "bytesInOutput": 5008
+          "bytesInOutput": 4660
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/send/route_client-reference-manifest.js": {
-          "bytesInOutput": 5008
+          "bytesInOutput": 4660
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/auth/route_client-reference-manifest.js": {
-          "bytesInOutput": 5008
+          "bytesInOutput": 4660
         },
         ".open-next/server-functions/default/node_modules/next/dist/server/load-manifest.external.js": {
-          "bytesInOutput": 33436
+          "bytesInOutput": 32658
         },
         ".open-next/server-functions/default/node_modules/next/dist/server/app-render/action-async-storage-instance.js": {
           "bytesInOutput": 501
@@ -7115,41 +7115,41 @@
         ".open-next/server-functions/default/.next/server/chunks/611.js": {
           "bytesInOutput": 71838
         },
-        ".open-next/server-functions/default/.next/server/chunks/763.js": {
-          "bytesInOutput": 36472
+        ".open-next/server-functions/default/.next/server/chunks/655.js": {
+          "bytesInOutput": 36445
         },
         ".open-next/server-functions/default/.next/server/chunks/773.js": {
-          "bytesInOutput": 260762
+          "bytesInOutput": 260636
         },
         ".open-next/server-functions/default/.next/server/webpack-runtime.js": {
           "bytesInOutput": 1892
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/disconnect/route.js": {
-          "bytesInOutput": 13962
+          "bytesInOutput": 13946
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/callback/route.js": {
-          "bytesInOutput": 14292
+          "bytesInOutput": 14278
         },
         ".open-next/server-functions/default/.next/server/app/api/system/status/route.js": {
-          "bytesInOutput": 14392
+          "bytesInOutput": 14378
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/status/route.js": {
-          "bytesInOutput": 14454
+          "bytesInOutput": 14440
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/auth/route.js": {
-          "bytesInOutput": 13942
+          "bytesInOutput": 13928
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/send/route.js": {
-          "bytesInOutput": 14296
+          "bytesInOutput": 14282
         },
         ".open-next/server-functions/default/.next/server/app/api/gmail/sync/route.js": {
-          "bytesInOutput": 14641
+          "bytesInOutput": 14627
         },
         ".open-next/server-functions/default/.next/server/app/_not-found/page.js": {
-          "bytesInOutput": 17239
+          "bytesInOutput": 17211
         },
         ".open-next/server-functions/default/.next/server/app/[section]/page.js": {
-          "bytesInOutput": 15682
+          "bytesInOutput": 15640
         },
         "optional-deps-missing-dependency:/critters": {
           "bytesInOutput": 141
@@ -7200,7 +7200,7 @@
           "bytesInOutput": 3575
         },
         ".open-next/server-functions/default/.next/server/app/page.js": {
-          "bytesInOutput": 15290
+          "bytesInOutput": 15248
         },
         ".open-next/server-functions/default/node_modules/next/dist/server/require.js": {
           "bytesInOutput": 10859
@@ -7314,10 +7314,10 @@
           "bytesInOutput": 5072
         },
         ".open-next/server-functions/default/index.mjs": {
-          "bytesInOutput": 63499
+          "bytesInOutput": 63471
         }
       },
-      "bytes": 2867593
+      "bytes": 2863986
     }
   }
 }
