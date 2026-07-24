@@ -13,6 +13,7 @@ LEADORA uses server-side OAuth with `gmail.send` and `gmail.readonly` only. Toke
 
 Run `openssl rand -base64 32` for `GMAIL_TOKEN_ENCRYPTION_KEY`, then configure every variable in `.env.example` in the deployment environment. Never commit the client secret or encryption key.
 For Cloudflare deployments, configure `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_D1_DATABASE_ID`. `GOOGLE_OAUTH_REDIRECT_URL` must exactly equal `${NEXT_PUBLIC_APP_URL}/api/gmail/callback` (including HTTPS and path).
+Deploy the Worker with `npm run cf:deploy`. The OAuth code reads Cloudflare Worker bindings through `getCloudflareContext().env`; do not rename the bindings or rely on `process.env` for production secrets. Configure plaintext values as Worker variables and set secret values with `wrangler secret put`.
 
 Google may require verification before external users can use Gmail restricted scopes. This integration deliberately does not request full mailbox access or `mail.google.com`.
 

@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 export const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.send',
@@ -38,6 +39,17 @@ export const GMAIL_REQUIRED_ENV_VARS = [
   'CLOUDFLARE_API_TOKEN',
   'CLOUDFLARE_D1_DATABASE_ID',
 ] as const;
+type RuntimeEnv = Record<string, string | undefined>;
+function getRuntimeEnv(): RuntimeEnv {
+  try {
+    return getCloudflareContext().env as RuntimeEnv;
+  } catch {
+    return process.env;
+  }
+}
+function env(name: string) {
+  return getRuntimeEnv()[name];
+}
 const friendlyMessages: Record<GmailErrorCode, string> = {
   GOOGLE_OAUTH_NOT_CONFIGURED: 'Google OAuth is not configured. Add the Google OAuth environment variables to the deployment.',
   MISSING_CLIENT_ID: 'Google OAuth Client ID is missing.',
@@ -55,22 +67,22 @@ const friendlyMessages: Record<GmailErrorCode, string> = {
 export function gmailErrorMessage(code: GmailErrorCode) { return friendlyMessages[code]; }
 export type GmailDiagnostic = { name: string; configured: boolean };
 export function getGmailDiagnostics(): GmailDiagnostic[] {
-  return GMAIL_REQUIRED_ENV_VARS.map(name => ({ name, configured: Boolean(process.env[name]) }));
+  return GMAIL_REQUIRED_ENV_VARS.map(name => ({ name, configured: Boolean(env(name)) }));
 }
 export function configurationError(): GmailIntegrationError | null {
-  const id = Boolean(process.env.GOOGLE_OAUTH_CLIENT_ID);
-  const secretValue = Boolean(process.env.GOOGLE_OAUTH_CLIENT_SECRET);
-  const redirect = Boolean(process.env.GOOGLE_OAUTH_REDIRECT_URL);
-  const encryption = Boolean(process.env.GMAIL_TOKEN_ENCRYPTION_KEY);
-  const appUrlValue = process.env.NEXT_PUBLIC_APP_URL;
-  const cloudflare = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_D1_DATABASE_ID'].every(name => Boolean(process.env[name]));
+  const id = Boolean(env('GOOGLE_OAUTH_CLIENT_ID'));
+  const secretValue = Boolean(env('GOOGLE_OAUTH_CLIENT_SECRET'));
+  const redirect = Boolean(env('GOOGLE_OAUTH_REDIRECT_URL'));
+  const encryption = Boolean(env('GMAIL_TOKEN_ENCRYPTION_KEY'));
+  const appUrlValue = env('NEXT_PUBLIC_APP_URL');
+  const cloudflare = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_D1_DATABASE_ID'].every(name => Boolean(env(name)));
   if (!id && !secretValue && !redirect) return new GmailIntegrationError('GOOGLE_OAUTH_NOT_CONFIGURED', gmailErrorMessage('GOOGLE_OAUTH_NOT_CONFIGURED'));
   if (!id) return new GmailIntegrationError('MISSING_CLIENT_ID', gmailErrorMessage('MISSING_CLIENT_ID'));
   if (!secretValue) return new GmailIntegrationError('MISSING_CLIENT_SECRET', gmailErrorMessage('MISSING_CLIENT_SECRET'));
   if (!encryption) return new GmailIntegrationError('MISSING_ENCRYPTION_KEY', gmailErrorMessage('MISSING_ENCRYPTION_KEY'));
   if (!redirect || !appUrlValue) return new GmailIntegrationError('MISSING_REDIRECT_URI', gmailErrorMessage('MISSING_REDIRECT_URI'));
   const expected = `${appUrlValue.replace(/\/$/, '')}/api/gmail/callback`;
-  if (process.env.GOOGLE_OAUTH_REDIRECT_URL !== expected) return new GmailIntegrationError('REDIRECT_URI_MISMATCH', gmailErrorMessage('REDIRECT_URI_MISMATCH'));
+  if (env('GOOGLE_OAUTH_REDIRECT_URL') !== expected) return new GmailIntegrationError('REDIRECT_URI_MISMATCH', gmailErrorMessage('REDIRECT_URI_MISMATCH'));
   if (!cloudflare) return new GmailIntegrationError('MISSING_CLOUDFLARE_ENV', gmailErrorMessage('MISSING_CLOUDFLARE_ENV'));
   return null;
 }
@@ -82,7 +94,7 @@ export type ParsedGmailMessage = {
 };
 
 function secret() {
-  const value = process.env.GMAIL_TOKEN_ENCRYPTION_KEY;
+  const value = env('GMAIL_TOKEN_ENCRYPTION_KEY');
   if (!value) throw new GmailIntegrationError('MISSING_ENCRYPTION_KEY', gmailErrorMessage('MISSING_ENCRYPTION_KEY'));
   return createHash('sha256').update(value).digest();
 }
@@ -110,8 +122,8 @@ export function getAuthorizationUrl(state: string) {
   const error = configurationError();
   if (error) throw error;
   const params = new URLSearchParams({
-    client_id: process.env.GOOGLE_OAUTH_CLIENT_ID ?? '',
-    redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URL ?? '',
+    client_id: env('GOOGLE_OAUTH_CLIENT_ID') ?? '',
+    redirect_uri: env('GOOGLE_OAUTH_REDIRECT_URL') ?? '',
     response_type: 'code', access_type: 'offline', prompt: 'consent',
     scope: GMAIL_SCOPES, state,
   });
@@ -126,9 +138,9 @@ export async function exchangeCode(code: string): Promise<TokenSet> {
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      code, client_id: process.env.GOOGLE_OAUTH_CLIENT_ID ?? '',
-      client_secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '',
-      redirect_uri: process.env.GOOGLE_OAUTH_REDIRECT_URL ?? '', grant_type: 'authorization_code',
+      code, client_id: env('GOOGLE_OAUTH_CLIENT_ID') ?? '',
+      client_secret: env('GOOGLE_OAUTH_CLIENT_SECRET') ?? '',
+      redirect_uri: env('GOOGLE_OAUTH_REDIRECT_URL') ?? '', grant_type: 'authorization_code',
     }),
   });
   if (!response.ok) throw new GmailIntegrationError('GMAIL_API_UNAVAILABLE', `Google authorization failed (${response.status})`);
@@ -142,8 +154,8 @@ export async function accessToken(tokens: TokenSet): Promise<TokenSet> {
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
-      client_id: process.env.GOOGLE_OAUTH_CLIENT_ID ?? '',
-      client_secret: process.env.GOOGLE_OAUTH_CLIENT_SECRET ?? '',
+      client_id: env('GOOGLE_OAUTH_CLIENT_ID') ?? '',
+      client_secret: env('GOOGLE_OAUTH_CLIENT_SECRET') ?? '',
       refresh_token: tokens.refresh_token, grant_type: 'refresh_token',
     }),
   });
