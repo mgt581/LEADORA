@@ -3,10 +3,10 @@
   "functions": {
     "/api/gmail/auth": {},
     "/api/gmail/callback": {},
-    "/api/gmail/disconnect": {},
     "/api/gmail/send": {},
     "/api/gmail/status": {},
     "/api/gmail/sync": {},
-    "/api/system/status": {}
+    "/api/system/status": {},
+    "/api/gmail/disconnect": {}
   }
 }
