@@ -16,6 +16,13 @@
       "static/chunks/380-1109895ba547c434.js",
       "static/chunks/app/layout-f1b2282fa371284c.js"
     ],
+    "/api/gmail/disconnect/route": [
+      "static/chunks/webpack-74c939c87fa0092a.js",
+      "static/chunks/4bd1b696-c023c6e3521b1417.js",
+      "static/chunks/255-a4e47dc05adf267a.js",
+      "static/chunks/main-app-5819f61cb41de776.js",
+      "static/chunks/app/api/gmail/disconnect/route-fb74e7bd42157f0b.js"
+    ],
     "/api/gmail/auth/route": [
       "static/chunks/webpack-74c939c87fa0092a.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
@@ -30,12 +37,12 @@
       "static/chunks/main-app-5819f61cb41de776.js",
       "static/chunks/app/api/gmail/callback/route-fb74e7bd42157f0b.js"
     ],
-    "/api/gmail/disconnect/route": [
+    "/api/gmail/status/route": [
       "static/chunks/webpack-74c939c87fa0092a.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
       "static/chunks/255-a4e47dc05adf267a.js",
       "static/chunks/main-app-5819f61cb41de776.js",
-      "static/chunks/app/api/gmail/disconnect/route-fb74e7bd42157f0b.js"
+      "static/chunks/app/api/gmail/status/route-fb74e7bd42157f0b.js"
     ],
     "/api/gmail/send/route": [
       "static/chunks/webpack-74c939c87fa0092a.js",
@@ -44,12 +51,12 @@
       "static/chunks/main-app-5819f61cb41de776.js",
       "static/chunks/app/api/gmail/send/route-fb74e7bd42157f0b.js"
     ],
-    "/api/gmail/status/route": [
+    "/api/system/status/route": [
       "static/chunks/webpack-74c939c87fa0092a.js",
       "static/chunks/4bd1b696-c023c6e3521b1417.js",
       "static/chunks/255-a4e47dc05adf267a.js",
       "static/chunks/main-app-5819f61cb41de776.js",
-      "static/chunks/app/api/gmail/status/route-fb74e7bd42157f0b.js"
+      "static/chunks/app/api/system/status/route-fb74e7bd42157f0b.js"
     ],
     "/api/gmail/sync/route": [
       "static/chunks/webpack-74c939c87fa0092a.js",
@@ -57,13 +64,6 @@
       "static/chunks/255-a4e47dc05adf267a.js",
       "static/chunks/main-app-5819f61cb41de776.js",
       "static/chunks/app/api/gmail/sync/route-fb74e7bd42157f0b.js"
-    ],
-    "/api/system/status/route": [
-      "static/chunks/webpack-74c939c87fa0092a.js",
-      "static/chunks/4bd1b696-c023c6e3521b1417.js",
-      "static/chunks/255-a4e47dc05adf267a.js",
-      "static/chunks/main-app-5819f61cb41de776.js",
-      "static/chunks/app/api/system/status/route-fb74e7bd42157f0b.js"
     ],
     "/page": [
       "static/chunks/webpack-74c939c87fa0092a.js",

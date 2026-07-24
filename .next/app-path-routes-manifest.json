@@ -1,12 +1,12 @@
 {
   "/_not-found/page": "/_not-found",
+  "/api/gmail/disconnect/route": "/api/gmail/disconnect",
   "/api/gmail/auth/route": "/api/gmail/auth",
   "/api/gmail/callback/route": "/api/gmail/callback",
-  "/api/gmail/disconnect/route": "/api/gmail/disconnect",
-  "/api/gmail/send/route": "/api/gmail/send",
   "/api/gmail/status/route": "/api/gmail/status",
-  "/api/gmail/sync/route": "/api/gmail/sync",
+  "/api/gmail/send/route": "/api/gmail/send",
   "/api/system/status/route": "/api/system/status",
+  "/api/gmail/sync/route": "/api/gmail/sync",
   "/page": "/",
   "/[section]/page": "/[section]"
 }
