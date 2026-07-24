@@ -125,8 +125,25 @@ function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesse
 function Header({title,sub,action}:{title:string;sub:string;action?:React.ReactNode}){return <div className="heading-row"><div><h1>{title}</h1><div className="muted">{sub}</div></div>{action}</div>}
 function Kpi({label,value,change}:{label:string;value:string;change:string}){return <div className="card"><div className="kpi-label">{label}</div><div className="kpi-value">{value}</div><div className="up">↑ {change} vs last 7 days</div></div>}
 async function fetchIntegrationStatus() {
-  const [gmailResponse,systemResponse]=await Promise.all([fetch('/api/gmail/status?authenticated=true'),fetch('/api/system/status')]);
-  return {gmailStatus:await gmailResponse.json() as GmailStatus,systemStatus:await systemResponse.json() as {statuses:SystemStatus}};
+  const get = async (url:string) => {
+    const response = await fetch(url);
+    if (!response.ok) throw new Error(`Status request failed (${response.status})`);
+    return response.json();
+  };
+  const [gmailResult,systemResult]=await Promise.allSettled([
+    get('/api/gmail/status?authenticated=true'),
+    get('/api/system/status'),
+  ]);
+  const gmailStatus = gmailResult.status === 'fulfilled'
+    ? gmailResult.value as GmailStatus
+    : {connected:false,code:'GMAIL_API_UNAVAILABLE',error:'The status service is unavailable. Try again shortly.'} satisfies GmailStatus;
+  const systemStatus = systemResult.status === 'fulfilled'
+    ? systemResult.value as {statuses:SystemStatus}
+    : {statuses:Object.fromEntries(
+        (['cloudflare','backend','database','googleOAuth','gmailApi','connectedAccount'] as const)
+          .map(key => [key,{ok:false,detail:'Status service unavailable'}]),
+      ) as SystemStatus};
+  return {gmailStatus,systemStatus};
 }
 
 function Dashboard({leads,prospects,drafts,outreach}:{leads:Lead[];prospects:Prospect[];drafts:Draft[];outreach:Outreach[]}) {
@@ -226,7 +243,7 @@ function SettingsPage(){
   const [daily,setDaily]=useState('10'); const [style,setStyle]=useState('Professional and warm'); const [saved,setSaved]=useState('');
   const [gmail,setGmail]=useState<GmailStatus>({connected:false}); const [mapping,setMapping]=useState<Record<string,string>>({}); const [syncing,setSyncing]=useState(false);
   const [system,setSystem]=useState<SystemStatus|null>(null);
-  useEffect(()=>{fetchIntegrationStatus().then(({gmailStatus,systemStatus})=>{setGmail(gmailStatus); setSystem({...systemStatus.statuses,connectedAccount:{ok:gmailStatus.connected,detail:gmailStatus.connected?`Connected · ${gmailStatus.emailAddress}`:'No Gmail account connected'},gmailApi:{ok:gmailStatus.connected,detail:gmailStatus.connected?'Profile check passed':gmailStatus.error??'Gmail status is unavailable'}});}).catch(()=>setGmail({connected:false,code:'GMAIL_API_UNAVAILABLE',error:'The status service is unavailable. Try again shortly.'}));},[]);
+  useEffect(()=>{fetchIntegrationStatus().then(({gmailStatus,systemStatus})=>{setGmail(gmailStatus); setSystem({...systemStatus.statuses,connectedAccount:{ok:gmailStatus.connected,detail:gmailStatus.connected?`Connected · ${gmailStatus.emailAddress}`:'No Gmail account connected'},gmailApi:{ok:gmailStatus.connected,detail:gmailStatus.connected?'Profile check passed':gmailStatus.error??'Gmail status is unavailable'}});});},[]);
   useEffect(()=>{const savedMapping=localStorage.getItem('leadora-business-email-mappings'); if(savedMapping) try{setMapping(JSON.parse(savedMapping));}catch{}},[]);
   function save(){const limit=Number(daily); if(!Number.isInteger(limit)||limit<1){setSaved('Enter a positive whole number');return;} try { localStorage.setItem('leadora-outreach-settings',JSON.stringify({dailyLimit:limit,style})); setSaved('Saved'); } catch { setSaved('Unable to save preferences'); }}
   function saveMappings(){localStorage.setItem('leadora-business-email-mappings',JSON.stringify(mapping));setSaved('Mappings saved');}
