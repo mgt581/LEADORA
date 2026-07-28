@@ -1,15 +1,16 @@
-name: Deploy LEADORA to Cloudflare
+name: Validate LEADORA
 
 on:
   push:
     branches: [main]
+  pull_request:
   workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository
@@ -20,21 +21,4 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Deploy Worker
-        run: npm run cf:deploy
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-      - name: Configure Gmail runtime secrets
-        run: |
-          printf '%s' "$GOOGLE_OAUTH_CLIENT_ID" | npx wrangler secret put GOOGLE_OAUTH_CLIENT_ID
-          printf '%s' "$GOOGLE_OAUTH_CLIENT_SECRET" | npx wrangler secret put GOOGLE_OAUTH_CLIENT_SECRET
-          printf '%s' "$GOOGLE_OAUTH_REDIRECT_URL" | npx wrangler secret put GOOGLE_OAUTH_REDIRECT_URL
-          printf '%s' "$GMAIL_TOKEN_ENCRYPTION_KEY" | npx wrangler secret put GMAIL_TOKEN_ENCRYPTION_KEY
-        env:
-          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          GOOGLE_OAUTH_CLIENT_ID: ${{ secrets.GOOGLE_OAUTH_CLIENT_ID }}
-          GOOGLE_OAUTH_CLIENT_SECRET: ${{ secrets.GOOGLE_OAUTH_CLIENT_SECRET }}
-          GOOGLE_OAUTH_REDIRECT_URL: ${{ secrets.GOOGLE_OAUTH_REDIRECT_URL }}
-          GMAIL_TOKEN_ENCRYPTION_KEY: ${{ secrets.GMAIL_TOKEN_ENCRYPTION_KEY }}
+      - run: npm run build
