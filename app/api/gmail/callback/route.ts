@@ -9,7 +9,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.redirect(new URL('/settings/?gmail=error&reason=INVALID_AUTHORIZATION', request.url));
   }
   try {
-    const tokens = await exchangeCode(code);
+    const callbackUrl = new URL('/api/gmail/callback', request.url).toString();
+    const tokens = await exchangeCode(code, callbackUrl);
     const response = NextResponse.redirect(new URL('/settings/?gmail=connected', request.url));
     response.cookies.set(TOKEN_COOKIE, encryptTokenSet(tokens), { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24 * 30, path: '/' });
     response.cookies.delete(STATE_COOKIE);

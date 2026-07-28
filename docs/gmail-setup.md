@@ -7,16 +7,16 @@ LEADORA uses server-side OAuth with `gmail.send` and `gmail.readonly` only. Toke
 1. Create/select a Google Cloud project and enable **Gmail API**.
 2. Configure the OAuth consent screen. Add the LEADORA owner as a test user while the app is in testing mode.
 3. Create an OAuth **Web application** client.
-4. Add the origin (`NEXT_PUBLIC_APP_URL`) under Authorized JavaScript origins.
+4. Add the deployed Worker origin under Authorized JavaScript origins.
 5. Add the exact redirect URL from `GOOGLE_OAUTH_REDIRECT_URL` under Authorized redirect URIs. The default is `http://localhost:3000/api/gmail/callback`.
 6. Configure the production HTTPS URL and production callback before deployment.
 
-Run `openssl rand -base64 32` for `GMAIL_TOKEN_ENCRYPTION_KEY`, then configure every variable in `.env.example` in the deployment environment. Never commit the client secret or encryption key.
-For Cloudflare deployments, configure `CLOUDFLARE_ACCOUNT_ID`, `CLOUDFLARE_API_TOKEN`, and `CLOUDFLARE_D1_DATABASE_ID`. `GOOGLE_OAUTH_REDIRECT_URL` must exactly equal `${NEXT_PUBLIC_APP_URL}/api/gmail/callback` (including HTTPS and path).
-Deploy the Worker with `npm run cf:deploy`. The OAuth code reads Cloudflare Worker bindings through `getCloudflareContext().env`; do not rename the bindings or rely on `process.env` for production secrets. Configure plaintext values as Worker variables and set secret values with `wrangler secret put`.
+Generate `GMAIL_TOKEN_ENCRYPTION_KEY` with `openssl rand -base64 32`. Add `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL`, and `GMAIL_TOKEN_ENCRYPTION_KEY` as GitHub Actions secrets; never commit their values. `GOOGLE_OAUTH_REDIRECT_URL` must be the exact deployed Worker callback URL.
+
+Add `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` as GitHub Actions secrets for deployment only. They are deliberately not exposed to the running application. Push to `main` or manually run **Deploy LEADORA to Cloudflare**, then make the Worker URL the canonical LEADORA URL instead of the static GitHub Pages site.
 
 Google may require verification before external users can use Gmail restricted scopes. This integration deliberately does not request full mailbox access or `mail.google.com`.
 
 ## Current hosting limitation
 
-The repository's existing GitHub Pages deployment is static and cannot execute OAuth callbacks or Gmail API routes. Deploy the Next.js server (for example on Vercel) with `output: 'export'` disabled, or place these routes behind an authenticated server deployment. Pub/Sub push is not enabled here; use the authenticated **Sync now** action until a server-side scheduler and database are configured.
+The repository's existing GitHub Pages deployment is static and cannot execute OAuth callbacks or Gmail API routes. Use the Cloudflare Worker deployment as the app URL. Pub/Sub push is not enabled here; use **Sync now** until a server-side scheduler and database are configured.
