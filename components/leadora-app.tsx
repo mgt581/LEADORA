@@ -131,7 +131,7 @@ async function fetchIntegrationStatus() {
     return response.json();
   };
   const [gmailResult,systemResult]=await Promise.allSettled([
-    get('/api/gmail/status?authenticated=true'),
+    get('/api/gmail/status'),
     get('/api/system/status'),
   ]);
   const gmailStatus = gmailResult.status === 'fulfilled'

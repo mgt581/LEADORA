@@ -32,12 +32,7 @@ export class GmailIntegrationError extends Error {
 export const GMAIL_REQUIRED_ENV_VARS = [
   'GOOGLE_OAUTH_CLIENT_ID',
   'GOOGLE_OAUTH_CLIENT_SECRET',
-  'GOOGLE_OAUTH_REDIRECT_URL',
   'GMAIL_TOKEN_ENCRYPTION_KEY',
-  'NEXT_PUBLIC_APP_URL',
-  'CLOUDFLARE_ACCOUNT_ID',
-  'CLOUDFLARE_API_TOKEN',
-  'CLOUDFLARE_D1_DATABASE_ID',
 ] as const;
 type RuntimeEnv = Record<string, string | undefined>;
 function getRuntimeEnv(): RuntimeEnv {
@@ -69,21 +64,18 @@ export type GmailDiagnostic = { name: string; configured: boolean };
 export function getGmailDiagnostics(): GmailDiagnostic[] {
   return GMAIL_REQUIRED_ENV_VARS.map(name => ({ name, configured: Boolean(env(name)) }));
 }
-export function configurationError(): GmailIntegrationError | null {
+export function configurationError(redirectUri?: string): GmailIntegrationError | null {
   const id = Boolean(env('GOOGLE_OAUTH_CLIENT_ID'));
   const secretValue = Boolean(env('GOOGLE_OAUTH_CLIENT_SECRET'));
-  const redirect = Boolean(env('GOOGLE_OAUTH_REDIRECT_URL'));
   const encryption = Boolean(env('GMAIL_TOKEN_ENCRYPTION_KEY'));
-  const appUrlValue = env('NEXT_PUBLIC_APP_URL');
-  const cloudflare = ['CLOUDFLARE_ACCOUNT_ID', 'CLOUDFLARE_API_TOKEN', 'CLOUDFLARE_D1_DATABASE_ID'].every(name => Boolean(env(name)));
-  if (!id && !secretValue && !redirect) return new GmailIntegrationError('GOOGLE_OAUTH_NOT_CONFIGURED', gmailErrorMessage('GOOGLE_OAUTH_NOT_CONFIGURED'));
+  if (!id && !secretValue) return new GmailIntegrationError('GOOGLE_OAUTH_NOT_CONFIGURED', gmailErrorMessage('GOOGLE_OAUTH_NOT_CONFIGURED'));
   if (!id) return new GmailIntegrationError('MISSING_CLIENT_ID', gmailErrorMessage('MISSING_CLIENT_ID'));
   if (!secretValue) return new GmailIntegrationError('MISSING_CLIENT_SECRET', gmailErrorMessage('MISSING_CLIENT_SECRET'));
   if (!encryption) return new GmailIntegrationError('MISSING_ENCRYPTION_KEY', gmailErrorMessage('MISSING_ENCRYPTION_KEY'));
-  if (!redirect || !appUrlValue) return new GmailIntegrationError('MISSING_REDIRECT_URI', gmailErrorMessage('MISSING_REDIRECT_URI'));
-  const expected = `${appUrlValue.replace(/\/$/, '')}/api/gmail/callback`;
-  if (env('GOOGLE_OAUTH_REDIRECT_URL') !== expected) return new GmailIntegrationError('REDIRECT_URI_MISMATCH', gmailErrorMessage('REDIRECT_URI_MISMATCH'));
-  if (!cloudflare) return new GmailIntegrationError('MISSING_CLOUDFLARE_ENV', gmailErrorMessage('MISSING_CLOUDFLARE_ENV'));
+  const configuredRedirect = env('GOOGLE_OAUTH_REDIRECT_URL');
+  if (configuredRedirect && redirectUri && configuredRedirect !== redirectUri) {
+    return new GmailIntegrationError('REDIRECT_URI_MISMATCH', gmailErrorMessage('REDIRECT_URI_MISMATCH'));
+  }
   return null;
 }
 export type GmailHeader = { name: string; value: string };
@@ -118,12 +110,12 @@ export function oauthStateMatches(expected: string, actual: string | undefined) 
   return timingSafeEqual(Buffer.from(expected), Buffer.from(actual));
 }
 export function createOAuthState() { return randomBytes(32).toString('base64url'); }
-export function getAuthorizationUrl(state: string) {
-  const error = configurationError();
+export function getAuthorizationUrl(state: string, redirectUri: string) {
+  const error = configurationError(redirectUri);
   if (error) throw error;
   const params = new URLSearchParams({
     client_id: env('GOOGLE_OAUTH_CLIENT_ID') ?? '',
-    redirect_uri: env('GOOGLE_OAUTH_REDIRECT_URL') ?? '',
+    redirect_uri: env('GOOGLE_OAUTH_REDIRECT_URL') ?? redirectUri,
     response_type: 'code', access_type: 'offline', prompt: 'consent',
     scope: GMAIL_SCOPES, state,
   });
@@ -132,15 +124,15 @@ export function getAuthorizationUrl(state: string) {
 export function encryptTokenSet(tokens: TokenSet) { return seal(JSON.stringify(tokens)); }
 export function decryptTokenSet(value: string): TokenSet { return JSON.parse(unseal(value)) as TokenSet; }
 
-export async function exchangeCode(code: string): Promise<TokenSet> {
-  const error = configurationError();
+export async function exchangeCode(code: string, redirectUri: string): Promise<TokenSet> {
+  const error = configurationError(redirectUri);
   if (error) throw error;
   const response = await fetch('https://oauth2.googleapis.com/token', {
     method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded' },
     body: new URLSearchParams({
       code, client_id: env('GOOGLE_OAUTH_CLIENT_ID') ?? '',
       client_secret: env('GOOGLE_OAUTH_CLIENT_SECRET') ?? '',
-      redirect_uri: env('GOOGLE_OAUTH_REDIRECT_URL') ?? '', grant_type: 'authorization_code',
+      redirect_uri: env('GOOGLE_OAUTH_REDIRECT_URL') ?? redirectUri, grant_type: 'authorization_code',
     }),
   });
   if (!response.ok) throw new GmailIntegrationError('GMAIL_API_UNAVAILABLE', `Google authorization failed (${response.status})`);

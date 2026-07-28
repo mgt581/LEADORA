@@ -13,9 +13,6 @@ export const runtime = 'nodejs';
 
 export async function GET(request: NextRequest) {
   const diagnostics = process.env.NODE_ENV === 'development' ? { diagnostics: getGmailDiagnostics() } : {};
-  if (request.nextUrl.searchParams.get('authenticated') !== 'true') {
-    return NextResponse.json({ connected: false, code: 'USER_NOT_AUTHENTICATED', error: gmailErrorMessage('USER_NOT_AUTHENTICATED'), ...diagnostics });
-  }
   const configError = configurationError();
   if (configError) {
     return NextResponse.json({ connected: false, code: configError.code, error: configError.message, ...diagnostics });
