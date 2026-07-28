@@ -11,9 +11,9 @@ LEADORA uses server-side OAuth with `gmail.send` and `gmail.readonly` only. Toke
 5. Add the exact redirect URL from `GOOGLE_OAUTH_REDIRECT_URL` under Authorized redirect URIs. The default is `http://localhost:3000/api/gmail/callback`.
 6. Configure the production HTTPS URL and production callback before deployment.
 
-Generate `GMAIL_TOKEN_ENCRYPTION_KEY` with `openssl rand -base64 32`. Add `GOOGLE_OAUTH_CLIENT_ID`, `GOOGLE_OAUTH_CLIENT_SECRET`, `GOOGLE_OAUTH_REDIRECT_URL`, and `GMAIL_TOKEN_ENCRYPTION_KEY` as GitHub Actions secrets; never commit their values. `GOOGLE_OAUTH_REDIRECT_URL` must be the exact deployed Worker callback URL.
+Generate `GMAIL_TOKEN_ENCRYPTION_KEY` with `openssl rand -base64 32`. Set the public `GOOGLE_OAUTH_CLIENT_ID` and `GOOGLE_OAUTH_REDIRECT_URL` Worker variables in `wrangler.jsonc`. Add `GOOGLE_OAUTH_CLIENT_SECRET` and `GMAIL_TOKEN_ENCRYPTION_KEY` as encrypted secrets in the Cloudflare Worker settings; never commit their values.
 
-Add `CLOUDFLARE_ACCOUNT_ID` and `CLOUDFLARE_API_TOKEN` as GitHub Actions secrets for deployment only. They are deliberately not exposed to the running application. Push to `main` or manually run **Deploy LEADORA to Cloudflare**, then make the Worker URL the canonical LEADORA URL instead of the static GitHub Pages site.
+The `leadora` Worker is connected directly to this GitHub repository. Cloudflare builds preview branches and deploys `main`; GitHub Actions independently validates the production Next.js build. No Cloudflare API token is required in GitHub.
 
 Google may require verification before external users can use Gmail restricted scopes. This integration deliberately does not request full mailbox access or `mail.google.com`.
 
