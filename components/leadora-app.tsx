@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   LayoutDashboard, Users, ContactRound, Building2, Handshake, Columns3,
@@ -11,9 +11,10 @@ import {
 type Lead = { name:string; email:string; company:string; status:string; source:string; created:string };
 type Contact = { name:string; email:string; company:string; phone:string; status:string };
 type BusinessProfile = { id:string; name:string; description:string; services:string[]; serviceArea:string; website:string; signature:string; tone:string; idealCustomer:string; industries:string[]; dailyLimit:number; followUp:string };
-type Prospect = { id:string; businessId:string; name:string; website:string; email:string; location:string; industry:string; contactUrl:string; score:number; reasons:string[]; discoveredAt:string; contacted:boolean };
-type Draft = { id:string; prospectId:string; businessId:string; subject:string; body:string; generatedAt:string; status:'pending'|'approved'|'rejected'|'sent'|'edited' };
-type Outreach = { id:string; prospectId:string; businessId:string; date:string; time:string; status:'sent'|'pending'|'rejected'|'follow-up due' };
+type Audit = { auditedAt:string; websiteSpeed:'not_measured'; mobileFriendly:'not_measured'; https:boolean; metaTitle:string; metaDescription:string; h1Tags:string[]; missingAltText:number; brokenLinks:number; basicSeoScore:number; accessibilityScore:number; googleBusinessProfileDetected:boolean; socialLinks:string[]; overallScore:number; notes:string[] };
+type Prospect = { id:string; businessId:string; name:string; website:string; email:string; phone?:string; location:string; industry:string; contactUrl:string; googleMapsUrl?:string; score:number; reasons:string[]; discoveredAt:string; contacted:boolean; audit?:Audit; recommendedService?:string; confidence?:number };
+type Draft = { id:string; prospectId:string; businessId:string; subject:string; body:string; callToAction?:string; generatedAt:string; status:'pending'|'approved'|'rejected'|'sent'|'edited'|'follow_up_due'|'send_failed'; isFollowUp?:boolean; gmailMessageId?:string; lastError?:string };
+type Outreach = { id:string; prospectId:string; businessId:string; date:string; time:string; status:'sent'|'pending'|'rejected'|'follow-up due'; gmailMessageId?:string; sentAt?:string };
 type GmailMessage = { id:string; threadId:string; from:string; to:string; cc:string; subject:string; body:string; internalDate:string; labelIds:string[]; businessId?:string|null; isRead?:boolean };
 type SystemCheck = { ok:boolean; detail:string };
 type SystemStatus = Record<'cloudflare'|'backend'|'database'|'googleOAuth'|'gmailApi'|'connectedAccount',SystemCheck>;
@@ -37,16 +38,6 @@ const seedBusinesses: BusinessProfile[] = [
   {id:'bryant-digital',name:'Bryant Digital Solutions',description:'Practical digital marketing for growing businesses.',services:['Websites','SEO','Lead generation'],serviceArea:'UK-wide',website:'bryantdigital.co.uk',signature:'Alex Bryant\nBryant Digital Solutions',tone:'Clear and consultative',idealCustomer:'Owner-led SMEs',industries:['Professional services','Retail','Hospitality'],dailyLimit:10,followUp:'3 days, then 7 days'},
   {id:'mr-white-teeth',name:'Mr White Teeth Whitening Bournemouth',description:'Safe, professional teeth whitening in Bournemouth.',services:['Teeth whitening','Smile consultations'],serviceArea:'Bournemouth and Poole',website:'mrwhiteteeth.co.uk',signature:'Alex Bryant\nMr White Teeth Whitening Bournemouth',tone:'Reassuring and upbeat',idealCustomer:'Adults seeking a brighter smile',industries:['Beauty','Healthcare'],dailyLimit:10,followUp:'5 days, then 10 days'},
 ];
-const discoveryPool = [
-  ['Harbour View Builders','harbourviewbuilders.co.uk','hello@harbourviewbuilders.co.uk','Bournemouth','Construction','https://harbourviewbuilders.co.uk/contact'],
-  ['Seaside Property Care','seasidepropertycare.co.uk','info@seasidepropertycare.co.uk','Poole','Property services','https://seasidepropertycare.co.uk/contact'],
-  ['The Dorset Kitchen','thedorsetkitchen.co.uk','hello@thedorsetkitchen.co.uk','Dorset','Hospitality','https://thedorsetkitchen.co.uk/contact'],
-  ['Pine & Oak Interiors','pineandoakinteriors.co.uk','studio@pineandoakinteriors.co.uk','Bournemouth','Interior design','https://pineandoakinteriors.co.uk/contact'],
-  ['South Coast Wellness','southcoastwellness.co.uk','hello@southcoastwellness.co.uk','Poole','Wellness','https://southcoastwellness.co.uk/contact'],
-  ['Brightline Accountants','brightlineaccountants.co.uk','enquiries@brightlineaccountants.co.uk','Dorset','Professional services','https://brightlineaccountants.co.uk/contact'],
-  ['Cedar Lane Dental','cedarlanedental.co.uk','reception@cedarlanedental.co.uk','Bournemouth','Healthcare','https://cedarlanedental.co.uk/contact'],
-  ['Coastal Lettings','coastallettings.co.uk','info@coastallettings.co.uk','Poole','Property','https://coastallettings.co.uk/contact'],
-] as const;
 
 const nav = [
   ['dashboard','Dashboard',LayoutDashboard],['leads','Leads',Users],['contacts','Contacts',ContactRound],
@@ -59,8 +50,15 @@ const nav = [
 
 function useStoredState<T>(key:string, initial:T) {
   const [value,setValue] = useState<T>(initial);
+  const loaded=useRef(false);
   useEffect(() => { const saved=localStorage.getItem(key); if(saved) try { setValue(JSON.parse(saved)); } catch {} },[key]);
-  useEffect(() => { localStorage.setItem(key,JSON.stringify(value)); },[key,value]);
+  useEffect(() => {
+    if(!key.startsWith('leadora-') || key==='leadora-auth' || key==='leadora-businesses'){loaded.current=true;return;}
+    let cancelled=false;
+    fetch(`/api/state/${key}`).then(async response=>{if(!response.ok)throw new Error();return response.json();}).then(data=>{if(!cancelled&&data.value!==null)setValue(data.value as T);}).catch(()=>{}).finally(()=>{loaded.current=true;});
+    return ()=>{cancelled=true;};
+  },[key]);
+  useEffect(() => { localStorage.setItem(key,JSON.stringify(value)); if(loaded.current&&key.startsWith('leadora-')&&key!=='leadora-auth'&&key!=='leadora-businesses') fetch(`/api/state/${key}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({value})}).catch(()=>{}); },[key,value]);
   return [value,setValue] as const;
 }
 
@@ -116,6 +114,7 @@ function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesse
   if(route==='automations') return <Automations/>;
   if(route==='analytics'||route==='reports') return <Reports title={route==='analytics'?'Analytics':'Reports'}/>;
   if(route==='settings') return <SettingsPage/>;
+  if(route==='website-audits') return <AuditPage prospects={prospects}/>;
   if(route==='inbox') return <InboxPage messages={gmailMessages} setMessages={setGmailMessages} businesses={businesses}/>;
   if(route==='email-outreach') return <OutreachPage businesses={businesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach}/>;
   if(route==='outreach-history') return <HistoryPage businesses={businesses} prospects={prospects} outreach={outreach}/>;
@@ -149,7 +148,7 @@ async function fetchIntegrationStatus() {
 function Dashboard({leads,prospects,drafts,outreach}:{leads:Lead[];prospects:Prospect[];drafts:Draft[];outreach:Outreach[]}) {
   const bars=[48,72,55,79,62,88,42];
   return <><Header title="Good morning, Alex 👋" sub="Here’s what’s happening with your business today." action={<button className="btn secondary">Jul 14 – Jul 21, 2026</button>}/>
-    <div className="grid kpis"><Kpi label="New Leads" value={String(248+leads.length)} change="18%"/><Kpi label="Open Deals" value="67" change="12%"/><Kpi label="Conversions" value="23" change="8%"/><Kpi label="Revenue" value="£12,540" change="22%"/></div>
+    <div className="grid kpis"><Kpi label="Leads Found Today" value={String(prospects.filter(p=>new Date(p.discoveredAt).toDateString()===new Date().toDateString()).length)} change="today"/><Kpi label="Awaiting Approval" value={String(drafts.filter(d=>d.status==='pending').length)} change="today"/><Kpi label="Emails Sent" value={String(outreach.filter(o=>o.status==='sent').length)} change="all time"/><Kpi label="Average Audit Score" value={prospects.length?`${Math.round(prospects.reduce((total,p)=>total+p.score,0)/prospects.length)}/100`:'—'} change="all audits"/></div>
     <div className="grid dashboard-grid"><div className="card"><b>Leads Overview</b><div className="chart-bars">{bars.map((h,i)=><div key={i} className="bar" style={{height:`${h}%`}}/>)}</div><div style={{display:'flex',justifyContent:'space-between'}}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=><span className="muted" key={x}>{x}</span>)}</div></div>
     <div className="card"><b>Recent Activity</b><div className="activity" style={{marginTop:18}}>{['New lead: Sarah Johnson','Email opened: Proposal Follow-up','Deal won: ACME Solutions','Task completed: Call with James','New lead: David Williams'].map((x,i)=><div className="activity-row" key={x}><i className="dot"/><span>{x}</span><span className="muted">{i+1}h</span></div>)}</div></div></div>
     <div className="grid dashboard-grid"><div className="card"><b>Today’s Prospecting</b><div className="grid kpis" style={{gridTemplateColumns:'repeat(4,1fr)',marginTop:14}}><Kpi label="Prospects found" value={String(prospects.length)} change="today"/><Kpi label="Emails drafted" value={String(drafts.length)} change="today"/><Kpi label="Pending approval" value={String(drafts.filter(d=>d.status==='pending').length)} change="today"/><Kpi label="Sent today" value={String(outreach.filter(o=>o.status==='sent'&&o.date===new Date().toLocaleDateString()).length)} change="today"/></div></div><div className="card"><b>Tasks Due Today</b>{['Review new AI drafts','Approve outreach queue','Follow up with prospects','Team meeting'].map((x,i)=><label key={x} style={{display:'flex',gap:10,marginTop:16,fontSize:12}}><input type="checkbox"/>{x}<span className="muted" style={{marginLeft:'auto'}}>{9+i}:00</span></label>)}</div></div>
@@ -177,26 +176,27 @@ function Reports({title}:{title:string}){return <><Header title={title} sub="Tra
 function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach}:{businesses:BusinessProfile[];prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void}) {
   const [businessId,setBusinessId]=useState(businesses[0]?.id||''); const [busy,setBusy]=useState(false); const [sending,setSending]=useState<string|null>(null); const [sendError,setSendError]=useState('');
   const pending=drafts.filter(d=>d.status==='pending');
-  function discover() {
-    const business=businesses.find(b=>b.id===businessId); if(!business)return; setBusy(true);
-    setTimeout(() => {
-      const existingWebsites = new Set(prospects.map(p=>p.website));
-      const candidates = discoveryPool.filter((_, index) => index < business.dailyLimit);
-      const found = candidates.filter(row => !existingWebsites.has(row[1])).map((row, index):Prospect => ({
-        id: `${business.id}-${crypto.randomUUID()}`,
-        businessId: business.id, name: row[0], website: row[1], email: row[2], location: row[3],
-        industry: row[4], contactUrl: row[5], score: 78-index*3,
-        reasons: [`Located inside ${business.serviceArea}`, 'Public business email found', business.industries.some(industry=>row[4].toLowerCase().includes(industry.toLowerCase()))?'Relevant industry':'Website opportunity identified'],
-        discoveredAt: new Date().toISOString(), contacted: false,
-      }));
-      const newDrafts = found.map((p):Draft => ({
-        id: `draft-${p.id}`, prospectId: p.id, businessId: p.businessId,
-        subject: `A practical idea for ${p.name}`,
-        body: `Hi there,\n\nI came across ${p.name} while looking at businesses in ${business.serviceArea}. ${business.description} We help organisations like yours with ${business.services.slice(0,2).join(' and ')} and I noticed there may be a straightforward opportunity to support your next stage of growth.\n\nWould a quick conversation be useful? I’m happy to share a few relevant ideas with no obligation.\n\n${business.signature}`,
-        generatedAt: new Date().toISOString(), status: 'pending',
-      }));
-      setProspects([...prospects,...found]); setDrafts([...drafts,...newDrafts]); setBusy(false);
-    },500);
+  useEffect(()=>{
+    const due = outreach.filter(o => o.status==='sent' && o.sentAt && Date.now()-new Date(o.sentAt).getTime() >= 3*24*60*60*1000 && !drafts.some(d=>d.prospectId===o.prospectId&&d.isFollowUp));
+    if(!due.length)return;
+    const followUps=due.map((o):Draft|null=>{const p=prospects.find(item=>item.id===o.prospectId);const b=businesses.find(item=>item.id===o.businessId);if(!p||!b)return null;return {id:`follow-up-${o.id}`,prospectId:p.id,businessId:b.id,subject:`Following up — ${p.name}`,body:`Hi there,\n\nI wanted to follow up on my earlier note. If improving ${b.services[0].toLowerCase()} is on your radar, I’d be happy to share a few relevant ideas — no pressure at all.\n\nWould a quick call be useful?\n\n${b.signature}`,callToAction:'Would a quick call be useful?',generatedAt:new Date().toISOString(),status:'pending',isFollowUp:true};}).filter((draft):draft is Draft=>Boolean(draft));
+    if(followUps.length)setDrafts([...drafts,...followUps]);
+  },[outreach,drafts,prospects,businesses,setDrafts]);
+  async function discover() {
+    const business=businesses.find(b=>b.id===businessId); if(!business)return;
+    if(business.id!=='bryant-digital'){setSendError(`${business.name} has a dedicated prospecting workflow planned. Website audits are only enabled for Bryant Digital Solutions.`);return;}
+    const website=prompt('Enter a public business website to analyse (for example, https://example.co.uk)'); if(!website)return;
+    setBusy(true); setSendError('');
+    try {
+      const response=await fetch('/api/leads/audit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({website})});
+      const result=await response.json(); if(!response.ok) throw new Error(result.error||'Website analysis failed.');
+      if(prospects.some(p=>p.website===result.website)){setSendError('This website is already in your CRM.');return;}
+      const audit=result.audit as Audit; const opportunity=audit.notes.length ? `The audit found ${audit.notes.slice(0,2).join(' and ').toLowerCase()}.` : 'The website has a solid foundation and may benefit from a focused growth review.';
+      const prospect:Prospect={id:`${business.id}-${crypto.randomUUID()}`,businessId:business.id,name:result.businessName,website:result.website,email:result.contactEmail||'',phone:result.phoneNumber||'',location:'',industry:'',contactUrl:result.contactPageUrl||'',googleMapsUrl:`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(result.businessName)}`,score:audit.overallScore,reasons:[opportunity,result.contactEmail?'A public business email was published on the website.':'No public email found — add one before sending.'],discoveredAt:new Date().toISOString(),contacted:false,audit,recommendedService:business.services[0],confidence:Math.max(40,Math.min(95,100-audit.overallScore))};
+      const evidence=audit.notes.length ? `I noticed ${audit.notes[0].toLowerCase()} on the public pages I reviewed.` : `I reviewed your public website and noticed a possible opportunity to strengthen its next stage of growth.`;
+      const draft:Draft={id:`draft-${prospect.id}`,prospectId:prospect.id,businessId:business.id,subject:`A practical idea for ${prospect.name}`,body:`Hi there,\n\nI came across ${prospect.name} and took a quick look at its public website. ${evidence}\n\n${business.name} helps organisations with ${business.services.slice(0,2).join(' and ')}. If useful, I’d be happy to share a few practical, no-obligation ideas that relate to what I found.\n\nWould a short call next week be helpful?\n\n${business.signature}`,callToAction:'Would a short call next week be helpful?',generatedAt:new Date().toISOString(),status:'pending'};
+      setProspects([...prospects,prospect]); setDrafts([...drafts,draft]);
+    } catch(error) { setSendError(error instanceof Error?error.message:'Website analysis failed.'); } finally {setBusy(false);}
   }
   function approve(id:string){setDrafts(drafts.map(d=>d.id===id?{...d,status:'approved'}:d));}
   function remove(id:string){setDrafts(drafts.filter(d=>d.id!==id));}
@@ -212,12 +212,26 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
       const result=await response.json(); if(!response.ok)throw new Error(result.error||'Gmail send failed.');
       if(drafts.some(x=>x.status==='sent'&&x.id===id))return;
       const now=new Date();
-      const record:Outreach={id:`out-${crypto.randomUUID()}`,prospectId:p.id,businessId:d.businessId,date:now.toLocaleDateString(),time:now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),status:'sent'};
-      setDrafts(drafts.map(x=>x.id===id?{...x,status:'sent'}:x)); setProspects(prospects.map(x=>x.id===p.id?{...x,contacted:true}:x)); setOutreach([...outreach,record]);
-    } catch(e) { setSendError(e instanceof Error?e.message:'Gmail send failed.'); } finally { setSending(null); }
+      const record:Outreach={id:`out-${crypto.randomUUID()}`,prospectId:p.id,businessId:d.businessId,date:now.toLocaleDateString(),time:now.toLocaleTimeString([], {hour:'2-digit',minute:'2-digit'}),status:'sent',gmailMessageId:result.id,sentAt:now.toISOString()};
+      setDrafts(drafts.map(x=>x.id===id?{...x,status:'sent',gmailMessageId:result.id}:x)); setProspects(prospects.map(x=>x.id===p.id?{...x,contacted:true}:x)); setOutreach([...outreach,record]);
+    } catch(e) { const message=e instanceof Error?e.message:'Gmail send failed.'; setSendError(message); setDrafts(drafts.map(x=>x.id===id?{...x,status:'send_failed',lastError:message}:x)); } finally { setSending(null); }
   }
   const prospectMap = new Map(prospects.map(p=>[p.id,p])); const businessMap = new Map(businesses.map(b=>[b.id,b]));
-  return <><Header title="AI Outreach Approval Queue" sub="Discover public business contacts and review every email before sending." action={<div style={{display:'flex',gap:8}}><select className="field" style={{margin:0,width:220}} value={businessId} onChange={e=>setBusinessId(e.target.value)}>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><button className="btn" onClick={discover} disabled={busy}>{busy?'Discovering…':'Find prospects'}</button></div>}/>{sendError&&<div className="card" style={{color:'#b42318',marginBottom:16}}>{sendError}</div>}<div className="card" style={{marginBottom:16}}><b><Sparkles size={15} style={{verticalAlign:'middle',marginRight:6}}/>Approval queue</b><span className="muted" style={{marginLeft:10}}>{pending.length} pending · emails are never sent automatically</span>{pending.length>0&&<button className="btn secondary" style={{float:'right'}} onClick={()=>setDrafts(drafts.map(d=>d.status==='pending'?{...d,status:'approved'}:d))}>Approve All</button>}</div>{pending.length===0?<div className="card" style={{textAlign:'center',padding:40}}><ClipboardCheck size={30} color="#c9a84c"/><p><b>No emails awaiting approval</b></p><p className="muted">Choose a business and find prospects to create personalised drafts.</p></div>:<div className="grid">{pending.map(d=>{const p=prospectMap.get(d.prospectId);const b=businessMap.get(d.businessId);if(!p||!b)return null;return <div className="card" key={d.id}><div style={{display:'flex',justifyContent:'space-between',gap:15}}><div><b>{p.name}</b><div className="muted">{b.name} · {p.email} · Score {p.score}/100</div></div><span className="badge">Pending approval</span></div><h3 style={{fontSize:14,marginBottom:8}}>{d.subject}</h3><p style={{whiteSpace:'pre-line',fontSize:13,lineHeight:1.6}}>{d.body}</p><div className="muted" style={{marginBottom:12}}>Why chosen: {p.reasons.join(' · ')}</div><div style={{display:'flex',gap:8}}><button className="btn" onClick={()=>approve(d.id)}><ClipboardCheck size={14}/> Approve</button><button className="btn secondary" onClick={()=>{const subject=prompt('Edit subject',d.subject)||d.subject;setDrafts(drafts.map(x=>x.id===d.id?{...x,subject,status:'edited'}:x))}}><Pencil size={14}/> Edit</button><button className="btn secondary" onClick={()=>remove(d.id)}><Trash2 size={14}/> Delete</button></div></div>})}</div>}{drafts.filter(d=>d.status==='approved').length>0&&<div className="card" style={{marginTop:16}}><b>Approved and ready to send</b>{drafts.filter(d=>d.status==='approved').map(d=><div key={d.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid #eee'}}><span>{prospectMap.get(d.prospectId)?.name}<span className="muted"> · {d.subject}</span></span><button className="btn" onClick={()=>send(d.id)} disabled={sending!==null}><Send size={14}/> {sending===d.id?'Sending…':'Send now'}</button></div>)}</div>}</>;
+  const digitalSelected=businessId==='bryant-digital';
+  return <><Header title="Bryant Digital Solutions Outreach" sub="A complete approval-only workflow: public website → audit → proposal → Gmail." action={<div style={{display:'flex',gap:8}}><select className="field" style={{margin:0,width:220}} value={businessId} onChange={e=>setBusinessId(e.target.value)}>{businesses.map(b=><option key={b.id} value={b.id}>{b.name}</option>)}</select><button className="btn" onClick={discover} disabled={busy||!digitalSelected}>{busy?'Analysing…':'Analyse website'}</button></div>}/>{!digitalSelected&&<div className="card" style={{marginBottom:16}}><b>{businesses.find(b=>b.id===businessId)?.name}</b><p className="muted">This specialist workflow is not enabled yet. It will use its own prospect criteria and proposal generator, without a website audit.</p></div>}{sendError&&<div className="card" style={{color:'#b42318',marginBottom:16}}>{sendError}</div>}<div className="card" style={{marginBottom:16}}><b><Sparkles size={15} style={{verticalAlign:'middle',marginRight:6}}/>Approval queue</b><span className="muted" style={{marginLeft:10}}>{pending.length} pending · emails are never sent automatically</span></div>{pending.length===0?<div className="card" style={{textAlign:'center',padding:40}}><ClipboardCheck size={30} color="#c9a84c"/><p><b>No emails awaiting approval</b></p><p className="muted">Select Bryant Digital Solutions and analyse a public business website to create the first audit and proposal.</p></div>:<div className="grid">{pending.map(d=>{const p=prospectMap.get(d.prospectId);const b=businessMap.get(d.businessId);if(!p||!b)return null;return <div className="card" key={d.id}><div style={{display:'flex',justifyContent:'space-between',gap:15}}><div><b>{p.name}</b><div className="muted">{b.name} · {p.email||'No public email'} · Audit {p.score}/100</div></div><span className="badge">Pending approval</span></div><h3 style={{fontSize:14,marginBottom:8}}>{d.subject}</h3><p style={{whiteSpace:'pre-line',fontSize:13,lineHeight:1.6}}>{d.body}</p><div className="muted" style={{marginBottom:12}}>Opportunity: {p.recommendedService} · Confidence {p.confidence}% · {p.reasons.join(' ')}</div><div style={{display:'flex',gap:8}}><button className="btn" onClick={()=>approve(d.id)} disabled={!p.email}><ClipboardCheck size={14}/> Approve</button><button className="btn secondary" onClick={()=>{const subject=prompt('Edit subject',d.subject)||d.subject;setDrafts(drafts.map(x=>x.id===d.id?{...x,subject,status:'edited'}:x))}}><Pencil size={14}/> Edit</button><button className="btn secondary" onClick={()=>remove(d.id)}><Trash2 size={14}/> Delete</button></div></div>})}</div>}{drafts.filter(d=>d.status==='approved').length>0&&<div className="card" style={{marginTop:16}}><b>Approved and ready to send</b>{drafts.filter(d=>d.status==='approved').map(d=><div key={d.id} style={{display:'flex',alignItems:'center',justifyContent:'space-between',padding:'12px 0',borderBottom:'1px solid #eee'}}><span>{prospectMap.get(d.prospectId)?.name}<span className="muted"> · {d.subject}</span></span><button className="btn" onClick={()=>send(d.id)} disabled={sending!==null}><Send size={14}/> {sending===d.id?'Sending…':'Send now'}</button></div>)}</div>}</>;
+}
+
+function AuditPage({prospects}:{prospects:Prospect[]}) {
+  const audited=prospects.filter(p=>p.audit);
+  if(!audited.length) return <><Header title="Website Audits" sub="Evidence gathered from public pages."/><div className="card" style={{textAlign:'center',padding:40}}><SearchCheck size={30} color="#c9a84c"/><p><b>No website audits yet</b></p><p className="muted">Analyse a public business website from Email Outreach to create the first audit.</p></div></>;
+  return <><Header title="Website Audits" sub="Evidence gathered from public pages. Speed and mobile testing can be added as a provider later."/><div className="grid">{audited.map(p=>{
+    const a=p.audit!;
+    return <div className="card" key={p.id}>
+      <div style={{display:'flex',justifyContent:'space-between',gap:12}}><div><b>{p.name}</b><div className="muted">{p.website}</div></div><span className="badge">{`${a.overallScore}/100`}</span></div>
+      <div className="grid" style={{gridTemplateColumns:'repeat(2,1fr)',marginTop:14,fontSize:12}}><div><b>SEO</b><div className="muted">{`${a.basicSeoScore}/100`}</div></div><div><b>Accessibility</b><div className="muted">{`${a.accessibilityScore}/100`}</div></div><div><b>HTTPS</b><div className="muted">{a.https?'Detected':'Not detected'}</div></div><div><b>Missing alt text</b><div className="muted">{a.missingAltText}</div></div></div>
+      <p className="muted" style={{fontSize:12,marginTop:14}}>{a.notes.length?a.notes.join(' · '):'No basic SEO or accessibility issues detected by this audit.'}</p>
+    </div>;
+  })}</div></>;
 }
 
 function HistoryPage({businesses,prospects,outreach}:{businesses:BusinessProfile[];prospects:Prospect[];outreach:Outreach[]}) {
