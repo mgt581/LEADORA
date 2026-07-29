@@ -91,7 +91,6 @@
     "compiler": {},
     "expireTime": 31536000,
     "staticPageGenerationTimeout": 60,
-    "output": "standalone",
     "modularizeImports": {
       "@mui/icons-material": {
         "transform": "@mui/icons-material/{{member}}"
@@ -100,7 +99,7 @@
         "transform": "lodash/{{member}}"
       }
     },
-    "outputFileTracingRoot": "/workspaces/LEADORA",
+    "outputFileTracingRoot": "/home/runner/work/LEADORA/LEADORA",
     "experimental": {
       "useSkewCookie": false,
       "cacheLife": {
@@ -159,7 +158,7 @@
       "middlewarePrefetch": "flexible",
       "optimisticClientCache": true,
       "manualClientBasePath": false,
-      "cpus": 1,
+      "cpus": 3,
       "memoryBasedWorkersCount": false,
       "imgOptConcurrency": null,
       "imgOptTimeoutInSeconds": 7,
@@ -289,10 +288,10 @@
     "bundlePagesRouterDependencies": false,
     "configFileName": "next.config.mjs",
     "turbopack": {
-      "root": "/workspaces/LEADORA"
+      "root": "/home/runner/work/LEADORA/LEADORA"
     }
   },
-  "appDir": "/workspaces/LEADORA",
+  "appDir": "/home/runner/work/LEADORA/LEADORA",
   "relativeAppDir": "",
   "files": [
     ".next/routes-manifest.json",

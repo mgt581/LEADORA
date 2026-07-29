@@ -65,6 +65,15 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
   type __Unused = __Check
 }
 
+// Validate ../../app/api/cleaning/discover/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/cleaning/discover">> = Specific
+  const handler = {} as typeof import("../../app/api/cleaning/discover/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
 // Validate ../../app/api/gmail/auth/route.ts
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/gmail/auth">> = Specific
@@ -114,6 +123,33 @@ type RouteHandlerConfig<Route extends AppRouteHandlerRoutes = AppRouteHandlerRou
 {
   type __IsExpected<Specific extends RouteHandlerConfig<"/api/gmail/sync">> = Specific
   const handler = {} as typeof import("../../app/api/gmail/sync/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/leads/audit/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/leads/audit">> = Specific
+  const handler = {} as typeof import("../../app/api/leads/audit/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/prospects/discover/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/prospects/discover">> = Specific
+  const handler = {} as typeof import("../../app/api/prospects/discover/route.js")
+  type __Check = __IsExpected<typeof handler>
+  // @ts-ignore
+  type __Unused = __Check
+}
+
+// Validate ../../app/api/state/[key]/route.ts
+{
+  type __IsExpected<Specific extends RouteHandlerConfig<"/api/state/[key]">> = Specific
+  const handler = {} as typeof import("../../app/api/state/[key]/route.js")
   type __Check = __IsExpected<typeof handler>
   // @ts-ignore
   type __Unused = __Check

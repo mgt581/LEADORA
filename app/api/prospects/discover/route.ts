@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
-import { getOutreachWorkflow, type OutreachWorkflowConfig } from '@/lib/outreach-workflows';
+import { getOutreachWorkflow, type OutreachWorkflowConfig, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 
 export const runtime = 'nodejs';
 
@@ -42,7 +42,7 @@ function fallbackProposal(config: OutreachWorkflowConfig, name: string, business
   const template = templates[config.proposalTemplate as keyof typeof templates];
   return {
     subject: template.subject,
-    body: `Hello,\n\nI came across ${name}, a ${businessType} in ${place}, through its public business listing.\n\n${config.companyName} provides ${template.service}. I thought there may be a relevant opportunity to work together.\n\nThere is no obligation — ${template.question}\n\nAlex Bryant\n${config.companyName}`,
+    body: `Hello,\n\nI came across ${name}, a ${businessType} in ${place}, through its public business listing.\n\n${config.companyName} provides ${template.service}. I thought there may be a relevant opportunity to work together.\n\nThere is no obligation — ${template.question}\n\nAlex Bryant\n${config.companyName}\n${CLIENT_CONTACT_PHONE}`,
     callToAction: template.question,
   };
 }

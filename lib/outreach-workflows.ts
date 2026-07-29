@@ -1,3 +1,6 @@
+/** The permanent company contact number shown to clients in all outreach communications. */
+export const CLIENT_CONTACT_PHONE = '07843 969254';
+
 export type WorkflowType = 'website-audit' | 'dorset-prospecting';
 
 export type OutreachWorkflowConfig = {

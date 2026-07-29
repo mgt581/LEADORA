@@ -1,12 +1,16 @@
 {
   "/_not-found/page": "/_not-found",
   "/api/gmail/auth/route": "/api/gmail/auth",
-  "/api/gmail/disconnect/route": "/api/gmail/disconnect",
-  "/api/gmail/status/route": "/api/gmail/status",
-  "/api/gmail/send/route": "/api/gmail/send",
-  "/api/system/status/route": "/api/system/status",
   "/api/gmail/callback/route": "/api/gmail/callback",
+  "/api/gmail/disconnect/route": "/api/gmail/disconnect",
+  "/api/cleaning/discover/route": "/api/cleaning/discover",
+  "/api/gmail/send/route": "/api/gmail/send",
+  "/api/gmail/status/route": "/api/gmail/status",
+  "/api/leads/audit/route": "/api/leads/audit",
   "/api/gmail/sync/route": "/api/gmail/sync",
-  "/[section]/page": "/[section]",
-  "/page": "/"
+  "/api/system/status/route": "/api/system/status",
+  "/api/prospects/discover/route": "/api/prospects/discover",
+  "/api/state/[key]/route": "/api/state/[key]",
+  "/page": "/",
+  "/[section]/page": "/[section]"
 }
