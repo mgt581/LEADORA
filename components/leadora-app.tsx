@@ -7,7 +7,7 @@ import {
   Mail, SearchCheck, Bot, Workflow, ChartNoAxesCombined, FileChartColumn,
   Settings, Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search, Inbox, RefreshCw
 } from 'lucide-react';
-import { getOutreachWorkflow } from '@/lib/outreach-workflows';
+import { getOutreachWorkflow, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 
 type Lead = { name:string; email:string; company:string; status:string; source:string; created:string };
 type Contact = { name:string; email:string; company:string; phone:string; status:string };
@@ -34,10 +34,10 @@ const seedContacts: Contact[] = [
   {name:'Emily Davis',email:'emily@brightidea.com',company:'Bright Idea',phone:'+44 7700 901234',status:'Inactive'},
 ];
 const seedBusinesses: BusinessProfile[] = [
-  {id:'bryant-construction',name:'Bryant Construction Group',description:'Trusted construction and renovation specialists.',services:['Extensions','Renovations','New builds'],serviceArea:'Bournemouth, Poole and Dorset',website:'bryantconstructiongroup.co.uk',signature:'Alex Bryant\nBryant Construction Group',tone:'Professional and warm',idealCustomer:'Homeowners and property developers',industries:['Construction','Property'],dailyLimit:10,followUp:'3 days, then 7 days'},
-  {id:'bryant-cleaning',name:'Bryant & Co Cleaning',description:'Reliable commercial and domestic cleaning teams.',services:['Commercial cleaning','End of tenancy','Deep cleaning'],serviceArea:'Bournemouth and surrounding areas',website:'bryantandcocleaning.co.uk',signature:'Alex Bryant\nBryant & Co Cleaning',tone:'Friendly and helpful',idealCustomer:'Busy homeowners and local businesses',industries:['Hospitality','Property','Offices'],dailyLimit:10,followUp:'4 days, then 10 days'},
-  {id:'bryant-digital',name:'Bryant Digital Solutions',description:'Practical digital marketing for growing businesses.',services:['Websites','SEO','Lead generation'],serviceArea:'UK-wide',website:'bryantdigital.co.uk',signature:'Alex Bryant\nBryant Digital Solutions',tone:'Clear and consultative',idealCustomer:'Owner-led SMEs',industries:['Professional services','Retail','Hospitality'],dailyLimit:10,followUp:'3 days, then 7 days'},
-  {id:'mr-white-teeth',name:'Mr White Teeth Whitening Bournemouth',description:'Safe, professional teeth whitening in Bournemouth.',services:['Teeth whitening','Smile consultations'],serviceArea:'Bournemouth and Poole',website:'mrwhiteteeth.co.uk',signature:'Alex Bryant\nMr White Teeth Whitening Bournemouth',tone:'Reassuring and upbeat',idealCustomer:'Adults seeking a brighter smile',industries:['Beauty','Healthcare'],dailyLimit:10,followUp:'5 days, then 10 days'},
+  {id:'bryant-construction',name:'Bryant Construction Group',description:'Trusted construction and renovation specialists.',services:['Extensions','Renovations','New builds'],serviceArea:'Bournemouth, Poole and Dorset',website:'bryantconstructiongroup.co.uk',signature:`Alex Bryant\nBryant Construction Group\n${CLIENT_CONTACT_PHONE}`,tone:'Professional and warm',idealCustomer:'Homeowners and property developers',industries:['Construction','Property'],dailyLimit:10,followUp:'3 days, then 7 days'},
+  {id:'bryant-cleaning',name:'Bryant & Co Cleaning',description:'Reliable commercial and domestic cleaning teams.',services:['Commercial cleaning','End of tenancy','Deep cleaning'],serviceArea:'Bournemouth and surrounding areas',website:'bryantandcocleaning.co.uk',signature:`Alex Bryant\nBryant & Co Cleaning\n${CLIENT_CONTACT_PHONE}`,tone:'Friendly and helpful',idealCustomer:'Busy homeowners and local businesses',industries:['Hospitality','Property','Offices'],dailyLimit:10,followUp:'4 days, then 10 days'},
+  {id:'bryant-digital',name:'Bryant Digital Solutions',description:'Practical digital marketing for growing businesses.',services:['Websites','SEO','Lead generation'],serviceArea:'UK-wide',website:'bryantdigital.co.uk',signature:`Alex Bryant\nBryant Digital Solutions\n${CLIENT_CONTACT_PHONE}`,tone:'Clear and consultative',idealCustomer:'Owner-led SMEs',industries:['Professional services','Retail','Hospitality'],dailyLimit:10,followUp:'3 days, then 7 days'},
+  {id:'mr-white-teeth',name:'Mr White Teeth Whitening Bournemouth',description:'Safe, professional teeth whitening in Bournemouth.',services:['Teeth whitening','Smile consultations'],serviceArea:'Bournemouth and Poole',website:'mrwhiteteeth.co.uk',signature:`Alex Bryant\nMr White Teeth Whitening Bournemouth\n${CLIENT_CONTACT_PHONE}`,tone:'Reassuring and upbeat',idealCustomer:'Adults seeking a brighter smile',industries:['Beauty','Healthcare'],dailyLimit:10,followUp:'5 days, then 10 days'},
 ];
 
 const nav = [

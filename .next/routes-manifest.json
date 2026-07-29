@@ -33,6 +33,14 @@
   },
   "dynamicRoutes": [
     {
+      "page": "/api/state/[key]",
+      "regex": "^/api/state/([^/]+?)(?:/)?$",
+      "routeKeys": {
+        "nxtPkey": "nxtPkey"
+      },
+      "namedRegex": "^/api/state/(?<nxtPkey>[^/]+?)(?:/)?$"
+    },
+    {
       "page": "/[section]",
       "regex": "^/([^/]+?)(?:/)?$",
       "routeKeys": {

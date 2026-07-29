@@ -1,12 +1,16 @@
 {
   "/_not-found/page": "app/_not-found/page.js",
   "/api/gmail/auth/route": "app/api/gmail/auth/route.js",
-  "/api/gmail/disconnect/route": "app/api/gmail/disconnect/route.js",
-  "/api/gmail/status/route": "app/api/gmail/status/route.js",
-  "/api/gmail/send/route": "app/api/gmail/send/route.js",
-  "/api/system/status/route": "app/api/system/status/route.js",
   "/api/gmail/callback/route": "app/api/gmail/callback/route.js",
+  "/api/gmail/disconnect/route": "app/api/gmail/disconnect/route.js",
+  "/api/cleaning/discover/route": "app/api/cleaning/discover/route.js",
+  "/api/gmail/send/route": "app/api/gmail/send/route.js",
+  "/api/gmail/status/route": "app/api/gmail/status/route.js",
+  "/api/leads/audit/route": "app/api/leads/audit/route.js",
   "/api/gmail/sync/route": "app/api/gmail/sync/route.js",
-  "/[section]/page": "app/[section]/page.js",
-  "/page": "app/page.js"
+  "/api/system/status/route": "app/api/system/status/route.js",
+  "/api/prospects/discover/route": "app/api/prospects/discover/route.js",
+  "/api/state/[key]/route": "app/api/state/[key]/route.js",
+  "/page": "app/page.js",
+  "/[section]/page": "app/[section]/page.js"
 }

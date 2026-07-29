@@ -1,4 +1,4 @@
-// File: /workspaces/LEADORA/app/api/system/status/route.ts
+// File: /home/runner/work/LEADORA/LEADORA/app/api/system/status/route.ts
 import * as entry from '../../../../../../app/api/system/status/route.js'
 import type { NextRequest } from 'next/server.js'
 

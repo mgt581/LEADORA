@@ -1,12 +1,16 @@
 {
   "version": 1,
   "functions": {
+    "/api/cleaning/discover": {},
     "/api/gmail/auth": {},
-    "/api/gmail/disconnect": {},
     "/api/gmail/callback": {},
+    "/api/gmail/disconnect": {},
     "/api/gmail/send": {},
     "/api/gmail/status": {},
     "/api/gmail/sync": {},
+    "/api/leads/audit": {},
+    "/api/prospects/discover": {},
+    "/api/state/[key]": {},
     "/api/system/status": {}
   }
 }

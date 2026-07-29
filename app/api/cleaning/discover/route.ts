@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 
 export const runtime = 'nodejs';
 
@@ -18,7 +19,7 @@ function industry(tags: Record<string, string>) {
 function fallbackProposal(name: string, businessType: string, place: string) {
   return {
     subject: `A reliable cleaning option for ${name}`,
-    body: `Hello,\n\nI came across ${name}, a ${businessType} in ${place}, through its public business listing.\n\nBryant & Co Cleaning provides dependable commercial cleaning for local businesses. If keeping your premises consistently clean is something you are reviewing, we would be happy to discuss a flexible cleaning plan around your hours and requirements.\n\nThere is no obligation — would a short call next week be useful?\n\nAlex Bryant\nBryant & Co Cleaning`,
+    body: `Hello,\n\nI came across ${name}, a ${businessType} in ${place}, through its public business listing.\n\nBryant & Co Cleaning provides dependable commercial cleaning for local businesses. If keeping your premises consistently clean is something you are reviewing, we would be happy to discuss a flexible cleaning plan around your hours and requirements.\n\nThere is no obligation — would a short call next week be useful?\n\nAlex Bryant\nBryant & Co Cleaning\n${CLIENT_CONTACT_PHONE}`,
     callToAction: 'Would a short call next week be useful?',
   };
 }
