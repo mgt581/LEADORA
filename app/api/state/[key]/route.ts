@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { database } from '@/lib/server/d1';
 
-export const runtime = 'edge';
+// This route shares the default server function with Gmail and D1. OpenNext
+// currently requires Edge handlers to be emitted as a separate function.
+export const runtime = 'nodejs';
 const allowed = new Set(['leadora-prospects','leadora-drafts','leadora-outreach','leadora-contacts','leadora-leads']);
 function valid(key:string) { return allowed.has(key); }
 
