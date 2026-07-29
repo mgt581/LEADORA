@@ -15,6 +15,9 @@
       "database_id": "ab675c7e-e9e2-4253-9281-7db496792337"
     }
   ],
+  "ai": {
+    "binding": "AI"
+  },
   "assets": {
     "binding": "ASSETS",
     "directory": ".open-next/assets"
