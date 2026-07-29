@@ -43,9 +43,16 @@ export async function POST(request: NextRequest) {
   const limit = Math.max(1, Math.min(Number(body.limit) || 10, 10));
   const query = `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["email"](area.area);nwr["contact:email"](area.area););out center tags 100;`;
   try {
-    const response = await fetch('https://overpass-api.de/api/interpreter', { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'LEADORA/1.0 public-contact discovery' }, body: new URLSearchParams({ data: query }), signal: AbortSignal.timeout(30_000) });
-    if (!response.ok) throw new Error(`The public directory is temporarily unavailable (${response.status}).`);
-    const data = await response.json() as { elements?: OsmElement[] };
+    let data: { elements?: OsmElement[] } | null = null;
+    let lastStatus = 0;
+    for (const endpoint of ['https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter']) {
+      try {
+        const response = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'LEADORA/1.0 public-contact discovery' }, body: new URLSearchParams({ data: query }), signal: AbortSignal.timeout(30_000) });
+        lastStatus = response.status;
+        if (response.ok) { data = await response.json() as { elements?: OsmElement[] }; break; }
+      } catch { /* Try the next free public mirror. */ }
+    }
+    if (!data) throw new Error(`The public directory is temporarily unavailable (${lastStatus || 'network error'}).`);
     const seen = new Set<string>();
     const candidates = (data.elements ?? []).flatMap(element => {
       const tags = element.tags ?? {}; const email = (tags.email || tags['contact:email'] || '').toLowerCase(); const name = tags.name;
