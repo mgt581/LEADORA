@@ -9,6 +9,17 @@ type AiBinding = { run: (model: string, input: Record<string, unknown>) => Promi
 
 const clean = (value: string) => value.replace(/\s+/g, ' ').trim();
 const emailPattern = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
+const publicDirectoryMirrors = [
+  'https://overpass-api.de/api/interpreter',
+  'https://overpass.private.coffee/api/interpreter',
+  'https://overpass.kumi.systems/api/interpreter',
+  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
+];
+
+function normaliseWebsite(value: string) {
+  const trimmed = value.trim();
+  return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
+}
 
 function location(tags: Record<string, string>) {
   return [tags['addr:housenumber'], tags['addr:street'], tags['addr:city'] || tags['addr:town'] || tags['addr:village'], tags['addr:postcode']].filter(Boolean).join(', ') || 'Dorset';
@@ -75,18 +86,19 @@ export async function POST(request: NextRequest) {
   try {
     let data: { elements?: OsmElement[] } | null = null;
     let lastStatus = 0;
-    for (const endpoint of ['https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter']) {
+    for (const endpoint of publicDirectoryMirrors) {
       try {
         const response = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'LEADORA/1.0 public-contact discovery' }, body: new URLSearchParams({ data: query }), signal: AbortSignal.timeout(30_000) });
         lastStatus = response.status;
         if (response.ok) { data = await response.json() as { elements?: OsmElement[] }; break; }
       } catch { /* Try the next free public mirror. */ }
     }
-    if (!data) throw new Error(`The public directory is temporarily unavailable (${lastStatus || 'network error'}).`);
+    if (!data) throw new Error(`The public directory is temporarily unavailable (${lastStatus || 'network error'}). Please try again shortly.`);
     const seen = new Set<string>();
     const candidates = (data.elements ?? []).flatMap(element => {
       const tags = element.tags ?? {}; const email = (tags.email || tags['contact:email'] || '').toLowerCase(); const name = tags.name;
-      const website = tags.website || tags['contact:website'] || '';
+      const rawWebsite = tags.website || tags['contact:website'] || '';
+      const website = rawWebsite ? normaliseWebsite(rawWebsite) : '';
       if (!name || !emailPattern.test(email) || seen.has(email) || (digitalDiscovery && !website) || (!digitalDiscovery && !matchesWorkflow(tags, config))) return [];
       seen.add(email);
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;

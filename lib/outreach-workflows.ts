@@ -42,7 +42,7 @@ export const OUTREACH_WORKFLOWS: Record<string, OutreachWorkflowConfig> = {
     proposalTemplate: 'cleaning', websiteAuditEnabled: false, title: 'Bryant & Co Cleaning Outreach',
     description: 'Public Dorset listings → cleaning proposal → your approval → Gmail.',
     steps: ['Find suitable commercial cleaning prospects in Dorset', 'Generate cleaning proposal', 'Add to approval queue'],
-    prospectCategories: ['office', 'hotel', 'restaurant', 'pub', 'school', 'clinic', 'commercial'], recommendedService: 'Commercial cleaning',
+    prospectCategories: ['office', 'hotel', 'restaurant', 'pub', 'school', 'clinic', 'commercial', 'gym', 'warehouse', 'retail'], recommendedService: 'Commercial cleaning',
   },
   'bryant-construction': {
     companyId: 'bryant-construction', companyName: 'Bryant Construction Group', buttonText: 'Find up to 10 Dorset Prospects',
@@ -50,7 +50,7 @@ export const OUTREACH_WORKFLOWS: Record<string, OutreachWorkflowConfig> = {
     proposalTemplate: 'construction', websiteAuditEnabled: false, title: 'Bryant Construction Group Outreach',
     description: 'Dorset property prospects → construction proposal → your approval → Gmail.',
     steps: ['Find suitable Dorset construction prospects', 'Property developers', 'Estate agents', 'Commercial premises', 'Landlords', 'Refurbishment opportunities', 'Generate construction proposal', 'Add to approval queue'],
-    prospectCategories: ['estate_agent', 'property', 'developer', 'letting_agent', 'commercial', 'real_estate'], recommendedService: 'Construction and refurbishment',
+    prospectCategories: ['estate_agent', 'estate agent', 'property', 'developer', 'letting_agent', 'letting agent', 'commercial', 'real_estate', 'real estate', 'architect', 'builder', 'construction'], recommendedService: 'Construction and refurbishment',
   },
   'mr-white-teeth': {
     companyId: 'mr-white-teeth', companyName: 'Mr White Teeth Whitening', buttonText: 'Find up to 10 Dorset Prospects',
@@ -58,7 +58,7 @@ export const OUTREACH_WORKFLOWS: Record<string, OutreachWorkflowConfig> = {
     proposalTemplate: 'partnership', websiteAuditEnabled: false, title: 'Mr White Teeth Whitening Outreach',
     description: 'Dorset partnership prospects → partnership proposal → your approval → Gmail.',
     steps: ['Find suitable Dorset partnership prospects', 'Beauty salons', 'Hair salons', 'Barbers', 'Wedding suppliers', 'Partnership opportunities', 'Generate partnership proposal', 'Add to approval queue'],
-    prospectCategories: ['beauty', 'hairdresser', 'barber', 'wedding', 'bridal', 'salon'], recommendedService: 'Teeth-whitening partnership',
+    prospectCategories: ['beauty', 'hairdresser', 'hair', 'barber', 'wedding', 'bridal', 'salon', 'nail', 'spa', 'beautician', 'cosmetics'], recommendedService: 'Teeth-whitening partnership',
   },
 };
 
