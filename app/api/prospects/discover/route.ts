@@ -95,16 +95,21 @@ export async function POST(request: NextRequest) {
     }
     if (!data) throw new Error(`The public directory is temporarily unavailable (${lastStatus || 'network error'}). Please try again shortly.`);
     const seen = new Set<string>();
-    const candidates = (data.elements ?? []).flatMap(element => {
+    const allCandidates = (data.elements ?? []).flatMap(element => {
       const tags = element.tags ?? {}; const email = (tags.email || tags['contact:email'] || '').toLowerCase(); const name = tags.name;
       const rawWebsite = tags.website || tags['contact:website'] || '';
       const website = rawWebsite ? normaliseWebsite(rawWebsite) : '';
-      if (!name || !emailPattern.test(email) || seen.has(email) || (digitalDiscovery && !website) || (!digitalDiscovery && !matchesWorkflow(tags, config))) return [];
+      if (!name || !emailPattern.test(email) || seen.has(email) || (digitalDiscovery && !website)) return [];
       seen.add(email);
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;
-      return [{ name: clean(name), email, website, phone: tags.phone || tags['contact:phone'] || '', location: location(tags), industry: industry(tags), contactUrl: website, googleMapsUrl: lat && lon ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} Dorset`)}` }];
-    }).slice(0, limit);
+      return [{ name: clean(name), email, website, phone: tags.phone || tags['contact:phone'] || '', location: location(tags), industry: industry(tags), tags, contactUrl: website, googleMapsUrl: lat && lon ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} Dorset`)}` }];
+    });
+    const relevant = digitalDiscovery ? allCandidates : allCandidates.filter(candidate => matchesWorkflow(candidate.tags, config));
+    // OpenStreetMap tagging is incomplete for property and beauty businesses. A
+    // transparent public-contact fallback is preferable to returning no leads.
+    const selected = (relevant.length ? relevant : allCandidates).slice(0, limit);
+    const candidates = selected.map(({ tags: _tags, ...candidate }) => candidate);
     const prospects = digitalDiscovery ? candidates : await Promise.all(candidates.map(async candidate => ({ ...candidate, proposal: await proposal(config, candidate.name, candidate.industry, candidate.location) })));
-    return NextResponse.json({ prospects, source: config.leadSource, companyId: config.companyId, limit });
+    return NextResponse.json({ prospects, source: config.leadSource, companyId: config.companyId, limit, categoryFallbackUsed: !digitalDiscovery && relevant.length === 0 });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Public directory search failed.' }, { status: 502 }); }
 }
