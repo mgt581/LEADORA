@@ -75,11 +75,18 @@ async function proposal(config: OutreachWorkflowConfig, name: string, businessTy
 
 /** Free discovery source: OpenStreetMap records and only the email that its contributor/business has published. */
 export async function POST(request: NextRequest) {
-  const body = await request.json().catch(() => ({})) as { limit?: number; companyId?: string };
+  const body = await request.json().catch(() => ({})) as {
+    limit?: number;
+    companyId?: string;
+    excludeEmails?: string[];
+    excludeWebsites?: string[];
+  };
   const config = getOutreachWorkflow(body.companyId || '');
   const digitalDiscovery = config?.companyId === 'bryant-digital';
   if (!config || (!digitalDiscovery && (config.websiteAuditEnabled || config.workflowType !== 'dorset-prospecting'))) return NextResponse.json({ error: 'This company does not have a Dorset prospecting workflow.' }, { status: 400 });
   const limit = Math.max(1, Math.min(Number(body.limit) || 10, 10));
+  const excludedEmails = new Set((body.excludeEmails ?? []).map(value => value.toLowerCase()).slice(0, 500));
+  const excludedWebsites = new Set((body.excludeWebsites ?? []).map(value => value.toLowerCase()).slice(0, 500));
   const query = digitalDiscovery
     ? `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["email"]["website"](area.area);nwr["contact:email"]["website"](area.area);nwr["email"]["contact:website"](area.area);nwr["contact:email"]["contact:website"](area.area););out center tags 150;`
     : `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["email"](area.area);nwr["contact:email"](area.area););out center tags 100;`;
@@ -99,7 +106,7 @@ export async function POST(request: NextRequest) {
       const tags = element.tags ?? {}; const email = (tags.email || tags['contact:email'] || '').toLowerCase(); const name = tags.name;
       const rawWebsite = tags.website || tags['contact:website'] || '';
       const website = rawWebsite ? normaliseWebsite(rawWebsite) : '';
-      if (!name || !emailPattern.test(email) || seen.has(email) || (digitalDiscovery && !website)) return [];
+      if (!name || !emailPattern.test(email) || seen.has(email) || excludedEmails.has(email) || (website && excludedWebsites.has(website.toLowerCase())) || (digitalDiscovery && !website)) return [];
       seen.add(email);
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;
       return [{ name: clean(name), email, website, phone: tags.phone || tags['contact:phone'] || '', location: location(tags), industry: industry(tags), tags, contactUrl: website, googleMapsUrl: lat && lon ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} Dorset`)}` }];
@@ -110,6 +117,13 @@ export async function POST(request: NextRequest) {
     const selected = (relevant.length ? relevant : allCandidates).slice(0, limit);
     const candidates = selected.map(({ tags: _tags, ...candidate }) => candidate);
     const prospects = digitalDiscovery ? candidates : await Promise.all(candidates.map(async candidate => ({ ...candidate, proposal: await proposal(config, candidate.name, candidate.industry, candidate.location) })));
-    return NextResponse.json({ prospects, source: config.leadSource, companyId: config.companyId, limit, categoryFallbackUsed: !digitalDiscovery && relevant.length === 0 });
+    return NextResponse.json({
+      prospects,
+      source: config.leadSource,
+      companyId: config.companyId,
+      limit,
+      categoryFallbackUsed: !digitalDiscovery && relevant.length === 0,
+      exhausted: prospects.length === 0,
+    });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Public directory search failed.' }, { status: 502 }); }
 }
