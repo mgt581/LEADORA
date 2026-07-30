@@ -57,7 +57,8 @@ async function proposal(config: OutreachWorkflowConfig, name: string, businessTy
     if (!raw) return fallback;
     const parsed = JSON.parse(raw) as Partial<typeof fallback>;
     if (!parsed.subject || !parsed.body || !parsed.callToAction) return fallback;
-    return { subject: clean(parsed.subject).slice(0, 140), body: clean(parsed.body).replace(/\\n/g, '\n'), callToAction: clean(parsed.callToAction).slice(0, 180) };
+    const body = clean(parsed.body).replace(/\\n/g, '\n');
+    return { subject: clean(parsed.subject).slice(0, 140), body: body.includes(CLIENT_CONTACT_PHONE) ? body : `${body}\n\nAlex Bryant\n${config.companyName}\n${CLIENT_CONTACT_PHONE}`, callToAction: clean(parsed.callToAction).slice(0, 180) };
   } catch { return fallback; }
 }
 
@@ -65,9 +66,12 @@ async function proposal(config: OutreachWorkflowConfig, name: string, businessTy
 export async function POST(request: NextRequest) {
   const body = await request.json().catch(() => ({})) as { limit?: number; companyId?: string };
   const config = getOutreachWorkflow(body.companyId || '');
-  if (!config || config.websiteAuditEnabled || config.workflowType !== 'dorset-prospecting') return NextResponse.json({ error: 'This company does not have a Dorset prospecting workflow.' }, { status: 400 });
+  const digitalDiscovery = config?.companyId === 'bryant-digital';
+  if (!config || (!digitalDiscovery && (config.websiteAuditEnabled || config.workflowType !== 'dorset-prospecting'))) return NextResponse.json({ error: 'This company does not have a Dorset prospecting workflow.' }, { status: 400 });
   const limit = Math.max(1, Math.min(Number(body.limit) || 10, 10));
-  const query = `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["email"](area.area);nwr["contact:email"](area.area););out center tags 100;`;
+  const query = digitalDiscovery
+    ? `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["email"]["website"](area.area);nwr["contact:email"]["website"](area.area);nwr["email"]["contact:website"](area.area);nwr["contact:email"]["contact:website"](area.area););out center tags 150;`
+    : `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["email"](area.area);nwr["contact:email"](area.area););out center tags 100;`;
   try {
     let data: { elements?: OsmElement[] } | null = null;
     let lastStatus = 0;
@@ -82,12 +86,13 @@ export async function POST(request: NextRequest) {
     const seen = new Set<string>();
     const candidates = (data.elements ?? []).flatMap(element => {
       const tags = element.tags ?? {}; const email = (tags.email || tags['contact:email'] || '').toLowerCase(); const name = tags.name;
-      if (!name || !emailPattern.test(email) || seen.has(email) || !matchesWorkflow(tags, config)) return [];
+      const website = tags.website || tags['contact:website'] || '';
+      if (!name || !emailPattern.test(email) || seen.has(email) || (digitalDiscovery && !website) || (!digitalDiscovery && !matchesWorkflow(tags, config))) return [];
       seen.add(email);
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;
-      return [{ name: clean(name), email, website: tags.website || tags['contact:website'] || '', phone: tags.phone || tags['contact:phone'] || '', location: location(tags), industry: industry(tags), contactUrl: tags.website || tags['contact:website'] || '', googleMapsUrl: lat && lon ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} Dorset`)}` }];
+      return [{ name: clean(name), email, website, phone: tags.phone || tags['contact:phone'] || '', location: location(tags), industry: industry(tags), contactUrl: website, googleMapsUrl: lat && lon ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} Dorset`)}` }];
     }).slice(0, limit);
-    const prospects = await Promise.all(candidates.map(async candidate => ({ ...candidate, proposal: await proposal(config, candidate.name, candidate.industry, candidate.location) })));
+    const prospects = digitalDiscovery ? candidates : await Promise.all(candidates.map(async candidate => ({ ...candidate, proposal: await proposal(config, candidate.name, candidate.industry, candidate.location) })));
     return NextResponse.json({ prospects, source: config.leadSource, companyId: config.companyId, limit });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Public directory search failed.' }, { status: 502 }); }
 }
