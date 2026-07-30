@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
   const excludedEmails = new Set((body.excludeEmails ?? []).map(value => value.toLowerCase()).slice(0, 500));
   const excludedWebsites = new Set((body.excludeWebsites ?? []).map(value => value.toLowerCase()).slice(0, 500));
   const query = digitalDiscovery
-    ? `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["email"]["website"](area.area);nwr["contact:email"]["website"](area.area);nwr["email"]["contact:website"](area.area);nwr["contact:email"]["contact:website"](area.area););out center tags 150;`
+    ? `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["website"](area.area);nwr["contact:website"](area.area););out center tags 250;`
     : `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["email"](area.area);nwr["contact:email"](area.area););out center tags 100;`;
   try {
     let data: { elements?: OsmElement[] } | null = null;
@@ -106,15 +106,17 @@ export async function POST(request: NextRequest) {
       const tags = element.tags ?? {}; const email = (tags.email || tags['contact:email'] || '').toLowerCase(); const name = tags.name;
       const rawWebsite = tags.website || tags['contact:website'] || '';
       const website = rawWebsite ? normaliseWebsite(rawWebsite) : '';
-      if (!name || !emailPattern.test(email) || seen.has(email) || excludedEmails.has(email) || (website && excludedWebsites.has(website.toLowerCase())) || (digitalDiscovery && !website)) return [];
-      seen.add(email);
+      const identity = digitalDiscovery ? website.toLowerCase() : email;
+      if (!name || (!digitalDiscovery && !emailPattern.test(email)) || !identity || seen.has(identity) || (email && excludedEmails.has(email)) || (website && excludedWebsites.has(website.toLowerCase()))) return [];
+      seen.add(identity);
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;
       return [{ name: clean(name), email, website, phone: tags.phone || tags['contact:phone'] || '', location: location(tags), industry: industry(tags), tags, contactUrl: website, googleMapsUrl: lat && lon ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} Dorset`)}` }];
     });
     const relevant = digitalDiscovery ? allCandidates : allCandidates.filter(candidate => matchesWorkflow(candidate.tags, config));
     // OpenStreetMap tagging is incomplete for property and beauty businesses. A
     // transparent public-contact fallback is preferable to returning no leads.
-    const selected = (relevant.length ? relevant : allCandidates).slice(0, limit);
+    const selectionLimit = digitalDiscovery ? Math.min(40, limit * 4) : limit;
+    const selected = (relevant.length ? relevant : allCandidates).slice(0, selectionLimit);
     const candidates = selected.map(({ tags: _tags, ...candidate }) => candidate);
     const prospects = digitalDiscovery ? candidates : await Promise.all(candidates.map(async candidate => ({ ...candidate, proposal: await proposal(config, candidate.name, candidate.industry, candidate.location) })));
     return NextResponse.json({

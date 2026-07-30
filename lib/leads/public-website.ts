@@ -39,5 +39,20 @@ export async function auditPublicWebsite(rawUrl: string): Promise<{ website: str
   if (html.length > 2_000_000) throw new Error('The website response is too large to analyse safely.');
   const result = inspectPublicWebsite(html, response.url);
   const origin = new URL(response.url).origin;
-  return { website: origin, businessName: result.title || new URL(response.url).hostname.replace(/^www\./, ''), contactEmail: result.emails[0] ?? null, phoneNumber: result.phone, contactPageUrl: result.contactPageUrl, audit: { auditedAt: new Date().toISOString(), websiteSpeed: 'not_measured', mobileFriendly: 'not_measured', https: new URL(response.url).protocol === 'https:', metaTitle: result.title, metaDescription: result.description, h1Tags: result.h1Tags, missingAltText: result.missingAltText, brokenLinks: 0, basicSeoScore: result.basicSeoScore, accessibilityScore: result.accessibilityScore, googleBusinessProfileDetected: result.googleBusinessProfileDetected, socialLinks: result.socialLinks, overallScore: result.overallScore, notes: result.notes } };
+  let contactEmail = result.emails[0] ?? null;
+  let phoneNumber = result.phone;
+  if (!contactEmail && result.contactPageUrl && new URL(result.contactPageUrl).origin === origin) {
+    try {
+      const contactResponse = await fetch(result.contactPageUrl, { headers: { 'user-agent': 'LEADORA/1.0 (public website audit)' }, redirect: 'follow', signal: AbortSignal.timeout(8_000) });
+      if (contactResponse.ok) {
+        const contactHtml = await contactResponse.text();
+        if (contactHtml.length <= 1_000_000) {
+          const contactResult = inspectPublicWebsite(contactHtml, contactResponse.url);
+          contactEmail = contactResult.emails[0] ?? null;
+          phoneNumber = phoneNumber ?? contactResult.phone;
+        }
+      }
+    } catch { /* The homepage audit remains valid if a contact page is unavailable. */ }
+  }
+  return { website: origin, businessName: result.title || new URL(response.url).hostname.replace(/^www\./, ''), contactEmail, phoneNumber, contactPageUrl: result.contactPageUrl, audit: { auditedAt: new Date().toISOString(), websiteSpeed: 'not_measured', mobileFriendly: 'not_measured', https: new URL(response.url).protocol === 'https:', metaTitle: result.title, metaDescription: result.description, h1Tags: result.h1Tags, missingAltText: result.missingAltText, brokenLinks: 0, basicSeoScore: result.basicSeoScore, accessibilityScore: result.accessibilityScore, googleBusinessProfileDetected: result.googleBusinessProfileDetected, socialLinks: result.socialLinks, overallScore: result.overallScore, notes: result.notes } };
 }
