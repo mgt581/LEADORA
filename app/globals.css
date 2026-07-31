@@ -35,6 +35,18 @@ h1 { font-size:25px; margin:0 0 5px; letter-spacing:-.02em; }
 .digital-email-preview img { display:block; width:168px; height:56px; object-fit:contain; }
 .digital-email-preview div { text-align:right; font-size:13px; }
 .digital-email-preview span { display:block; margin-top:4px; color:#d8eafa; font-size:11px; }
+.cleaning-email-preview { margin:16px 0 14px; padding:14px 16px; border-radius:10px; background:#103542; color:#fff; display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.cleaning-email-preview img { display:block; width:92px; height:92px; object-fit:contain; background:#fff; border-radius:10px; }
+.cleaning-email-preview div { text-align:right; font-size:13px; }
+.cleaning-email-preview span { display:block; margin-top:4px; color:#cdeff6; font-size:11px; }
+.construction-email-preview, .teeth-email-preview { margin:16px 0 14px; padding:14px 16px; border-radius:10px; color:#fff; display:flex; align-items:center; justify-content:space-between; gap:18px; }
+.construction-email-preview { background:#123756; }
+.teeth-email-preview { background:#12649c; }
+.construction-email-preview img, .teeth-email-preview img { display:block; object-fit:contain; border-radius:10px; }
+.construction-email-preview img { width:112px; height:96px; background:#fff; }
+.teeth-email-preview img { width:104px; height:104px; }
+.construction-email-preview div, .teeth-email-preview div { text-align:right; font-size:13px; }
+.construction-email-preview span, .teeth-email-preview span { display:block; margin-top:4px; color:#dceaf4; font-size:11px; }
 .grid { display:grid; gap:16px; }
 .kpis { grid-template-columns:repeat(4,minmax(0,1fr)); }
 .card { background:#fff; border:1px solid #e8e8eb; border-radius:12px; box-shadow:0 2px 10px rgba(15,23,42,.045); padding:18px; }
@@ -88,6 +100,6 @@ td { padding:13px 10px; border-bottom:1px solid #efeff1; white-space:nowrap; }
   .content { padding:18px 14px; }
   .heading-row { flex-direction:column; }
   .kpis { grid-template-columns:1fr; }
-  .digital-email-preview { align-items:flex-start; flex-direction:column; }
-  .digital-email-preview div { text-align:left; }
+  .digital-email-preview, .cleaning-email-preview, .construction-email-preview, .teeth-email-preview { align-items:flex-start; flex-direction:column; }
+  .digital-email-preview div, .cleaning-email-preview div, .construction-email-preview div, .teeth-email-preview div { text-align:left; }
 }

@@ -53,27 +53,27 @@ function publicDirectoryQuery(config: OutreachWorkflowConfig, digitalDiscovery: 
 }
 
 function fallbackProposal(config: OutreachWorkflowConfig, name: string, businessType: string, place: string) {
+  if (config.proposalTemplate === 'cleaning') return {
+    subject: `A cleaner, easier option for ${name}`,
+    body: `Hi there,\n\nI came across ${name} in ${place} and thought this might be useful.\n\nBryant & Co Cleaning provides reliable commercial cleaning with a tailored plan built around your opening hours and requirements.\n\nI can put together a free, no-obligation quote, with replies normally within one hour during business hours.\n\nWould you like me to price up an option?\n\nhttps://www.bryantandcocleaning.co.uk\n\nAlex Bryant\nBryant & Co Cleaning\n${CLIENT_CONTACT_PHONE}`,
+    callToAction: 'Would you like me to price up an option?',
+  };
   const templates = {
-    cleaning: {
-      subject: `A reliable cleaning option for ${name}`,
-      service: 'dependable commercial cleaning with flexible plans built around a business’s hours and requirements',
-      question: 'Would a short call next week be useful?',
-    },
     construction: {
-      subject: `Construction support for ${name}`,
-      service: 'construction, renovation and refurbishment support for Dorset property businesses and commercial premises',
-      question: 'Would a brief conversation about upcoming property work be useful?',
+      subject: `A clear quote for upcoming work at ${name}`,
+      body: `Hi there,\n\nI came across ${name} in ${place} and thought this might be useful.\n\nBryant Construction Group handles repairs, maintenance and refurbishment across Bournemouth, Poole and Christchurch.\n\nWe can provide a free, clear quote before work starts, with no hidden extras.\n\nDo you have any upcoming property work we could quote for?\n\nhttps://bryantconstructiongroup.co.uk\n\nAlex Bryant\nBryant Construction Group\n${CLIENT_CONTACT_PHONE}`,
+      question: 'Do you have any upcoming property work we could quote for?',
     },
     partnership: {
       subject: `A local partnership idea for ${name}`,
-      service: 'professional teeth-whitening partnership opportunities for local beauty, hair and wedding businesses',
-      question: 'Would you be open to a short conversation about a partnership?',
+      body: `Hi there,\n\nI came across ${name} in ${place} and thought there could be a good local partnership fit.\n\nMr White provides professional, pain-free teeth whitening in Bournemouth from £69. I would love to explore a simple referral or cross-promotion partnership that could benefit both of our clients.\n\nWould you be open to a quick, no-obligation chat?\n\nhttps://teethwhiteningbournemouth.co.uk\n\nAlex Bryant\nMr White Teeth Whitening\n${CLIENT_CONTACT_PHONE}`,
+      question: 'Would you be open to a quick, no-obligation chat?',
     },
   } as const;
   const template = templates[config.proposalTemplate as keyof typeof templates];
   return {
     subject: template.subject,
-    body: `Hello,\n\nI came across ${name}, a ${businessType} in ${place}, through its public business listing.\n\n${config.companyName} provides ${template.service}. I thought there may be a relevant opportunity to work together.\n\nThere is no obligation — ${template.question}\n\nAlex Bryant\n${config.companyName}\n${CLIENT_CONTACT_PHONE}`,
+    body: template.body,
     callToAction: template.question,
   };
 }

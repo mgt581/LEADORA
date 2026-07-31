@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decryptTokenSet, encodeRawMessage, gmailRequest, TOKEN_COOKIE } from '@/lib/server/gmail';
 import { decodeHtmlEntities } from '@/lib/text';
-import { digitalOutreachHtml } from '@/lib/email-templates';
+import { cleaningOutreachHtml, constructionOutreachHtml, digitalOutreachHtml, teethWhiteningOutreachHtml } from '@/lib/email-templates';
 
 export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
@@ -14,7 +14,12 @@ export async function POST(request: NextRequest) {
   if (input.subject.length > 200 || input.body.length > 100_000) return NextResponse.json({ error: 'The subject or email body is too long.' }, { status: 413 });
   try {
     const plainBody = decodeHtmlEntities(input.body);
-    const message = { from: input.from, to: input.to, subject: decodeHtmlEntities(input.subject.trim()), body: plainBody, ...(input.threadId ? { threadId: input.threadId } : {}), ...(input.inReplyTo ? { inReplyTo: input.inReplyTo } : {}), ...(input.references ? { references: input.references } : {}), ...(input.brandId === 'bryant-digital' ? { html: digitalOutreachHtml(plainBody, input.isFollowUp) } : {}) };
+    const html = input.brandId === 'bryant-digital' ? digitalOutreachHtml(plainBody, input.isFollowUp)
+      : input.brandId === 'bryant-cleaning' ? cleaningOutreachHtml(plainBody, input.isFollowUp)
+      : input.brandId === 'bryant-construction' ? constructionOutreachHtml(plainBody, input.isFollowUp)
+      : input.brandId === 'mr-white-teeth' ? teethWhiteningOutreachHtml(plainBody, input.isFollowUp)
+      : undefined;
+    const message = { from: input.from, to: input.to, subject: decodeHtmlEntities(input.subject.trim()), body: plainBody, ...(input.threadId ? { threadId: input.threadId } : {}), ...(input.inReplyTo ? { inReplyTo: input.inReplyTo } : {}), ...(input.references ? { references: input.references } : {}), ...(html ? { html } : {}) };
     const { response } = await gmailRequest('messages/send', decryptTokenSet(cookie), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ raw: encodeRawMessage(message), ...(input.threadId ? { threadId: input.threadId } : {}) }) });
     return NextResponse.json(await response.json());
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Gmail send failed.' }, { status: 502 }); }
