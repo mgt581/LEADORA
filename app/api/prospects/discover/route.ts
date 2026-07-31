@@ -9,10 +9,11 @@ type OsmElement = { id: number; type: string; lat?: number; lon?: number; center
 
 const clean = (value: string) => decodeHtmlEntities(value).replace(/\s+/g, ' ').trim();
 const publicDirectoryMirrors = [
+  // Britain-and-Ireland regional instance: smaller dataset and consistently
+  // faster for Dorset than the global public mirrors.
+  'https://overpass.atownsend.org.uk/api/interpreter',
   'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
-  'https://overpass.kumi.systems/api/interpreter',
-  'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ];
 const dorsetBounds = '50.50,-2.95,51.10,-1.70';
 
