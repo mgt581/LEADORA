@@ -1,5 +1,6 @@
 import type { WebsiteAudit } from './types';
 import { decodeHtmlEntities } from '@/lib/text';
+import { isPublicBusinessEmail } from './public-email';
 
 const socialHosts = ['facebook.com', 'instagram.com', 'linkedin.com', 'x.com', 'twitter.com', 'youtube.com', 'tiktok.com'];
 const clean = (value: string) => decodeHtmlEntities(value.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
@@ -12,7 +13,7 @@ export function inspectPublicWebsite(html: string, website: string) {
   const h1Tags = [...html.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/gi)].map(match => clean(match[1])).filter(Boolean).slice(0, 5);
   const imageTags = html.match(/<img\b[^>]*>/gi) ?? [];
   const missingAltText = imageTags.filter(tag => !/\balt\s*=\s*["'][^"']+["']/i.test(tag)).length;
-  const emails = [...html.matchAll(/(?:mailto:)?([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi)].map(match => match[1].toLowerCase()).filter(email => !/example\.|wixpress|sentry|cloudflare/i.test(email));
+  const emails = [...html.matchAll(/(?:mailto:)?([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi)].map(match => match[1].toLowerCase()).filter(isPublicBusinessEmail);
   const phone = html.match(/(?:tel:|\+?44\s?\(?0?\d{2,4}\)?[\s\d-]{6,})/i)?.[0]?.replace(/^tel:/i, '').trim() ?? null;
   const links = [...html.matchAll(/<a\b[^>]*href=["']([^"']+)["'][^>]*>/gi)].map(match => absolute(match[1], website)).filter((link): link is string => Boolean(link));
   const contactPageUrl = links.find(link => /\/(contact|contact-us|enquiries|enquire)(\/|$|\?)/i.test(link)) ?? null;

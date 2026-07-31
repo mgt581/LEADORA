@@ -1,13 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOutreachWorkflow, type OutreachWorkflowConfig, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 import { decodeHtmlEntities } from '@/lib/text';
+import { isPublicBusinessEmail } from '@/lib/leads/public-email';
 
 export const runtime = 'nodejs';
 
 type OsmElement = { id: number; type: string; lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> };
 
 const clean = (value: string) => decodeHtmlEntities(value).replace(/\s+/g, ' ').trim();
-const emailPattern = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const publicDirectoryMirrors = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
@@ -133,11 +133,11 @@ export async function POST(request: NextRequest) {
     const data = await fetchPublicDirectory(query);
     const seen = new Set<string>();
     const allCandidates = (data.elements ?? []).flatMap(element => {
-      const tags = element.tags ?? {}; const email = (tags.email || tags['contact:email'] || '').toLowerCase(); const name = tags.name;
+      const tags = element.tags ?? {}; const listedEmail = (tags.email || tags['contact:email'] || '').toLowerCase(); const email = isPublicBusinessEmail(listedEmail) ? listedEmail : ''; const name = tags.name;
       const rawWebsite = tags.website || tags['contact:website'] || '';
       const website = rawWebsite ? normaliseWebsite(rawWebsite) : '';
       const identity = digitalDiscovery ? website.toLowerCase() : email;
-      if (!name || (!digitalDiscovery && !emailPattern.test(email)) || !identity || seen.has(identity) || (email && excludedEmails.has(email)) || (website && excludedWebsites.has(website.toLowerCase()))) return [];
+      if (!name || (!digitalDiscovery && !email) || !identity || seen.has(identity) || (email && excludedEmails.has(email)) || (website && excludedWebsites.has(website.toLowerCase()))) return [];
       seen.add(identity);
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;
       return [{ name: clean(name), email, website, phone: tags.phone || tags['contact:phone'] || '', location: location(tags), industry: industry(tags), tags, contactUrl: website, googleMapsUrl: lat && lon ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} Dorset`)}` }];
