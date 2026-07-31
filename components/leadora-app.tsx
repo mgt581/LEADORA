@@ -234,7 +234,14 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
     if(followUps.length)setDrafts([...drafts,...followUps]);
   },[outreach,drafts,prospects,businesses,setDrafts]);
   const withClientContact=(body:string,business:BusinessProfile)=>body.includes(CLIENT_CONTACT_PHONE)?body:`${body.trim()}\n\n${business.signature.includes(CLIENT_CONTACT_PHONE)?business.signature:`${business.signature}\n${CLIENT_CONTACT_PHONE}`}`;
-  const digitalOfferBody=(business:BusinessProfile,name:string,finding?:string)=>withClientContact(`Hi there,\n\nI took a quick look at ${name}'s website${finding?` and spotted one quick win: ${finding.replace(/\.$/,'').toLowerCase()}`:''}.\n\nHere’s my offer: a website and SEO audit, normally £49, free — with practical actions you can use straight away.\n\nIf you want help putting them into action, our recurring plans are month-to-month, with no long contract and low risk.\n\nWorth me sending the free audit over?\n\nhttps://bryantdigitalsolutions.com`,business);
+  const digitalOfferBody=(business:BusinessProfile,name:string,finding?:string)=>withClientContact(`Hi there,\n\nI took a quick look at the website for ${name}${finding?` and spotted one quick win: ${finding.replace(/\.$/,'').toLowerCase()}`:''}.\n\nHere’s my offer: a website and SEO audit, normally £49, free — with practical actions you can use straight away.\n\nIf you want help putting them into action, our recurring plans are month-to-month, with no long contract and low risk.\n\nWorth me sending the free audit over?\n\nhttps://bryantdigitalsolutions.com`,business);
+  useEffect(()=>{
+    if(businessId!=='bryant-digital')return;
+    const business=businesses.find(item=>item.id==='bryant-digital');if(!business)return;
+    let changed=false;
+    const refreshed=drafts.map(draft=>{if(draft.businessId!=='bryant-digital'||!['pending','edited'].includes(draft.status)||draft.body.includes('month-to-month'))return draft;const prospect=prospects.find(item=>item.id===draft.prospectId);if(!prospect)return draft;changed=true;return {...draft,subject:`A quick website win for ${prospect.name}`,body:digitalOfferBody(business,prospect.name,prospect.audit?.notes[0]),callToAction:'Worth me sending the free audit over?',status:'pending' as const};});
+    if(changed)setDrafts(refreshed);
+  },[businessId]);
   async function discoverDigitalProspects() {
     const business=businesses.find(b=>b.id===businessId); if(!business)return;
     setBusy(true); setSendError(''); setProgress('Finding public Dorset prospects…');
