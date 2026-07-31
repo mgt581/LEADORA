@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   LayoutDashboard, Users, ContactRound, Building2, Handshake, Columns3,
@@ -21,18 +21,12 @@ type SystemCheck = { ok:boolean; detail:string };
 type SystemStatus = Record<'cloudflare'|'backend'|'database'|'googleOAuth'|'gmailApi'|'connectedAccount',SystemCheck>;
 type GmailStatus = {connected:boolean;emailAddress?:string;error?:string;code?:string;diagnostics?:Array<{name:string;configured:boolean}>};
 
-const seedLeads: Lead[] = [
-  {name:'Sarah Johnson',email:'sarah@designco.com',company:'Design Co.',status:'New',source:'Website',created:'2 min ago'},
-  {name:'David Williams',email:'david@techflow.com',company:'TechFlow',status:'Contacted',source:'LinkedIn',created:'1 h ago'},
-  {name:'James Brown',email:'james@marketplus.com',company:'MarketPlus',status:'Qualified',source:'Referral',created:'2 h ago'},
-  {name:'Emily Davis',email:'emily@brightidea.com',company:'Bright Idea',status:'Proposal',source:'Website',created:'5 h ago'},
-  {name:'Michael Wilson',email:'michael@nextgen.com',company:'NextGen',status:'New',source:'Ads',created:'1 day ago'},
-];
-const seedContacts: Contact[] = [
-  {name:'Sarah Johnson',email:'sarah@designco.com',company:'Design Co.',phone:'+44 7700 900123',status:'Active'},
-  {name:'David Williams',email:'david@techflow.com',company:'TechFlow',phone:'+44 7700 900456',status:'Active'},
-  {name:'Emily Davis',email:'emily@brightidea.com',company:'Bright Idea',phone:'+44 7700 901234',status:'Inactive'},
-];
+const seedLeads: Lead[] = [];
+const seedContacts: Contact[] = [];
+const DEMO_EMAILS = new Set([
+  'sarah@designco.com','david@techflow.com','james@marketplus.com',
+  'emily@brightidea.com','michael@nextgen.com',
+]);
 const seedBusinesses: BusinessProfile[] = [
   {id:'bryant-construction',name:'Bryant Construction Group',description:'Trusted construction and renovation specialists.',services:['Extensions','Renovations','New builds'],serviceArea:'Bournemouth, Poole and Dorset',website:'bryantconstructiongroup.co.uk',signature:`Alex Bryant\nBryant Construction Group\n${CLIENT_CONTACT_PHONE}`,tone:'Professional and warm',idealCustomer:'Homeowners and property developers',industries:['Construction','Property'],dailyLimit:10,followUp:'3 days, then 7 days'},
   {id:'bryant-cleaning',name:'Bryant & Co Cleaning',description:'Reliable commercial and domestic cleaning teams.',services:['Commercial cleaning','End of tenancy','Deep cleaning'],serviceArea:'Bournemouth and surrounding areas',website:'bryantandcocleaning.co.uk',signature:`Alex Bryant\nBryant & Co Cleaning\n${CLIENT_CONTACT_PHONE}`,tone:'Friendly and helpful',idealCustomer:'Busy homeowners and local businesses',industries:['Hospitality','Property','Offices'],dailyLimit:10,followUp:'4 days, then 10 days'},
@@ -80,6 +74,13 @@ export function LeadoraApp({ route='dashboard' }: { route?:string }) {
   const [gmailMessages,setGmailMessages] = useStoredState<GmailMessage[]>('leadora-gmail-messages',[]);
   const [menu,setMenu] = useState(false);
 
+  useEffect(() => {
+    const realLeads=leads.filter(item=>!DEMO_EMAILS.has(item.email.toLowerCase()));
+    const realContacts=contacts.filter(item=>!DEMO_EMAILS.has(item.email.toLowerCase()));
+    if(realLeads.length!==leads.length)setLeads(realLeads);
+    if(realContacts.length!==contacts.length)setContacts(realContacts);
+  },[leads,contacts,setLeads,setContacts]);
+
   if(route==='login' || !auth) return <Login onLogin={()=>setAuth(true)} />;
   const active = nav.find(n=>n[0]===route) ?? nav[0];
 
@@ -114,12 +115,12 @@ function Login({onLogin}:{onLogin:()=>void}) {
 }
 
 function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach,gmailMessages,setGmailMessages}:{route:string;leads:Lead[];setLeads:(v:Lead[])=>void;contacts:Contact[];setContacts:(v:Contact[])=>void;businesses:BusinessProfile[];setBusinesses:(v:BusinessProfile[])=>void;prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void;gmailMessages:GmailMessage[];setGmailMessages:(v:GmailMessage[])=>void}) {
-  if(route==='dashboard') return <Dashboard leads={leads} prospects={prospects} drafts={drafts} outreach={outreach}/>;
+  if(route==='dashboard') return <Dashboard prospects={prospects} drafts={drafts} outreach={outreach} gmailMessages={gmailMessages}/>;
   if(route==='leads') return <Leads leads={leads} setLeads={setLeads}/>;
   if(route==='contacts') return <Contacts contacts={contacts} setContacts={setContacts}/>;
   if(route==='pipelines') return <Pipelines leads={leads}/>;
   if(route==='automations') return <Automations/>;
-  if(route==='analytics'||route==='reports') return <Reports title={route==='analytics'?'Analytics':'Reports'}/>;
+  if(route==='analytics'||route==='reports') return <Reports title={route==='analytics'?'Analytics':'Reports'} prospects={prospects} drafts={drafts} outreach={outreach} gmailMessages={gmailMessages}/>;
   if(route==='settings') return <SettingsPage/>;
   if(route==='website-audits') return <AuditPage prospects={prospects}/>;
   if(route==='inbox') return <InboxPage messages={gmailMessages} setMessages={setGmailMessages} businesses={businesses}/>;
@@ -129,7 +130,7 @@ function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesse
 }
 
 function Header({title,sub,action}:{title:string;sub:string;action?:React.ReactNode}){return <div className="heading-row"><div><h1>{title}</h1><div className="muted">{sub}</div></div>{action}</div>}
-function Kpi({label,value,change}:{label:string;value:string;change:string}){return <div className="card"><div className="kpi-label">{label}</div><div className="kpi-value">{value}</div><div className="up">↑ {change} vs last 7 days</div></div>}
+function Kpi({label,value,detail}:{label:string;value:string;detail:string}){return <div className="card"><div className="kpi-label">{label}</div><div className="kpi-value">{value}</div><div className="muted">{detail}</div></div>}
 async function fetchIntegrationStatus() {
   const get = async (url:string) => {
     const response = await fetch(url);
@@ -152,13 +153,32 @@ async function fetchIntegrationStatus() {
   return {gmailStatus,systemStatus};
 }
 
-function Dashboard({leads,prospects,drafts,outreach}:{leads:Lead[];prospects:Prospect[];drafts:Draft[];outreach:Outreach[]}) {
-  const bars=[48,72,55,79,62,88,42];
-  return <><Header title="Good morning, Alex 👋" sub="Here’s what’s happening with your business today." action={<button className="btn secondary">Jul 14 – Jul 21, 2026</button>}/>
-    <div className="grid kpis"><Kpi label="Leads Found Today" value={String(prospects.filter(p=>new Date(p.discoveredAt).toDateString()===new Date().toDateString()).length)} change="today"/><Kpi label="Awaiting Approval" value={String(drafts.filter(d=>d.status==='pending').length)} change="today"/><Kpi label="Emails Sent" value={String(outreach.filter(o=>o.status==='sent').length)} change="all time"/><Kpi label="Average Audit Score" value={prospects.length?`${Math.round(prospects.reduce((total,p)=>total+p.score,0)/prospects.length)}/100`:'—'} change="all audits"/></div>
-    <div className="grid dashboard-grid"><div className="card"><b>Leads Overview</b><div className="chart-bars">{bars.map((h,i)=><div key={i} className="bar" style={{height:`${h}%`}}/>)}</div><div style={{display:'flex',justifyContent:'space-between'}}>{['Mon','Tue','Wed','Thu','Fri','Sat','Sun'].map(x=><span className="muted" key={x}>{x}</span>)}</div></div>
-    <div className="card"><b>Recent Activity</b><div className="activity" style={{marginTop:18}}>{['New lead: Sarah Johnson','Email opened: Proposal Follow-up','Deal won: ACME Solutions','Task completed: Call with James','New lead: David Williams'].map((x,i)=><div className="activity-row" key={x}><i className="dot"/><span>{x}</span><span className="muted">{i+1}h</span></div>)}</div></div></div>
-    <div className="grid dashboard-grid"><div className="card"><b>Today’s Prospecting</b><div className="grid kpis" style={{gridTemplateColumns:'repeat(4,1fr)',marginTop:14}}><Kpi label="Prospects found" value={String(prospects.length)} change="today"/><Kpi label="Emails drafted" value={String(drafts.length)} change="today"/><Kpi label="Pending approval" value={String(drafts.filter(d=>d.status==='pending').length)} change="today"/><Kpi label="Sent today" value={String(outreach.filter(o=>o.status==='sent'&&o.date===new Date().toLocaleDateString()).length)} change="today"/></div></div><div className="card"><b>Tasks Due Today</b>{['Review new AI drafts','Approve outreach queue','Follow up with prospects','Team meeting'].map((x,i)=><label key={x} style={{display:'flex',gap:10,marginTop:16,fontSize:12}}><input type="checkbox"/>{x}<span className="muted" style={{marginLeft:'auto'}}>{9+i}:00</span></label>)}</div></div>
+function Dashboard({prospects,drafts,outreach,gmailMessages}:{prospects:Prospect[];drafts:Draft[];outreach:Outreach[];gmailMessages:GmailMessage[]}) {
+  const now=new Date(); const today=now.toDateString();
+  const days=Array.from({length:7},(_,index)=>{const date=new Date(now);date.setHours(0,0,0,0);date.setDate(date.getDate()-(6-index));return date;});
+  const dayCounts=days.map(date=>prospects.filter(p=>new Date(p.discoveredAt).toDateString()===date.toDateString()).length);
+  const maxDayCount=Math.max(0,...dayCounts);
+  const audited=prospects.filter(p=>p.audit);
+  const incoming=gmailMessages.filter(message=>!message.labelIds.includes('SENT'));
+  const recent=[
+    ...prospects.map(p=>({at:new Date(p.discoveredAt).getTime(),text:`Prospect found: ${p.name}`})),
+    ...outreach.filter(o=>o.sentAt).map(o=>({at:new Date(o.sentAt!).getTime(),text:`Email sent: ${prospects.find(p=>p.id===o.prospectId)?.name||'Prospect'}`})),
+    ...incoming.map(message=>({at:Number(message.internalDate)||new Date(message.internalDate).getTime(),text:`Reply received: ${message.from||message.subject||'Gmail message'}`})),
+  ].filter(item=>Number.isFinite(item.at)).sort((a,b)=>b.at-a.at).slice(0,5);
+  const relative=(timestamp:number)=>{const minutes=Math.max(0,Math.floor((Date.now()-timestamp)/60000));if(minutes<1)return 'now';if(minutes<60)return `${minutes}m`;const hours=Math.floor(minutes/60);if(hours<24)return `${hours}h`;return `${Math.floor(hours/24)}d`;};
+  const todayProspects=prospects.filter(p=>new Date(p.discoveredAt).toDateString()===today).length;
+  const todayDrafts=drafts.filter(d=>new Date(d.generatedAt).toDateString()===today).length;
+  const sentToday=outreach.filter(o=>o.status==='sent'&&o.sentAt&&new Date(o.sentAt).toDateString()===today).length;
+  const pending=drafts.filter(d=>d.status==='pending').length;
+  const followUps=drafts.filter(d=>d.status==='pending'&&d.isFollowUp).length;
+  const unreadReplies=incoming.filter(message=>message.isRead===false).length;
+  const rangeLabel=`${days[0].toLocaleDateString('en-GB',{day:'numeric',month:'short'})} – ${days[6].toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
+  const tasks=[pending?`${pending} email${pending===1?'':'s'} awaiting approval`:null,followUps?`${followUps} follow-up${followUps===1?'':'s'} ready to review`:null,unreadReplies?`${unreadReplies} unread repl${unreadReplies===1?'y':'ies'} in Inbox`:null].filter((task):task is string=>Boolean(task));
+  return <><Header title="Good morning, Alex 👋" sub="Live figures from your saved LEADORA activity." action={<span className="btn secondary">{rangeLabel}</span>}/>
+    <div className="grid kpis"><Kpi label="Prospects Found Today" value={String(todayProspects)} detail="Recorded today"/><Kpi label="Awaiting Approval" value={String(pending)} detail="Current queue"/><Kpi label="Emails Sent" value={String(outreach.filter(o=>o.status==='sent').length)} detail="Recorded all time"/><Kpi label="Average Audit Score" value={audited.length?`${Math.round(audited.reduce((total,p)=>total+(p.audit?.overallScore??0),0)/audited.length)}/100`:'—'} detail={audited.length?`${audited.length} completed audit${audited.length===1?'':'s'}`:'No audits yet'}/></div>
+    <div className="grid dashboard-grid"><div className="card"><b>Prospects Found · Last 7 Days</b>{maxDayCount===0?<p className="muted" style={{marginTop:28}}>No prospects recorded in this period.</p>:<><div className="chart-bars">{dayCounts.map((count,index)=><div key={days[index].toISOString()} className="bar" title={`${count} prospect${count===1?'':'s'}`} style={{height:`${Math.max(6,(count/maxDayCount)*100)}%`}}/>)}</div><div style={{display:'flex',justifyContent:'space-between'}}>{days.map(date=><span className="muted" key={date.toISOString()}>{date.toLocaleDateString('en-GB',{weekday:'short'})}</span>)}</div></>}</div>
+    <div className="card"><b>Recent Activity</b>{recent.length?<div className="activity" style={{marginTop:18}}>{recent.map(item=><div className="activity-row" key={`${item.at}-${item.text}`}><i className="dot"/><span>{item.text}</span><span className="muted">{relative(item.at)}</span></div>)}</div>:<p className="muted" style={{marginTop:28}}>No recorded activity yet.</p>}</div></div>
+    <div className="grid dashboard-grid"><div className="card"><b>Today’s Prospecting</b><div className="grid kpis" style={{gridTemplateColumns:'repeat(4,1fr)',marginTop:14}}><Kpi label="Prospects found" value={String(todayProspects)} detail="Today"/><Kpi label="Emails drafted" value={String(todayDrafts)} detail="Today"/><Kpi label="Pending approval" value={String(pending)} detail="Current queue"/><Kpi label="Sent today" value={String(sentToday)} detail="Today"/></div></div><div className="card"><b>Tasks Due Now</b>{tasks.length?tasks.map(task=><div key={task} style={{display:'flex',gap:10,marginTop:16,fontSize:12}}><ClipboardCheck size={15}/><span>{task}</span></div>):<p className="muted" style={{marginTop:28}}>No recorded tasks are currently due.</p>}</div></div>
   </>;
 }
 
@@ -174,11 +194,17 @@ function Contacts({contacts,setContacts}:{contacts:Contact[];setContacts:(v:Cont
 
 function DataTable({headers,rows}:{headers:string[];rows:React.ReactNode[][]}) {return <div className="card table-wrap"><table><thead><tr>{headers.map(h=><th key={h}>{h}</th>)}</tr></thead><tbody>{rows.map((r,i)=><tr key={i}>{r.map((v,j)=><td key={j}>{v}</td>)}</tr>)}</tbody></table></div>}
 
-function Pipelines({leads}:{leads:Lead[]}) { const stages=['New','Contacted','Qualified','Proposal']; return <><Header title="Pipeline" sub="Move prospects through your sales process." action={<button className="btn">+ Add Deal</button>}/><div className="grid pipeline">{stages.map((s,si)=><div className="pipeline-col" key={s}><div className="pipeline-title"><span>{s}</span><span>{leads.filter(l=>l.status===s).length||si+2}</span></div>{leads.filter(l=>l.status===s).concat(leads.slice(si,si+1)).slice(0,3).map((l,i)=><div className="deal" key={l.name+i}><b>{l.company}</b><p className="muted">{l.name}</p><strong style={{color:'#886b22'}}>£{(2400+si*1750).toLocaleString()}</strong></div>)}</div>)}</div></> }
+function Pipelines({leads}:{leads:Lead[]}) { const stages=['New','Contacted','Qualified','Proposal']; return <><Header title="Pipeline" sub="Live stages from your saved CRM leads."/><div className="grid pipeline">{stages.map(stage=>{const stageLeads=leads.filter(lead=>lead.status===stage);return <div className="pipeline-col" key={stage}><div className="pipeline-title"><span>{stage}</span><span>{stageLeads.length}</span></div>{stageLeads.map((lead,index)=><div className="deal" key={`${lead.email}-${index}`}><b>{lead.company}</b><p className="muted">{lead.name}</p></div>)}{stageLeads.length===0&&<p className="muted" style={{fontSize:12}}>No leads in this stage.</p>}</div>})}</div></> }
 
-function Automations(){const rows=[['New Lead Welcome','Welcome a new lead','124','86%'],['Follow-Up Sequence','Follow up with leads','98','72%'],['Re-engagement Campaign','Win back inactive leads','64','45%'],['Deal Won Celebration','Reward new customers','23','100%']];return <><Header title="Automations" sub="Create workflows that work for you." action={<button className="btn">+ New Automation</button>}/><div className="card">{rows.map(r=><div key={r[0]} style={{display:'grid',gridTemplateColumns:'42px 1fr 80px 80px 45px',gap:14,alignItems:'center',padding:'15px 4px',borderBottom:'1px solid #eee'}}><div className="avatar"><Workflow size={15}/></div><div><b>{r[0]}</b><div className="muted">{r[1]}</div></div><div><b>{r[2]}</b><div className="muted">Active</div></div><div><b>{r[3]}</b><div className="muted">Open rate</div></div><div className="toggle"/></div>)}</div></>}
+function Automations(){return <><Header title="Automations" sub="Automation runs will appear here when configured."/><div className="card" style={{textAlign:'center',padding:40}}><Workflow size={30} color="#c9a84c"/><p><b>No automations configured</b></p><p className="muted">No template runs or invented performance figures are shown.</p></div></>}
 
-function Reports({title}:{title:string}){return <><Header title={title} sub="Track your performance and growth." action={<button className="btn secondary">Jul 14 – Jul 21, 2026</button>}/><div className="grid kpis"><Kpi label="Total Leads" value="248" change="18%"/><Kpi label="Conversions" value="23" change="8%"/><Kpi label="Conversion Rate" value="9.3%" change="2.1%"/><Kpi label="Revenue" value="£12,540" change="22%"/></div><div className="grid dashboard-grid"><div className="card"><b>Leads Over Time</b><div className="chart-bars">{[22,45,86,52,68,38,91,61,73,49,80,57].map((h,i)=><div className="bar" key={i} style={{height:`${h}%`}}/>)}</div></div><div className="card"><b>Leads by Source</b><div style={{width:190,height:190,borderRadius:'50%',margin:'28px auto',background:'conic-gradient(#c9a84c 0 42%,#0b1220 42% 70%,#e8d8ae 70% 87%,#dfe2e8 87%)',display:'grid',placeItems:'center'}}><div style={{width:105,height:105,borderRadius:'50%',background:'#fff',display:'grid',placeItems:'center',fontWeight:800,fontSize:25}}>248</div></div></div></div></>}
+function Reports({title,prospects,drafts,outreach,gmailMessages}:{title:string;prospects:Prospect[];drafts:Draft[];outreach:Outreach[];gmailMessages:GmailMessage[]}){
+  const now=new Date();const days=Array.from({length:7},(_,index)=>{const date=new Date(now);date.setHours(0,0,0,0);date.setDate(date.getDate()-(6-index));return date;});
+  const counts=days.map(date=>prospects.filter(p=>new Date(p.discoveredAt).toDateString()===date.toDateString()).length);const max=Math.max(0,...counts);
+  const sent=outreach.filter(item=>item.status==='sent').length;const replies=gmailMessages.filter(message=>!message.labelIds.includes('SENT')).length;const replyRate=sent?`${Math.min(100,Math.round((replies/sent)*1000)/10)}%`:'0%';
+  const rangeLabel=`${days[0].toLocaleDateString('en-GB',{day:'numeric',month:'short'})} – ${days[6].toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
+  const pending=drafts.filter(draft=>draft.status==='pending').length;const approved=drafts.filter(draft=>draft.status==='approved').length;
+  return <><Header title={title} sub="Recorded outreach performance only—no template figures." action={<span className="btn secondary">{rangeLabel}</span>}/><div className="grid kpis"><Kpi label="Total Prospects" value={String(prospects.length)} detail="Recorded all time"/><Kpi label="Emails Sent" value={String(sent)} detail="Accepted by Gmail"/><Kpi label="Replies" value={String(replies)} detail="Imported from Gmail"/><Kpi label="Reply Rate" value={replyRate} detail="Replies ÷ emails sent"/></div><div className="grid dashboard-grid"><div className="card"><b>Prospects Found · Last 7 Days</b>{max===0?<p className="muted" style={{marginTop:28}}>No prospects recorded in this period.</p>:<><div className="chart-bars">{counts.map((count,index)=><div className="bar" key={days[index].toISOString()} title={`${count} prospect${count===1?'':'s'}`} style={{height:`${Math.max(6,(count/max)*100)}%`}}/>)}</div><div style={{display:'flex',justifyContent:'space-between'}}>{days.map(date=><span className="muted" key={date.toISOString()}>{date.toLocaleDateString('en-GB',{weekday:'short'})}</span>)}</div></>}</div><div className="card"><b>Current Outreach Funnel</b><div style={{display:'grid',gap:16,marginTop:24}}>{[['Prospects',prospects.length],['Drafts',drafts.length],['Awaiting approval',pending],['Approved',approved],['Sent',sent],['Replies',replies]].map(([label,value])=><div key={String(label)} style={{display:'flex',justifyContent:'space-between',borderBottom:'1px solid #eee',paddingBottom:10}}><span className="muted">{label}</span><b>{value}</b></div>)}</div></div></div></>}
 
 function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach}:{businesses:BusinessProfile[];prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void}) {
   const [businessId,setBusinessId]=useState(businesses[0]?.id||''); const [busy,setBusy]=useState(false); const [sending,setSending]=useState<string|null>(null); const [sendError,setSendError]=useState(''); const [website,setWebsite]=useState(''); const [progress,setProgress]=useState('');
@@ -319,6 +345,5 @@ function GenericPage({route}:{route:string}) { const config:Record<string,[strin
  'ai-agents':['AI Agents','Deploy autonomous agents across your sales operation.',['Agent','Purpose','Runs','Success Rate','Status']],
  };
  const [title,sub,headers]=config[route]??['LEADORA','Your sales operating system.',['Item','Owner','Performance','Status']];
- const rows=useMemo(()=>Array.from({length:6},(_,i)=>headers.map((h,j)=>j===0?(route==='website-audits'?<Link href="/">{`${title.slice(0,-1)} ${i+1}`}</Link>:`${title.slice(0,-1)} ${i+1}`):j===headers.length-1?<span className="badge" key={h}>Active</span>:j===2?`${82-i*4}%`:`${h} data`)),[headers,title,route]);
- return <><Header title={title} sub={sub} action={<button className="btn">+ New {title.slice(0,-1)}</button>}/><DataTable headers={headers} rows={rows}/></>;
+ return <><Header title={title} sub={sub}/><DataTable headers={headers} rows={[]}/><div className="card" style={{textAlign:'center',marginTop:16,padding:32}}><p><b>No recorded {title.toLowerCase()} yet</b></p><p className="muted">Real records will appear here when this module is connected.</p></div></>;
 }
