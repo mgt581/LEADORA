@@ -241,7 +241,7 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
     let changed=false;
     const refreshed=drafts.map(draft=>{if(draft.businessId!=='bryant-digital'||!['pending','edited'].includes(draft.status)||draft.body.includes('month-to-month'))return draft;const prospect=prospects.find(item=>item.id===draft.prospectId);if(!prospect)return draft;changed=true;return {...draft,subject:`A quick website win for ${prospect.name}`,body:digitalOfferBody(business,prospect.name,prospect.audit?.notes[0]),callToAction:'Worth me sending the free audit over?',status:'pending' as const};});
     if(changed)setDrafts(refreshed);
-  },[businessId]);
+  },[businessId,businesses,drafts,prospects,setDrafts]);
   async function discoverDigitalProspects() {
     const business=businesses.find(b=>b.id===businessId); if(!business)return;
     setBusy(true); setSendError(''); setProgress('Finding public Dorset prospects…');
