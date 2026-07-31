@@ -176,11 +176,15 @@ export function businessEmailFromHeaders(headers: GmailHeader[], mappings: Recor
   return matches.length === 1 ? matches[0] : null;
 }
 
-export function encodeRawMessage(fields: { from: string; to: string; subject: string; body: string; inReplyTo?: string; references?: string }) {
-  const headers = [`From: ${fields.from}`, `To: ${fields.to}`, `Subject: ${fields.subject}`, 'MIME-Version: 1.0', 'Content-Type: text/plain; charset="UTF-8"'];
+export function encodeRawMessage(fields: { from: string; to: string; subject: string; body: string; html?: string; inReplyTo?: string; references?: string }) {
+  const boundary = `leadora-${crypto.randomUUID()}`;
+  const headers = [`From: ${fields.from}`, `To: ${fields.to}`, `Subject: ${fields.subject}`, 'MIME-Version: 1.0', fields.html ? `Content-Type: multipart/alternative; boundary="${boundary}"` : 'Content-Type: text/plain; charset="UTF-8"'];
   if (fields.inReplyTo) headers.push(`In-Reply-To: ${fields.inReplyTo}`);
   if (fields.references) headers.push(`References: ${fields.references}`);
-  return Buffer.from(`${headers.join('\r\n')}\r\n\r\n${fields.body}`, 'utf8').toString('base64url');
+  const content = fields.html
+    ? `--${boundary}\r\nContent-Type: text/plain; charset="UTF-8"\r\n\r\n${fields.body}\r\n--${boundary}\r\nContent-Type: text/html; charset="UTF-8"\r\n\r\n${fields.html}\r\n--${boundary}--`
+    : fields.body;
+  return Buffer.from(`${headers.join('\r\n')}\r\n\r\n${content}`, 'utf8').toString('base64url');
 }
 
 export async function gmailRequest(path: string, tokens: TokenSet, init?: RequestInit) {
