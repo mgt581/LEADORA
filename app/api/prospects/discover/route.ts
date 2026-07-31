@@ -1,11 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { getOutreachWorkflow, type OutreachWorkflowConfig, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 
 export const runtime = 'nodejs';
 
 type OsmElement = { id: number; type: string; lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> };
-type AiBinding = { run: (model: string, input: Record<string, unknown>) => Promise<{ response?: string }> };
 
 const clean = (value: string) => value.replace(/\s+/g, ' ').trim();
 const emailPattern = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
@@ -15,6 +13,7 @@ const publicDirectoryMirrors = [
   'https://overpass.kumi.systems/api/interpreter',
   'https://maps.mail.ru/osm/tools/overpass/api/interpreter',
 ];
+const dorsetBounds = '50.50,-2.95,51.10,-1.70';
 
 function normaliseWebsite(value: string) {
   const trimmed = value.trim();
@@ -58,19 +57,32 @@ function fallbackProposal(config: OutreachWorkflowConfig, name: string, business
   };
 }
 async function proposal(config: OutreachWorkflowConfig, name: string, businessType: string, place: string) {
-  const fallback = fallbackProposal(config, name, businessType, place);
+  // Deterministic proposals keep discovery fast and prevent a text model from
+  // inventing claims, attachments, links or contact details.
+  return fallbackProposal(config, name, businessType, place);
+}
+
+async function fetchPublicDirectory(query: string) {
+  const attempts = publicDirectoryMirrors.map(async endpoint => {
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/x-www-form-urlencoded',
+        'user-agent': 'LEADORA/1.0 public-contact discovery',
+      },
+      body: new URLSearchParams({ data: query }),
+      signal: AbortSignal.timeout(15_000),
+    });
+    if (!response.ok) throw new Error(`${response.status}`);
+    const data = await response.json() as { elements?: OsmElement[] };
+    if (!data.elements?.length) throw new Error('empty response');
+    return data;
+  });
   try {
-    const env = getCloudflareContext().env as unknown as { AI?: AiBinding };
-    if (!env.AI) return fallback;
-    const prompt = `Write a concise UK outreach email in JSON only with keys subject, body, callToAction. Use only these facts: business name=${name}; public category=${businessType}; location=${place}. Sender is ${config.companyName}. Use the ${config.proposalTemplate} proposal template for ${config.recommendedService}. Do not claim to have visited, audited, or know any needs of the business. Helpful, professional, no pressure, 120 words maximum.`;
-    const result = await env.AI.run('@cf/meta/llama-3.2-1b-instruct', { prompt, max_tokens: 360, temperature: 0.35 });
-    const raw = result.response?.match(/\{[\s\S]*\}/)?.[0];
-    if (!raw) return fallback;
-    const parsed = JSON.parse(raw) as Partial<typeof fallback>;
-    if (!parsed.subject || !parsed.body || !parsed.callToAction) return fallback;
-    const body = clean(parsed.body).replace(/\\n/g, '\n');
-    return { subject: clean(parsed.subject).slice(0, 140), body: body.includes(CLIENT_CONTACT_PHONE) ? body : `${body}\n\nAlex Bryant\n${config.companyName}\n${CLIENT_CONTACT_PHONE}`, callToAction: clean(parsed.callToAction).slice(0, 180) };
-  } catch { return fallback; }
+    return await Promise.any(attempts);
+  } catch {
+    throw new Error('The public directory is temporarily unavailable. Please try again shortly.');
+  }
 }
 
 /** Free discovery source: OpenStreetMap records and only the email that its contributor/business has published. */
@@ -88,19 +100,10 @@ export async function POST(request: NextRequest) {
   const excludedEmails = new Set((body.excludeEmails ?? []).map(value => value.toLowerCase()).slice(0, 500));
   const excludedWebsites = new Set((body.excludeWebsites ?? []).map(value => value.toLowerCase()).slice(0, 500));
   const query = digitalDiscovery
-    ? `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["website"](area.area);nwr["contact:website"](area.area););out center tags 250;`
-    : `[out:json][timeout:25];area["name"="Dorset"]["boundary"="administrative"]->.area;(nwr["email"](area.area);nwr["contact:email"](area.area););out center tags 100;`;
+    ? `[out:json][timeout:12];(nwr["website"]["name"](${dorsetBounds});nwr["contact:website"]["name"](${dorsetBounds}););out center tags 120;`
+    : `[out:json][timeout:12];(nwr["email"]["name"](${dorsetBounds});nwr["contact:email"]["name"](${dorsetBounds}););out center tags 120;`;
   try {
-    let data: { elements?: OsmElement[] } | null = null;
-    let lastStatus = 0;
-    for (const endpoint of publicDirectoryMirrors) {
-      try {
-        const response = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'LEADORA/1.0 public-contact discovery' }, body: new URLSearchParams({ data: query }), signal: AbortSignal.timeout(30_000) });
-        lastStatus = response.status;
-        if (response.ok) { data = await response.json() as { elements?: OsmElement[] }; break; }
-      } catch { /* Try the next free public mirror. */ }
-    }
-    if (!data) throw new Error(`The public directory is temporarily unavailable (${lastStatus || 'network error'}). Please try again shortly.`);
+    const data = await fetchPublicDirectory(query);
     const seen = new Set<string>();
     const allCandidates = (data.elements ?? []).flatMap(element => {
       const tags = element.tags ?? {}; const email = (tags.email || tags['contact:email'] || '').toLowerCase(); const name = tags.name;
@@ -112,10 +115,11 @@ export async function POST(request: NextRequest) {
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;
       return [{ name: clean(name), email, website, phone: tags.phone || tags['contact:phone'] || '', location: location(tags), industry: industry(tags), tags, contactUrl: website, googleMapsUrl: lat && lon ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} Dorset`)}` }];
     });
+    if (digitalDiscovery) allCandidates.sort((a, b) => Number(Boolean(b.email)) - Number(Boolean(a.email)));
     const relevant = digitalDiscovery ? allCandidates : allCandidates.filter(candidate => matchesWorkflow(candidate.tags, config));
     // OpenStreetMap tagging is incomplete for property and beauty businesses. A
     // transparent public-contact fallback is preferable to returning no leads.
-    const selectionLimit = digitalDiscovery ? Math.min(40, limit * 4) : limit;
+    const selectionLimit = digitalDiscovery ? Math.min(20, limit * 2) : limit;
     const selected = (relevant.length ? relevant : allCandidates).slice(0, selectionLimit);
     const candidates = selected.map(({ tags: _tags, ...candidate }) => candidate);
     const prospects = digitalDiscovery ? candidates : await Promise.all(candidates.map(async candidate => ({ ...candidate, proposal: await proposal(config, candidate.name, candidate.industry, candidate.location) })));
