@@ -42,7 +42,7 @@ const seedBusinesses: BusinessProfile[] = [
 const DEFAULT_BUSINESS_EMAIL_MAPPINGS: Record<string,string> = {
   'bryant-cleaning':'info@bryantandcocleaning.co.uk',
   'bryant-construction':'info@bryantconstructiongroup.co.uk',
-  'bryant-digital':'info@bryantdigital.co.uk',
+  'bryant-digital':'info@bryantdigitalsolutions.com',
   'mr-white-teeth':'info@mrwhiteteeth.co.uk',
 };
 
