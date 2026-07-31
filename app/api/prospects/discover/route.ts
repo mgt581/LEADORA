@@ -1,11 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getOutreachWorkflow, type OutreachWorkflowConfig, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
+import { decodeHtmlEntities } from '@/lib/text';
 
 export const runtime = 'nodejs';
 
 type OsmElement = { id: number; type: string; lat?: number; lon?: number; center?: { lat: number; lon: number }; tags?: Record<string, string> };
 
-const clean = (value: string) => value.replace(/\s+/g, ' ').trim();
+const clean = (value: string) => decodeHtmlEntities(value).replace(/\s+/g, ' ').trim();
 const emailPattern = /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i;
 const publicDirectoryMirrors = [
   'https://overpass-api.de/api/interpreter',
@@ -105,7 +106,7 @@ export async function POST(request: NextRequest) {
   // Start with published email records for every workflow. Digital discovery
   // then keeps only records that also publish a website and audits those sites.
   // This is far faster and more useful than enumerating every Dorset website.
-  const query = `[out:json][timeout:12];(nwr["email"]["name"](${dorsetBounds});nwr["contact:email"]["name"](${dorsetBounds}););out center tags 160;`;
+  const query = `[out:json][timeout:12];(nwr["email"]["name"](${dorsetBounds});nwr["contact:email"]["name"](${dorsetBounds}););out center tags 600;`;
   try {
     const data = await fetchPublicDirectory(query);
     const seen = new Set<string>();

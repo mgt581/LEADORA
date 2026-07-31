@@ -1,14 +1,15 @@
 import type { WebsiteAudit } from './types';
+import { decodeHtmlEntities } from '@/lib/text';
 
 const socialHosts = ['facebook.com', 'instagram.com', 'linkedin.com', 'x.com', 'twitter.com', 'youtube.com', 'tiktok.com'];
-const clean = (value: string) => value.replace(/\s+/g, ' ').trim();
+const clean = (value: string) => decodeHtmlEntities(value.replace(/<[^>]+>/g, ' ')).replace(/\s+/g, ' ').trim();
 const absolute = (href: string, origin: string) => { try { return new URL(href, origin).toString(); } catch { return null; } };
 
 /** Extracts only information published by the website owner. It never guesses an address. */
 export function inspectPublicWebsite(html: string, website: string) {
   const title = clean(html.match(/<title[^>]*>([\s\S]*?)<\/title>/i)?.[1] ?? '');
   const description = clean(html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']*)/i)?.[1] ?? html.match(/<meta[^>]+content=["']([^"']*)["'][^>]+name=["']description/i)?.[1] ?? '');
-  const h1Tags = [...html.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/gi)].map(match => clean(match[1].replace(/<[^>]+>/g, ''))).filter(Boolean).slice(0, 5);
+  const h1Tags = [...html.matchAll(/<h1[^>]*>([\s\S]*?)<\/h1>/gi)].map(match => clean(match[1])).filter(Boolean).slice(0, 5);
   const imageTags = html.match(/<img\b[^>]*>/gi) ?? [];
   const missingAltText = imageTags.filter(tag => !/\balt\s*=\s*["'][^"']+["']/i.test(tag)).length;
   const emails = [...html.matchAll(/(?:mailto:)?([A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,})/gi)].map(match => match[1].toLowerCase()).filter(email => !/example\.|wixpress|sentry|cloudflare/i.test(email));
@@ -32,7 +33,7 @@ export async function auditPublicWebsite(rawUrl: string): Promise<{ website: str
   if (!['http:', 'https:'].includes(url.protocol)) throw new Error('Only public HTTP(S) websites can be analysed.');
   // Do not turn the audit endpoint into a proxy for local or private infrastructure.
   const host = url.hostname.toLowerCase();
-  if (host === 'localhost' || host.endsWith('.local') || /^127\.|^10\.|^192\.168\.|^169\.254\.|^0\.|^\[?::1\]?$/i.test(host)) throw new Error('Only publicly reachable websites can be analysed.');
+  if (host === 'localhost' || host.endsWith('.local') || /^127\.|^10\.|^192\.168\.|^169\.254\.|^0\.|^172\.(1[6-9]|2\d|3[01])\.|^\[?(::1|fc|fd|fe80)/i.test(host)) throw new Error('Only publicly reachable websites can be analysed.');
   const response = await fetch(url, { headers: { 'user-agent': 'LEADORA/1.0 (public website audit)' }, redirect: 'follow', signal: AbortSignal.timeout(12_000) });
   if (!response.ok) throw new Error(`The website could not be read (${response.status}).`);
   const html = await response.text();

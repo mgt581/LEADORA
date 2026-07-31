@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { configurationError, getGmailDiagnostics } from '@/lib/server/gmail';
+import { database } from '@/lib/server/d1';
 
 export const runtime = 'nodejs';
 
@@ -7,11 +8,14 @@ export async function GET(request: NextRequest) {
   const gmailError = configurationError();
   const configured = getGmailDiagnostics();
   const has = (name: string) => configured.find(item => item.name === name)?.configured ?? false;
+  let databaseStatus = { ok: true, detail: 'D1 connection verified' };
+  try { await database().prepare('SELECT 1 AS ok').first<{ok:number}>(); }
+  catch (error) { databaseStatus = { ok: false, detail: error instanceof Error ? error.message : 'D1 is unavailable' }; }
   return NextResponse.json({
     statuses: {
       cloudflare: { ok: true, detail: new URL(request.url).hostname },
       backend: { ok: true, detail: 'API is responding' },
-      database: { ok: true, detail: 'Not required for a single connected account' },
+      database: databaseStatus,
       googleOAuth: { ok: !gmailError || !['GOOGLE_OAUTH_NOT_CONFIGURED', 'MISSING_CLIENT_ID', 'MISSING_CLIENT_SECRET', 'MISSING_REDIRECT_URI', 'REDIRECT_URI_MISMATCH'].includes(gmailError.code), detail: gmailError?.message ?? 'Configured' },
       gmailApi: { ok: true, detail: 'Available when an account is connected' },
       connectedAccount: { ok: false, detail: 'Check Gmail status for the signed-in user' },

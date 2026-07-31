@@ -14,6 +14,6 @@ export async function GET(_:NextRequest, { params }:{params:Promise<{key:string}
 }
 export async function PUT(request:NextRequest, { params }:{params:Promise<{key:string}>}) {
   const {key}=await params; if(!valid(key)) return NextResponse.json({error:'Unknown state collection.'},{status:404});
-  try { const {value}=await request.json(); const json=JSON.stringify(value); if(json.length>1_000_000)return NextResponse.json({error:'Record collection is too large.'},{status:413}); await database().prepare("INSERT INTO app_state (state_key,value_json,updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(state_key) DO UPDATE SET value_json=excluded.value_json,updated_at=CURRENT_TIMESTAMP").bind(key,json).run(); return NextResponse.json({ok:true}); }
+  try { const {value}=await request.json(); if(!Array.isArray(value))return NextResponse.json({error:'State collections must be arrays.'},{status:400}); const json=JSON.stringify(value); if(json.length>1_000_000)return NextResponse.json({error:'Record collection is too large.'},{status:413}); await database().prepare("INSERT INTO app_state (state_key,value_json,updated_at) VALUES (?, ?, CURRENT_TIMESTAMP) ON CONFLICT(state_key) DO UPDATE SET value_json=excluded.value_json,updated_at=CURRENT_TIMESTAMP").bind(key,json).run(); return NextResponse.json({ok:true}); }
   catch(error) { return NextResponse.json({error:error instanceof Error?error.message:'Database write failed.'},{status:503}); }
 }
