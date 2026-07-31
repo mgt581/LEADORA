@@ -43,7 +43,7 @@ function publicDirectoryQuery(config: OutreachWorkflowConfig, digitalDiscovery: 
         '["shop"~"beauty|hairdresser|cosmetics|wedding"]',
         '["beauty"]',
       ]
-    : ['["amenity"]', '["tourism"]', '["office"]', '["shop"]', '["leisure"]'];
+    : [''];
   const statements = selectors.flatMap(filter => [
     `nwr["email"]["name"]${filter}(${dorsetBounds});`,
     `nwr["contact:email"]["name"]${filter}(${dorsetBounds});`,
