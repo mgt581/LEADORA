@@ -79,7 +79,10 @@ async function fetchPublicDirectory(query: string) {
     return data;
   });
   try {
-    return await Promise.any(attempts);
+    const deadline = new Promise<never>((_, reject) => {
+      setTimeout(() => reject(new Error('directory deadline exceeded')), 16_000);
+    });
+    return await Promise.race([Promise.any(attempts), deadline]);
   } catch {
     throw new Error('The public directory is temporarily unavailable. Please try again shortly.');
   }
@@ -99,9 +102,10 @@ export async function POST(request: NextRequest) {
   const limit = Math.max(1, Math.min(Number(body.limit) || 10, 10));
   const excludedEmails = new Set((body.excludeEmails ?? []).map(value => value.toLowerCase()).slice(0, 500));
   const excludedWebsites = new Set((body.excludeWebsites ?? []).map(value => value.toLowerCase()).slice(0, 500));
-  const query = digitalDiscovery
-    ? `[out:json][timeout:12];(nwr["website"]["name"](${dorsetBounds});nwr["contact:website"]["name"](${dorsetBounds}););out center tags 120;`
-    : `[out:json][timeout:12];(nwr["email"]["name"](${dorsetBounds});nwr["contact:email"]["name"](${dorsetBounds}););out center tags 120;`;
+  // Start with published email records for every workflow. Digital discovery
+  // then keeps only records that also publish a website and audits those sites.
+  // This is far faster and more useful than enumerating every Dorset website.
+  const query = `[out:json][timeout:12];(nwr["email"]["name"](${dorsetBounds});nwr["contact:email"]["name"](${dorsetBounds}););out center tags 160;`;
   try {
     const data = await fetchPublicDirectory(query);
     const seen = new Set<string>();
