@@ -1,9 +1,9 @@
 name: Validate LEADORA
 
 on:
-  push:
-    branches: [main]
-  pull_request:
+  # Cloudflare builds and deploys main independently. Keep this validation
+  # available for an intentional manual run without blocking deployments when
+  # GitHub Actions billing is unavailable.
   workflow_dispatch:
 
 permissions:
