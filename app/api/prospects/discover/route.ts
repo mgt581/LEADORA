@@ -28,8 +28,27 @@ function industry(tags: Record<string, string>) {
   return tags.office || tags.amenity || tags.tourism || tags.shop || 'Local business';
 }
 function matchesWorkflow(tags: Record<string, string>, config: OutreachWorkflowConfig) {
-  const searchable = Object.values(tags).join(' ').toLowerCase();
+  const searchable = Object.entries(tags).flat().join(' ').toLowerCase();
   return config.prospectCategories.some(category => searchable.includes(category));
+}
+
+function publicDirectoryQuery(config: OutreachWorkflowConfig, digitalDiscovery: boolean) {
+  const selectors = digitalDiscovery ? ['']
+    : config.companyId === 'bryant-construction' ? [
+        '["office"~"estate_agent|property_management|architect|surveying"]',
+        '["craft"~"builder|carpenter|roofer|plumber|electrician"]',
+        '["shop"="estate_agent"]',
+      ]
+    : config.companyId === 'mr-white-teeth' ? [
+        '["shop"~"beauty|hairdresser|cosmetics|wedding"]',
+        '["beauty"]',
+      ]
+    : ['["amenity"]', '["tourism"]', '["office"]', '["shop"]', '["leisure"]'];
+  const statements = selectors.flatMap(filter => [
+    `nwr["email"]["name"]${filter}(${dorsetBounds});`,
+    `nwr["contact:email"]["name"]${filter}(${dorsetBounds});`,
+  ]).join('');
+  return `[out:json][timeout:12];(${statements});out center tags 600;`;
 }
 
 function fallbackProposal(config: OutreachWorkflowConfig, name: string, businessType: string, place: string) {
@@ -109,7 +128,7 @@ export async function POST(request: NextRequest) {
   // Start with published email records for every workflow. Digital discovery
   // then keeps only records that also publish a website and audits those sites.
   // This is far faster and more useful than enumerating every Dorset website.
-  const query = `[out:json][timeout:12];(nwr["email"]["name"](${dorsetBounds});nwr["contact:email"]["name"](${dorsetBounds}););out center tags 600;`;
+  const query = publicDirectoryQuery(config, digitalDiscovery);
   try {
     const data = await fetchPublicDirectory(query);
     const seen = new Set<string>();
@@ -125,10 +144,8 @@ export async function POST(request: NextRequest) {
     });
     if (digitalDiscovery) allCandidates.sort((a, b) => Number(Boolean(b.email)) - Number(Boolean(a.email)));
     const relevant = digitalDiscovery ? allCandidates : allCandidates.filter(candidate => matchesWorkflow(candidate.tags, config));
-    // OpenStreetMap tagging is incomplete for property and beauty businesses. A
-    // transparent public-contact fallback is preferable to returning no leads.
     const selectionLimit = digitalDiscovery ? Math.min(20, limit * 2) : limit;
-    const selected = (relevant.length ? relevant : allCandidates).slice(0, selectionLimit);
+    const selected = relevant.slice(0, selectionLimit);
     const candidates = selected.map(({ tags: _tags, ...candidate }) => candidate);
     const prospects = digitalDiscovery ? candidates : await Promise.all(candidates.map(async candidate => ({ ...candidate, proposal: await proposal(config, candidate.name, candidate.industry, candidate.location) })));
     return NextResponse.json({
@@ -136,7 +153,7 @@ export async function POST(request: NextRequest) {
       source: config.leadSource,
       companyId: config.companyId,
       limit,
-      categoryFallbackUsed: !digitalDiscovery && relevant.length === 0,
+      categoryFallbackUsed: false,
       exhausted: prospects.length === 0,
     });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Public directory search failed.' }, { status: 502 }); }
