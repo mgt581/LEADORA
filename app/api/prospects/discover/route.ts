@@ -64,29 +64,32 @@ async function proposal(config: OutreachWorkflowConfig, name: string, businessTy
 }
 
 async function fetchPublicDirectory(query: string) {
-  const attempts = publicDirectoryMirrors.map(async endpoint => {
-    const response = await fetch(endpoint, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/x-www-form-urlencoded',
-        'user-agent': 'LEADORA/1.0 public-contact discovery',
-      },
-      body: new URLSearchParams({ data: query }),
-      signal: AbortSignal.timeout(15_000),
+  for (let pass = 0; pass < 2; pass += 1) {
+    const attempts = publicDirectoryMirrors.map(async endpoint => {
+      const response = await fetch(endpoint, {
+        method: 'POST',
+        headers: {
+          'content-type': 'application/x-www-form-urlencoded',
+          'user-agent': 'LEADORA/1.0 public-contact discovery',
+        },
+        body: new URLSearchParams({ data: query }),
+        signal: AbortSignal.timeout(12_000),
+      });
+      if (!response.ok) throw new Error(`${response.status}`);
+      const data = await response.json() as { elements?: OsmElement[] };
+      if (!data.elements?.length) throw new Error('empty response');
+      return data;
     });
-    if (!response.ok) throw new Error(`${response.status}`);
-    const data = await response.json() as { elements?: OsmElement[] };
-    if (!data.elements?.length) throw new Error('empty response');
-    return data;
-  });
-  try {
-    const deadline = new Promise<never>((_, reject) => {
-      setTimeout(() => reject(new Error('directory deadline exceeded')), 16_000);
-    });
-    return await Promise.race([Promise.any(attempts), deadline]);
-  } catch {
-    throw new Error('The public directory is temporarily unavailable. Please try again shortly.');
+    try {
+      const deadline = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('directory deadline exceeded')), 13_000);
+      });
+      return await Promise.race([Promise.any(attempts), deadline]);
+    } catch {
+      if (pass === 0) await new Promise(resolve => setTimeout(resolve, 350));
+    }
   }
+  throw new Error('The public directory is temporarily unavailable after trying every fallback. Please try again shortly.');
 }
 
 /** Free discovery source: OpenStreetMap records and only the email that its contributor/business has published. */
