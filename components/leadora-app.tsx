@@ -52,7 +52,9 @@ const seedGoogleProfiles: GoogleProfileConfig[] = seedBusinesses.map(business=>(
   businessProfileUrl:'https://business.google.com/locations',
   publicProfileUrl:business.id==='bryant-digital'
     ?'https://share.google/tLq4RtoFNfYYYa833'
-    :business.id==='mr-white-teeth'?'https://share.google/rQJkWIs2P32hEk0d6':'',
+    :business.id==='bryant-cleaning'
+      ?'https://share.google/fUjEskkIeGwNbASk3'
+      :business.id==='mr-white-teeth'?'https://share.google/rQJkWIs2P32hEk0d6':'',
   analyticsPropertyId:'',
 }));
 
@@ -394,7 +396,10 @@ function GoogleProfilesPage({businesses}:{businesses:BusinessProfile[]}) {
   useEffect(()=>{
     const defaults=new Map(seedGoogleProfiles.map(profile=>[profile.companyId,profile]));
     const missing=businesses.filter(business=>!profiles.some(profile=>profile.companyId===business.id));
-    const updated=profiles.map(profile=>typeof profile.publicProfileUrl==='undefined'?{...profile,publicProfileUrl:defaults.get(profile.companyId)?.publicProfileUrl??''}:profile);
+    const updated=profiles.map(profile=>{
+      const defaultPublicUrl=defaults.get(profile.companyId)?.publicProfileUrl??'';
+      return (typeof profile.publicProfileUrl==='undefined'||(!profile.publicProfileUrl&&defaultPublicUrl))?{...profile,publicProfileUrl:defaultPublicUrl}:profile;
+    });
     if(missing.length||updated.some((profile,index)=>profile!==profiles[index]))setProfiles([...updated,...missing.map(business=>defaults.get(business.id)??{companyId:business.id,accountEmail:'',businessProfileUrl:'https://business.google.com/locations',publicProfileUrl:'',analyticsPropertyId:''})]);
   },[businesses,profiles,setProfiles]);
 
