@@ -6,5 +6,5 @@ export const LEADRALLY_BRAND = {
   domain: 'leadrally.co.uk',
   url: 'https://leadrally.co.uk',
   ownerEmail: 'ajbryantsleads@gmail.com',
-  logoPath: '/branding/leadrally-mark.png',
+  logoPath: '/branding/leadrally-mark-3d.png',
 } as const;
