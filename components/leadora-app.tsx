@@ -5,7 +5,8 @@ import Link from 'next/link';
 import {
   LayoutDashboard, Users, ContactRound, Building2, Handshake, Columns3,
   Mail, SearchCheck, Bot, Workflow, ChartNoAxesCombined, FileChartColumn,
-  Settings, Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search, Inbox, RefreshCw
+  Settings, Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search, Inbox, RefreshCw,
+  MapPinned, ExternalLink, BarChart3, Link2, Unlink
 } from 'lucide-react';
 import { getOutreachWorkflow, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 import { decodeHtmlEntities } from '@/lib/text';
@@ -23,6 +24,9 @@ type GmailMessage = { id:string; threadId:string; from:string; to:string; cc:str
 type SystemCheck = { ok:boolean; detail:string };
 type SystemStatus = Record<'cloudflare'|'backend'|'database'|'googleOAuth'|'gmailApi'|'connectedAccount',SystemCheck>;
 type GmailStatus = {connected:boolean;emailAddress?:string;error?:string;code?:string;diagnostics?:Array<{name:string;configured:boolean}>};
+type GoogleProfileConfig = { companyId:string; accountEmail:string; businessProfileUrl:string; analyticsPropertyId:string };
+type GoogleConnectionStatus = { connected:boolean; email?:string; properties:Array<{id:string;name:string;accountName:string}>; warning?:string; error?:string };
+type GoogleAnalyticsMetrics = { current:{activeUsers:number;sessions:number;pageViews:number;keyEvents:number};previous:{activeUsers:number;sessions:number;pageViews:number;keyEvents:number};period:string };
 
 const seedLeads: Lead[] = [];
 const seedContacts: Contact[] = [];
@@ -42,13 +46,19 @@ const DEFAULT_BUSINESS_EMAIL_MAPPINGS: Record<string,string> = {
   'bryant-digital':'info@bryantdigitalsolutions.com',
   'mr-white-teeth':'info@mrwhiteteeth.co.uk',
 };
+const seedGoogleProfiles: GoogleProfileConfig[] = seedBusinesses.map(business=>({
+  companyId:business.id,
+  accountEmail:'',
+  businessProfileUrl:'https://business.google.com/locations',
+  analyticsPropertyId:'',
+}));
 
 const nav = [
   ['dashboard','Dashboard',LayoutDashboard],['leads','Leads',Users],['contacts','Contacts',ContactRound],
   ['companies','Companies',Building2],['deals','Deals',Handshake],['pipelines','Pipelines',Columns3],
   ['email-outreach','Email Outreach',Mail],['website-audits','Website Audits',SearchCheck],
   ['outreach-history','Outreach History',History],['inbox','Inbox',Inbox],
-  ['ai-agents','AI Agents',Bot],['automations','Automations',Workflow],['analytics','Analytics',ChartNoAxesCombined],
+  ['ai-agents','AI Agents',Bot],['automations','Automations',Workflow],['google-profiles','Google Profiles',MapPinned],['analytics','Analytics',ChartNoAxesCombined],
   ['reports','Reports',FileChartColumn],['settings','Settings',Settings],
 ] as const;
 
@@ -135,6 +145,7 @@ function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesse
   if(route==='contacts') return <Contacts contacts={contacts} setContacts={setContacts}/>;
   if(route==='pipelines') return <Pipelines leads={leads}/>;
   if(route==='automations') return <Automations/>;
+  if(route==='google-profiles') return <GoogleProfilesPage businesses={businesses}/>;
   if(route==='analytics'||route==='reports') return <Reports title={route==='analytics'?'Analytics':'Reports'} prospects={prospects} drafts={drafts} outreach={outreach} gmailMessages={gmailMessages}/>;
   if(route==='settings') return <SettingsPage/>;
   if(route==='website-audits') return <AuditPage prospects={prospects}/>;
@@ -368,6 +379,95 @@ function InboxPage({messages,setMessages,businesses}:{messages:GmailMessage[];se
   }
   const visible=messages.filter(m=>filter==='all'||filter==='unread'&&!m.isRead||filter==='replies'&&!m.labelIds.includes('SENT')||filter==='unassigned'&&!m.businessId);
   return <><Header title="Inbox & conversations" sub="Gmail conversations matched to your prospects and businesses." action={<button className="btn" onClick={sync} disabled={busy}><RefreshCw size={14}/> {busy?'Syncing…':'Sync now'}</button>}/>{error&&<div role="alert" className="card" style={{color:'#b42318',marginBottom:16}}>{error}</div>}<div className="tabs">{[['all','All'],['unread','Unread'],['replies','Replies'],['unassigned','Unassigned']].map(([key,label])=><button className={`tab ${filter===key?'active':''}`} key={key} onClick={()=>setFilter(key)}>{label}</button>)}</div>{visible.length===0?<div className="card" style={{textAlign:'center',padding:40}}><Inbox size={30} color="#c9a84c"/><p><b>No matching conversations</b></p><p className="muted">{filter==='all'?'Connect Gmail in Settings, then choose Sync now.':'Try another filter or synchronise Gmail again.'}</p></div>:<div className="grid">{visible.map(m=><div className="card" key={m.id}><div style={{display:'flex',justifyContent:'space-between',gap:12}}><div><b>{decodeHtmlEntities(m.subject||'(no subject)')}</b><div className="muted">{m.from} · {new Date(Number(m.internalDate)||m.internalDate).toLocaleString()}</div></div><span className="badge">{businesses.find(b=>b.id===m.businessId)?.name||'Business not identified'}</span></div><p style={{whiteSpace:'pre-line',fontSize:13,lineHeight:1.5}}>{decodeHtmlEntities(m.body.slice(0,320))}{m.body.length>320?'…':''}</p><div className="muted">Thread {m.threadId} · {m.labelIds.includes('SENT')?'Sent outreach':'Incoming reply'}</div></div>)}</div>}</>;
+}
+
+function GoogleProfilesPage({businesses}:{businesses:BusinessProfile[]}) {
+  const [profiles,setProfiles]=useStoredState<GoogleProfileConfig[]>('leadora-google-profiles',seedGoogleProfiles);
+  const [statuses,setStatuses]=useState<Record<string,GoogleConnectionStatus>>({});
+  const [metrics,setMetrics]=useState<Record<string,GoogleAnalyticsMetrics>>({});
+  const [busy,setBusy]=useState<Record<string,string>>({});
+  const [message,setMessage]=useState('');
+
+  useEffect(()=>{
+    const missing=businesses.filter(business=>!profiles.some(profile=>profile.companyId===business.id));
+    if(missing.length)setProfiles([...profiles,...missing.map(business=>({companyId:business.id,accountEmail:'',businessProfileUrl:'https://business.google.com/locations',analyticsPropertyId:''}))]);
+  },[businesses,profiles,setProfiles]);
+
+  async function refreshStatus(companyId:string) {
+    setBusy(current=>({...current,[companyId]:'status'}));
+    try {
+      const response=await fetch(`/api/google/status?companyId=${encodeURIComponent(companyId)}`);
+      const data=await response.json() as GoogleConnectionStatus;
+      if(!response.ok)throw new Error(data.error||'Google connection status is unavailable.');
+      setStatuses(current=>({...current,[companyId]:data}));
+      if(data.email)setProfiles(current=>current.map(profile=>profile.companyId===companyId&&!profile.accountEmail?{...profile,accountEmail:data.email!}:profile));
+    } catch(error) {
+      setStatuses(current=>({...current,[companyId]:{connected:false,properties:[],error:error instanceof Error?error.message:'Google status failed.'}}));
+    } finally { setBusy(current=>({...current,[companyId]:''})); }
+  }
+
+  useEffect(()=>{businesses.forEach(business=>{void refreshStatus(business.id);});},[]);
+
+  function update(companyId:string,changes:Partial<GoogleProfileConfig>) {
+    setProfiles(profiles.map(profile=>profile.companyId===companyId?{...profile,...changes}:profile));
+    setMessage('Google profile settings saved.');
+  }
+
+  function managerUrl(profile:GoogleProfileConfig,status?:GoogleConnectionStatus) {
+    const base=profile.businessProfileUrl.trim()||'https://business.google.com/locations';
+    const account=profile.accountEmail.trim()||status?.email||'';
+    try {
+      const url=new URL(base);
+      if(account&&url.hostname.endsWith('google.com'))url.searchParams.set('authuser',account);
+      return url.toString();
+    } catch { return 'https://business.google.com/locations'; }
+  }
+
+  async function loadAnalytics(profile:GoogleProfileConfig) {
+    if(!/^\d+$/.test(profile.analyticsPropertyId)){setMessage('Enter or select a valid numeric GA4 property ID.');return;}
+    setBusy(current=>({...current,[profile.companyId]:'analytics'})); setMessage('');
+    try {
+      const response=await fetch('/api/google/analytics',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({companyId:profile.companyId,propertyId:profile.analyticsPropertyId})});
+      const data=await response.json() as GoogleAnalyticsMetrics&{error?:string};
+      if(!response.ok)throw new Error(data.error||'Google Analytics is unavailable.');
+      setMetrics(current=>({...current,[profile.companyId]:data}));
+    } catch(error) { setMessage(error instanceof Error?error.message:'Google Analytics is unavailable.'); }
+    finally { setBusy(current=>({...current,[profile.companyId]:''})); }
+  }
+
+  async function disconnect(companyId:string) {
+    if(!confirm('Disconnect this company from Google Analytics? The Business Profile shortcut will remain.'))return;
+    setBusy(current=>({...current,[companyId]:'disconnect'}));
+    await fetch('/api/google/disconnect',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({companyId})}).catch(()=>{});
+    setStatuses(current=>({...current,[companyId]:{connected:false,properties:[]}}));
+    setMetrics(current=>{const next={...current};delete next[companyId];return next;});
+    setBusy(current=>({...current,[companyId]:''}));
+  }
+
+  const trend=(current:number,previous:number)=>previous?`${current>=previous?'+':''}${Math.round(((current-previous)/previous)*100)}% vs previous 30 days`:'No previous-period data';
+  return <><Header title="Google Business Profiles" sub="Open every company profile directly and view its real GA4 performance from one place."/>
+    <div className="card" style={{marginBottom:16}}><b>Recommended account setup</b><p className="muted" style={{marginBottom:0}}>Add <b>{LEADRALLY_BRAND.ownerEmail}</b> as an owner or manager of each Google Business Profile and Analytics property. Google keeps the browser session signed in; LeadRally stores OAuth tokens securely and never stores Google passwords. If a profile uses another Google account, keep that account signed into this browser and enter its email below.</p></div>
+    {message&&<div role="status" className="card" style={{marginBottom:16,color:message.includes('saved')?'#16803c':'#b42318'}}>{message}</div>}
+    <div className="grid">{businesses.map(business=>{
+      const profile=profiles.find(item=>item.companyId===business.id)??{companyId:business.id,accountEmail:'',businessProfileUrl:'https://business.google.com/locations',analyticsPropertyId:''};
+      const status=statuses[business.id]; const report=metrics[business.id]; const working=busy[business.id];
+      return <div className="card" key={business.id}>
+        <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'flex-start'}}><div><b style={{fontSize:16}}>{business.name}</b><div className="muted">{business.website}</div></div><span className="badge" style={{color:status?.connected?'#16803c':undefined}}>{working==='status'?'Checking…':status?.connected?'Google connected':'Not connected'}</span></div>
+        <div className="grid dashboard-grid" style={{marginTop:16}}><div>
+          <label className="form-row" style={{display:'block',fontSize:12}}>Google account email<input className="field" type="email" value={profile.accountEmail} placeholder={LEADRALLY_BRAND.ownerEmail} onChange={event=>update(business.id,{accountEmail:event.target.value})}/></label>
+          <label className="form-row" style={{display:'block',fontSize:12}}>Exact Business Profile management link<input className="field" type="url" value={profile.businessProfileUrl} placeholder="https://business.google.com/locations" onChange={event=>update(business.id,{businessProfileUrl:event.target.value})}/></label>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:12}}><a className="btn" href={managerUrl(profile,status)} target="_blank" rel="noreferrer"><MapPinned size={14}/> Manage profile <ExternalLink size={12}/></a><button className="btn secondary" onClick={()=>location.href=`/api/google/auth?companyId=${encodeURIComponent(business.id)}`}><Link2 size={14}/> {status?.connected?'Reconnect Google':'Connect Google'}</button>{status?.connected&&<button className="btn secondary" onClick={()=>disconnect(business.id)} disabled={Boolean(working)}><Unlink size={14}/> Disconnect</button>}</div>
+          <p className="muted" style={{fontSize:11}}>The management link opens the matching signed-in Google account. Paste the exact profile link here when Google provides one.</p>
+        </div><div>
+          <label className="form-row" style={{display:'block',fontSize:12}}>GA4 property ID<input className="field" inputMode="numeric" value={profile.analyticsPropertyId} placeholder="123456789" onChange={event=>update(business.id,{analyticsPropertyId:event.target.value.replace(/\D/g,'')})}/></label>
+          {status?.properties?.length>0&&<div style={{marginTop:8}}><div className="muted" style={{fontSize:11,marginBottom:5}}>Properties available to {status.email}</div>{status.properties.map(property=><button type="button" className="tab" style={{margin:'0 6px 6px 0'}} key={property.id} onClick={()=>update(business.id,{analyticsPropertyId:property.id})}>{property.name}</button>)}</div>}
+          {status?.warning&&<p style={{color:'#b26a00',fontSize:11}}>{status.warning}</p>}{status?.error&&<p style={{color:'#b42318',fontSize:11}}>{status.error}</p>}
+          <button className="btn secondary" style={{marginTop:10}} onClick={()=>loadAnalytics(profile)} disabled={!status?.connected||Boolean(working)}><BarChart3 size={14}/> {working==='analytics'?'Loading…':'Refresh GA4 data'}</button>
+        </div></div>
+        {report&&<><div className="muted" style={{marginTop:16,fontSize:11}}>{report.period}</div><div className="grid kpis" style={{gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))',marginTop:8}}><Kpi label="Active users" value={String(report.current.activeUsers)} detail={trend(report.current.activeUsers,report.previous.activeUsers)}/><Kpi label="Sessions" value={String(report.current.sessions)} detail={trend(report.current.sessions,report.previous.sessions)}/><Kpi label="Page views" value={String(report.current.pageViews)} detail={trend(report.current.pageViews,report.previous.pageViews)}/><Kpi label="Key events" value={String(report.current.keyEvents)} detail={trend(report.current.keyEvents,report.previous.keyEvents)}/></div></>}
+      </div>;
+    })}</div>
+  </>;
 }
 
 function SettingsPage(){

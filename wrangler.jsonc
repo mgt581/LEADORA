@@ -6,7 +6,8 @@
   "compatibility_flags": ["nodejs_compat"],
   "vars": {
     "GOOGLE_OAUTH_CLIENT_ID": "818522168136-j4tqouj3mbacenfke42pju0id1dbr4qv.apps.googleusercontent.com",
-    "GOOGLE_OAUTH_REDIRECT_URL": "https://leadrally.co.uk/api/gmail/callback"
+    "GOOGLE_OAUTH_REDIRECT_URL": "https://leadrally.co.uk/api/gmail/callback",
+    "GOOGLE_INTEGRATIONS_REDIRECT_URL": "https://leadrally.co.uk/api/google/callback"
   },
   "routes": [
     {

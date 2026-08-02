@@ -9,7 +9,7 @@ export const GMAIL_SCOPES = [
 const TOKEN_COOKIE = 'leadora-gmail-token';
 const STATE_COOKIE = 'leadora-gmail-oauth-state';
 
-type TokenSet = { access_token: string; refresh_token?: string; expiry_date?: number; token_type?: string };
+export type TokenSet = { access_token: string; refresh_token?: string; expiry_date?: number; token_type?: string; expires_in?: number };
 export type GmailErrorCode =
   | 'GOOGLE_OAUTH_NOT_CONFIGURED'
   | 'MISSING_CLIENT_ID'
