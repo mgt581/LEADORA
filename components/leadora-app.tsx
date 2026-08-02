@@ -24,7 +24,7 @@ type GmailMessage = { id:string; threadId:string; from:string; to:string; cc:str
 type SystemCheck = { ok:boolean; detail:string };
 type SystemStatus = Record<'cloudflare'|'backend'|'database'|'googleOAuth'|'gmailApi'|'connectedAccount',SystemCheck>;
 type GmailStatus = {connected:boolean;emailAddress?:string;error?:string;code?:string;diagnostics?:Array<{name:string;configured:boolean}>};
-type GoogleProfileConfig = { companyId:string; accountEmail:string; businessProfileUrl:string; analyticsPropertyId:string };
+type GoogleProfileConfig = { companyId:string; accountEmail:string; businessProfileUrl:string; publicProfileUrl:string; analyticsPropertyId:string };
 type GoogleConnectionStatus = { connected:boolean; email?:string; properties:Array<{id:string;name:string;accountName:string}>; warning?:string; error?:string };
 type GoogleAnalyticsMetrics = { current:{activeUsers:number;sessions:number;pageViews:number;keyEvents:number};previous:{activeUsers:number;sessions:number;pageViews:number;keyEvents:number};period:string };
 
@@ -50,6 +50,9 @@ const seedGoogleProfiles: GoogleProfileConfig[] = seedBusinesses.map(business=>(
   companyId:business.id,
   accountEmail:'',
   businessProfileUrl:'https://business.google.com/locations',
+  publicProfileUrl:business.id==='bryant-digital'
+    ?'https://share.google/tLq4RtoFNfYYYa833'
+    :business.id==='mr-white-teeth'?'https://share.google/rQJkWIs2P32hEk0d6':'',
   analyticsPropertyId:'',
 }));
 
@@ -389,8 +392,10 @@ function GoogleProfilesPage({businesses}:{businesses:BusinessProfile[]}) {
   const [message,setMessage]=useState('');
 
   useEffect(()=>{
+    const defaults=new Map(seedGoogleProfiles.map(profile=>[profile.companyId,profile]));
     const missing=businesses.filter(business=>!profiles.some(profile=>profile.companyId===business.id));
-    if(missing.length)setProfiles([...profiles,...missing.map(business=>({companyId:business.id,accountEmail:'',businessProfileUrl:'https://business.google.com/locations',analyticsPropertyId:''}))]);
+    const updated=profiles.map(profile=>typeof profile.publicProfileUrl==='undefined'?{...profile,publicProfileUrl:defaults.get(profile.companyId)?.publicProfileUrl??''}:profile);
+    if(missing.length||updated.some((profile,index)=>profile!==profiles[index]))setProfiles([...updated,...missing.map(business=>defaults.get(business.id)??{companyId:business.id,accountEmail:'',businessProfileUrl:'https://business.google.com/locations',publicProfileUrl:'',analyticsPropertyId:''})]);
   },[businesses,profiles,setProfiles]);
 
   async function refreshStatus(companyId:string) {
@@ -449,15 +454,16 @@ function GoogleProfilesPage({businesses}:{businesses:BusinessProfile[]}) {
     <div className="card" style={{marginBottom:16}}><b>Recommended account setup</b><p className="muted" style={{marginBottom:0}}>Add <b>{LEADRALLY_BRAND.ownerEmail}</b> as an owner or manager of each Google Business Profile and Analytics property. Google keeps the browser session signed in; LeadRally stores OAuth tokens securely and never stores Google passwords. If a profile uses another Google account, keep that account signed into this browser and enter its email below.</p></div>
     {message&&<div role="status" className="card" style={{marginBottom:16,color:message.includes('saved')?'#16803c':'#b42318'}}>{message}</div>}
     <div className="grid">{businesses.map(business=>{
-      const profile=profiles.find(item=>item.companyId===business.id)??{companyId:business.id,accountEmail:'',businessProfileUrl:'https://business.google.com/locations',analyticsPropertyId:''};
+      const profile=profiles.find(item=>item.companyId===business.id)??{companyId:business.id,accountEmail:'',businessProfileUrl:'https://business.google.com/locations',publicProfileUrl:'',analyticsPropertyId:''};
       const status=statuses[business.id]; const report=metrics[business.id]; const working=busy[business.id];
       return <div className="card" key={business.id}>
         <div style={{display:'flex',justifyContent:'space-between',gap:12,alignItems:'flex-start'}}><div><b style={{fontSize:16}}>{business.name}</b><div className="muted">{business.website}</div></div><span className="badge" style={{color:status?.connected?'#16803c':undefined}}>{working==='status'?'Checking…':status?.connected?'Google connected':'Not connected'}</span></div>
         <div className="grid dashboard-grid" style={{marginTop:16}}><div>
           <label className="form-row" style={{display:'block',fontSize:12}}>Google account email<input className="field" type="email" value={profile.accountEmail} placeholder={LEADRALLY_BRAND.ownerEmail} onChange={event=>update(business.id,{accountEmail:event.target.value})}/></label>
           <label className="form-row" style={{display:'block',fontSize:12}}>Exact Business Profile management link<input className="field" type="url" value={profile.businessProfileUrl} placeholder="https://business.google.com/locations" onChange={event=>update(business.id,{businessProfileUrl:event.target.value})}/></label>
-          <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:12}}><a className="btn" href={managerUrl(profile,status)} target="_blank" rel="noreferrer"><MapPinned size={14}/> Manage profile <ExternalLink size={12}/></a><button className="btn secondary" onClick={()=>location.href=`/api/google/auth?companyId=${encodeURIComponent(business.id)}`}><Link2 size={14}/> {status?.connected?'Reconnect Google':'Connect Google'}</button>{status?.connected&&<button className="btn secondary" onClick={()=>disconnect(business.id)} disabled={Boolean(working)}><Unlink size={14}/> Disconnect</button>}</div>
-          <p className="muted" style={{fontSize:11}}>The management link opens the matching signed-in Google account. Paste the exact profile link here when Google provides one.</p>
+          <label className="form-row" style={{display:'block',fontSize:12}}>Public Google Profile link<input className="field" type="url" value={profile.publicProfileUrl} placeholder="https://share.google/..." onChange={event=>update(business.id,{publicProfileUrl:event.target.value})}/></label>
+          <div style={{display:'flex',gap:8,flexWrap:'wrap',marginTop:12}}><a className="btn" href={managerUrl(profile,status)} target="_blank" rel="noreferrer"><MapPinned size={14}/> Manage profile <ExternalLink size={12}/></a>{profile.publicProfileUrl&&<a className="btn secondary" href={profile.publicProfileUrl} target="_blank" rel="noreferrer"><ExternalLink size={14}/> View public profile</a>}<button className="btn secondary" onClick={()=>location.href=`/api/google/auth?companyId=${encodeURIComponent(business.id)}`}><Link2 size={14}/> {status?.connected?'Reconnect Google':'Connect Google'}</button>{status?.connected&&<button className="btn secondary" onClick={()=>disconnect(business.id)} disabled={Boolean(working)}><Unlink size={14}/> Disconnect</button>}</div>
+          <p className="muted" style={{fontSize:11}}>Manage profile opens Google&apos;s signed-in management area. The public link is the share link customers can open.</p>
         </div><div>
           <label className="form-row" style={{display:'block',fontSize:12}}>GA4 property ID<input className="field" inputMode="numeric" value={profile.analyticsPropertyId} placeholder="123456789" onChange={event=>update(business.id,{analyticsPropertyId:event.target.value.replace(/\D/g,'')})}/></label>
           {status?.properties?.length>0&&<div style={{marginTop:8}}><div className="muted" style={{fontSize:11,marginBottom:5}}>Properties available to {status.email}</div>{status.properties.map(property=><button type="button" className="tab" style={{margin:'0 6px 6px 0'}} key={property.id} onClick={()=>update(business.id,{analyticsPropertyId:property.id})}>{property.name}</button>)}</div>}
