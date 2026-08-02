@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
     let lastStatus = 0;
     for (const endpoint of ['https://overpass.kumi.systems/api/interpreter', 'https://overpass-api.de/api/interpreter']) {
       try {
-        const response = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'LEADORA/1.0 public-contact discovery' }, body: new URLSearchParams({ data: query }), signal: AbortSignal.timeout(30_000) });
+        const response = await fetch(endpoint, { method: 'POST', headers: { 'content-type': 'application/x-www-form-urlencoded', 'user-agent': 'LeadRally/2.0 public-contact discovery (https://leadrally.co.uk)' }, body: new URLSearchParams({ data: query }), signal: AbortSignal.timeout(30_000) });
         lastStatus = response.status;
         if (response.ok) { data = await response.json() as { elements?: OsmElement[] }; break; }
       } catch { /* Try the next free public mirror. */ }

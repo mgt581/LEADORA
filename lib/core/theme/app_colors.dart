@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 
-/// Leadora brand colours
+/// LeadRally brand colours
 class AppColors {
   AppColors._();
 

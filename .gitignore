@@ -56,3 +56,9 @@ app.*.map.json
 google-services.json
 GoogleService-Info.plist
 node_modules
+.next/
+.open-next/
+.wrangler/
+tsconfig.tsbuildinfo
+pnpm-lock.yaml
+pnpm-workspace.yaml

@@ -35,7 +35,7 @@ export async function auditPublicWebsite(rawUrl: string): Promise<{ website: str
   // Do not turn the audit endpoint into a proxy for local or private infrastructure.
   const host = url.hostname.toLowerCase();
   if (host === 'localhost' || host.endsWith('.local') || /^127\.|^10\.|^192\.168\.|^169\.254\.|^0\.|^172\.(1[6-9]|2\d|3[01])\.|^\[?(::1|fc|fd|fe80)/i.test(host)) throw new Error('Only publicly reachable websites can be analysed.');
-  const response = await fetch(url, { headers: { 'user-agent': 'LEADORA/1.0 (public website audit)' }, redirect: 'follow', signal: AbortSignal.timeout(12_000) });
+  const response = await fetch(url, { headers: { 'user-agent': 'LeadRally/2.0 (public website audit; https://leadrally.co.uk)' }, redirect: 'follow', signal: AbortSignal.timeout(12_000) });
   if (!response.ok) throw new Error(`The website could not be read (${response.status}).`);
   const html = await response.text();
   if (html.length > 2_000_000) throw new Error('The website response is too large to analyse safely.');
@@ -45,7 +45,7 @@ export async function auditPublicWebsite(rawUrl: string): Promise<{ website: str
   let phoneNumber = result.phone;
   if (!contactEmail && result.contactPageUrl && new URL(result.contactPageUrl).origin === origin) {
     try {
-      const contactResponse = await fetch(result.contactPageUrl, { headers: { 'user-agent': 'LEADORA/1.0 (public website audit)' }, redirect: 'follow', signal: AbortSignal.timeout(8_000) });
+      const contactResponse = await fetch(result.contactPageUrl, { headers: { 'user-agent': 'LeadRally/2.0 (public website audit; https://leadrally.co.uk)' }, redirect: 'follow', signal: AbortSignal.timeout(8_000) });
       if (contactResponse.ok) {
         const contactHtml = await contactResponse.text();
         if (contactHtml.length <= 1_000_000) {

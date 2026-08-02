@@ -1,4 +1,4 @@
-name: Validate LEADORA
+name: Validate LeadRally
 
 on:
   # Cloudflare builds and deploys main independently. Keep this validation

@@ -8,16 +8,16 @@ void main() {
   WidgetsFlutterBinding.ensureInitialized();
   // Pre-cache Inter from Google Fonts
   GoogleFonts.config.allowRuntimeFetching = true;
-  runApp(const ProviderScope(child: LeadoraApp()));
+  runApp(const ProviderScope(child: LeadRallyApp()));
 }
 
-class LeadoraApp extends StatelessWidget {
-  const LeadoraApp({super.key});
+class LeadRallyApp extends StatelessWidget {
+  const LeadRallyApp({super.key});
 
   @override
   Widget build(BuildContext context) {
     return MaterialApp.router(
-      title: 'Leadora',
+      title: 'LeadRally',
       debugShowCheckedModeBanner: false,
       theme: AppTheme.light,
       routerConfig: AppRouter.router,

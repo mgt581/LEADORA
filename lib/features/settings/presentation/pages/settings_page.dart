@@ -130,7 +130,7 @@ class _ProfileTab extends StatelessWidget {
                   ),
                 ),
                 const Text(
-                  'admin@leadora.io',
+                  'ajbryantsleads@gmail.com',
                   style: TextStyle(
                     fontFamily: 'Inter',
                     fontSize: 13,
@@ -157,7 +157,7 @@ class _ProfileTab extends StatelessWidget {
           ],
         ),
         const SizedBox(height: 16),
-        _SettingsField(label: 'Email Address', value: 'admin@leadora.io'),
+        _SettingsField(label: 'Email Address', value: 'ajbryantsleads@gmail.com'),
         const SizedBox(height: 16),
         _SettingsField(label: 'Job Title', value: 'Founder & CEO'),
         const SizedBox(height: 16),
@@ -173,7 +173,7 @@ class _ProfileTab extends StatelessWidget {
 
 class _TeamTab extends StatelessWidget {
   static const List<_Member> _members = [
-    _Member('Alex Bryant', 'admin@leadora.io', 'Admin', 'Active'),
+    _Member('Alex Bryant', 'ajbryantsleads@gmail.com', 'Admin', 'Active'),
     _Member('Sarah Johnson', 'sarah@designco.com', 'Member', 'Active'),
     _Member('David Williams', 'david@techflow.com', 'Member', 'Active'),
     _Member('James Brown', 'james@marketplus.com', 'Viewer', 'Invited'),

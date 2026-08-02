@@ -10,6 +10,7 @@ import {
 import { getOutreachWorkflow, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 import { decodeHtmlEntities } from '@/lib/text';
 import { isPublicBusinessEmail } from '@/lib/leads/public-email';
+import { LEADRALLY_BRAND } from '@/lib/brand';
 
 type Lead = { name:string; email:string; company:string; status:string; source:string; created:string };
 type Contact = { name:string; email:string; company:string; phone:string; status:string };
@@ -65,7 +66,7 @@ function useStoredState<T>(key:string, initial:T) {
   return [value,setValue] as const;
 }
 
-export function LeadoraApp({ route='dashboard' }: { route?:string }) {
+export function LeadRallyApp({ route='dashboard' }: { route?:string }) {
   const [auth,setAuth] = useStoredState('leadora-auth',false);
   const [leads,setLeads] = useStoredState<Lead[]>('leadora-leads',seedLeads);
   const [contacts,setContacts] = useStoredState<Contact[]>('leadora-contacts',seedContacts);
@@ -100,14 +101,14 @@ export function LeadoraApp({ route='dashboard' }: { route?:string }) {
 
   return <div className="shell">
     <aside className={`sidebar ${menu?'open':''}`}>
-      <div className="brand"><div className="brand-mark">L◉</div><span>LEADORA</span></div>
+      <div className="brand"><img className="brand-mark" src={LEADRALLY_BRAND.logoPath} alt=""/><span>{LEADRALLY_BRAND.uppercaseName}</span></div>
       <nav className="nav">{nav.map(([slug,label,Icon])=><Link key={slug} href={`/${slug}/`} className={`nav-link ${route===slug?'active':''}`} onClick={()=>setMenu(false)}><Icon size={16}/><span>{label}</span></Link>)}</nav>
       <button className="sidebar-user" onClick={()=>setAuth(false)}><div className="avatar">AB</div><div><b>Alex Bryant</b><br/><span style={{color:'#8792a3'}}>Admin · Sign out</span></div><LogOut size={14}/></button>
     </aside>
     <main className="main">
       <header className="topbar">
         <button className="btn secondary mobile-menu" onClick={()=>setMenu(!menu)} aria-label="Open navigation"><Menu size={18}/></button>
-        <form onSubmit={search} style={{flex:1,display:'flex',gap:8}}><input aria-label="Search LEADORA" className="search" value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} placeholder="Search pages, prospects and contacts…" /><button className="btn secondary" type="submit" aria-label="Run search" title="Search"><Search size={16}/></button></form>
+        <form onSubmit={search} style={{flex:1,display:'flex',gap:8}}><input aria-label={`Search ${LEADRALLY_BRAND.name}`} className="search" value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} placeholder="Search pages, prospects and contacts…" /><button className="btn secondary" type="submit" aria-label="Run search" title="Search"><Search size={16}/></button></form>
         <div style={{display:'flex',alignItems:'center',gap:13}}><Link className="btn" href="/leads/" aria-label="Add a lead" title="Add a lead"><Plus size={16}/></Link><Link href="/inbox/" aria-label={`${notifications} notifications`} title="Open notifications" style={{position:'relative',display:'inline-flex',color:'inherit'}}><Bell size={18}/>{notifications>0&&<span className="notification-count">{Math.min(99,notifications)}</span>}</Link><div className="avatar">AB</div></div>
       </header>
       <section className="content"><Page route={active[0]} leads={leads} setLeads={setLeads} contacts={contacts} setContacts={setContacts} businesses={businesses} setBusinesses={setBusinesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach} gmailMessages={gmailMessages} setGmailMessages={setGmailMessages}/></section>
@@ -119,9 +120,9 @@ function Login({onLogin}:{onLogin:()=>void}) {
   const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [error,setError]=useState('');
   function submit(e:React.FormEvent){e.preventDefault(); if(!email.includes('@')||password.length<6){setError('Enter a valid email and a password of at least 6 characters.');return;} onLogin();}
   return <main className="login"><form className="login-card" onSubmit={submit}>
-    <div className="login-logo"><div className="brand-mark" style={{margin:'0 auto 10px',width:48,height:48,fontSize:26}}>L◉</div>LEADORA</div>
+    <div className="login-logo"><img className="login-brand-mark" src={LEADRALLY_BRAND.logoPath} alt=""/><span>{LEADRALLY_BRAND.uppercaseName}</span></div>
     <h1>Welcome back</h1><p className="muted">Sign in to your sales workspace.</p>
-    <div className="form-row"><label>Email address<input className="field" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder="alex@leadora.com"/></label></div>
+    <div className="form-row"><label>Email address<input className="field" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder={LEADRALLY_BRAND.ownerEmail}/></label></div>
     <div className="form-row"><label>Password<input className="field" type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="6+ characters"/></label></div>
     {error&&<p style={{color:'#b42318',fontSize:12}}>{error}</p>}<button className="btn" style={{width:'100%',marginTop:8}}>Sign in</button>
     <p className="muted" style={{textAlign:'center',marginTop:14}}>Your sign-in is remembered on this device.</p>
@@ -189,7 +190,7 @@ function Dashboard({prospects,drafts,outreach,gmailMessages}:{prospects:Prospect
   const unreadReplies=incoming.filter(message=>message.isRead===false).length;
   const rangeLabel=`${days[0].toLocaleDateString('en-GB',{day:'numeric',month:'short'})} – ${days[6].toLocaleDateString('en-GB',{day:'numeric',month:'short',year:'numeric'})}`;
   const tasks=[pending?`${pending} email${pending===1?'':'s'} awaiting approval`:null,followUps?`${followUps} follow-up${followUps===1?'':'s'} ready to review`:null,unreadReplies?`${unreadReplies} unread repl${unreadReplies===1?'y':'ies'} in Inbox`:null].filter((task):task is string=>Boolean(task));
-  return <><Header title={`${greeting}, Alex 👋`} sub="Live figures from your saved LEADORA activity." action={<span className="btn secondary">{rangeLabel}</span>}/>
+  return <><Header title={`${greeting}, Alex 👋`} sub={`Live figures from your saved ${LEADRALLY_BRAND.name} activity.`} action={<span className="btn secondary">{rangeLabel}</span>}/>
     <div className="grid kpis"><Kpi label="Prospects Found Today" value={String(todayProspects)} detail="Recorded today"/><Kpi label="Awaiting Approval" value={String(pending)} detail="Current queue"/><Kpi label="Emails Sent" value={String(outreach.filter(o=>o.status==='sent').length)} detail="Recorded all time"/><Kpi label="Average Audit Score" value={audited.length?`${Math.round(audited.reduce((total,p)=>total+(p.audit?.overallScore??0),0)/audited.length)}/100`:'—'} detail={audited.length?`${audited.length} completed audit${audited.length===1?'':'s'}`:'No audits yet'}/></div>
     <div className="grid dashboard-grid"><div className="card"><b>Prospects Found · Last 7 Days</b>{maxDayCount===0?<p className="muted" style={{marginTop:28}}>No prospects recorded in this period.</p>:<><div className="chart-bars">{dayCounts.map((count,index)=><div key={days[index].toISOString()} className="bar" title={`${count} prospect${count===1?'':'s'}`} style={{height:`${Math.max(6,(count/maxDayCount)*100)}%`}}/>)}</div><div style={{display:'flex',justifyContent:'space-between'}}>{days.map(date=><span className="muted" key={date.toISOString()}>{date.toLocaleDateString('en-GB',{weekday:'short'})}</span>)}</div></>}</div>
     <div className="card"><b>Recent Activity</b>{recent.length?<div className="activity" style={{marginTop:18}}>{recent.map(item=><div className="activity-row" key={`${item.at}-${item.text}`}><i className="dot"/><span>{item.text}</span><span className="muted">{relative(item.at)}</span></div>)}</div>:<p className="muted" style={{marginTop:28}}>No recorded activity yet.</p>}</div></div>
@@ -378,7 +379,7 @@ function SettingsPage(){
   useEffect(()=>{const preferences=localStorage.getItem('leadora-outreach-settings');if(preferences)try{const parsed=JSON.parse(preferences) as {dailyLimit?:number;style?:string};if(parsed.dailyLimit)setDaily(String(parsed.dailyLimit));if(parsed.style)setStyle(parsed.style);}catch{}},[]);
   function save(){const limit=Number(daily); if(!Number.isInteger(limit)||limit<1){setSaved('Enter a positive whole number');return;} try { localStorage.setItem('leadora-outreach-settings',JSON.stringify({dailyLimit:limit,style})); setSaved('Saved'); } catch { setSaved('Unable to save preferences'); }}
   function saveMappings(){if(Object.values(mapping).some(address=>!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address.trim()))){setSaved('Enter a valid email address for every company');return;}localStorage.setItem('leadora-business-email-mappings',JSON.stringify(mapping));setSaved('Mappings saved');}
-  async function disconnect(){if(!confirm('Disconnect Gmail from LEADORA? Approved drafts will remain saved.'))return;setSyncing(true);setSaved('');try{const response=await fetch('/api/gmail/disconnect',{method:'POST'});if(!response.ok)throw new Error();setGmail({connected:false});setSaved('Gmail disconnected');}catch{setSaved('Unable to disconnect Gmail');}finally{setSyncing(false);}}
+  async function disconnect(){if(!confirm(`Disconnect Gmail from ${LEADRALLY_BRAND.name}? Approved drafts will remain saved.`))return;setSyncing(true);setSaved('');try{const response=await fetch('/api/gmail/disconnect',{method:'POST'});if(!response.ok)throw new Error();setGmail({connected:false});setSaved('Gmail disconnected');}catch{setSaved('Unable to disconnect Gmail');}finally{setSyncing(false);}}
   const checks=[['cloudflare','Cloudflare deployment'],['backend','Backend API'],['database','Database'],['googleOAuth','Google OAuth'],['gmailApi','Gmail API'],['connectedAccount','Connected account']] as const;
   return <><Header title="Settings" sub="Manage integrations, sender identities and outreach preferences."/><div className="card" style={{marginBottom:16}}><b>System Status</b><div className="grid" style={{gridTemplateColumns:'repeat(auto-fit,minmax(180px,1fr))',marginTop:12}}>{checks.map(([key,label])=>{const check=system?.[key]; return <div key={key} style={{display:'flex',gap:8,alignItems:'flex-start'}}><span style={{color:check?.ok?'#16803c':'#b42318',fontWeight:700}}>{check?.ok?'✓':'✕'}</span><div><b>{label}</b><div className="muted" style={{fontSize:12}}>{check?.detail??'Checking…'}</div></div></div>})}</div></div><div className="grid dashboard-grid"><div className="card"><b>Gmail integration</b><p className="muted">Send only approved outreach and synchronise incoming replies securely.</p>{gmail.connected?<><div className="badge" style={{margin:'8px 0'}}>Connected · {gmail.emailAddress}</div><p className="muted">Tokens are handled server-side. Last synchronisation is shown in Inbox.</p><button className="btn secondary" onClick={()=>location.href='/api/gmail/auth'}>Reconnect Gmail</button><button className="btn secondary" style={{marginLeft:8}} onClick={disconnect} disabled={syncing}>{syncing?'Disconnecting…':'Disconnect'}</button></>:<button className="btn" onClick={()=>location.href='/api/gmail/auth'}>Connect Gmail</button>}{gmail.error&&<p style={{color:'#b42318',fontSize:12}}>{gmail.code&&<><b>{gmail.code}</b> — </>}{gmail.error}</p>}</div><div className="card"><b>Business email mappings</b><p className="muted">Choose the verified Gmail alias used to send for each company.</p>{seedBusinesses.map(({id,name})=><label className="form-row" style={{display:'block',fontSize:12}} key={id}>{name}<input className="field" type="email" value={mapping[id]??''} placeholder="info@example.com" onChange={e=>setMapping({...mapping,[id]:e.target.value})}/></label>)}<button className="btn" onClick={saveMappings}>Save mappings</button></div><div className="card"><b>Outreach preferences</b><label className="form-row" style={{display:'block',fontSize:12}}>Daily prospect limit<input className="field" type="number" min="1" max="100" value={daily} onChange={e=>setDaily(e.target.value)}/></label><label className="form-row" style={{display:'block',fontSize:12}}>Writing style<select className="field" value={style} onChange={e=>setStyle(e.target.value)}><option>Professional and warm</option><option>Friendly and helpful</option><option>Clear and consultative</option></select></label><button className="btn" onClick={save}>Save preferences</button>{saved&&<span role="status" className="up" style={{marginLeft:10}}>{saved}</span>}</div><div className="card"><b>Workspace access</b><p className="muted">This deployment does not provide an in-app password-management service. Access protection should be managed at the Cloudflare deployment layer.</p><p className="muted">No password form is shown because it would not change a real account.</p></div>{gmail.diagnostics&&<div className="card"><b>Developer diagnostics</b><p className="muted">Development only. Secret values are never displayed.</p>{gmail.diagnostics.map(item=><div key={item.name} style={{display:'flex',justifyContent:'space-between',fontSize:12,padding:'4px 0'}}><span>{item.name}</span><span style={{color:item.configured?'#16803c':'#b42318'}}>{item.configured?'Present':'Missing'}</span></div>)}</div>}</div></>}
 
@@ -389,6 +390,6 @@ function GenericPage({route}:{route:string}) { const config:Record<string,[strin
  'website-audits':['Website Audits','Run SEO, performance and conversion audits.',['Website','Score','SEO','Performance','Status']],
  'ai-agents':['AI Agents','Deploy autonomous agents across your sales operation.',['Agent','Purpose','Runs','Success Rate','Status']],
  };
- const [title,sub,headers]=config[route]??['LEADORA','Your sales operating system.',['Item','Owner','Performance','Status']];
+ const [title,sub,headers]=config[route]??[LEADRALLY_BRAND.name,'Your sales operating system.',['Item','Owner','Performance','Status']];
  return <><Header title={title} sub={sub}/><DataTable headers={headers} rows={[]}/><div className="card" style={{textAlign:'center',marginTop:16,padding:32}}><p><b>No recorded {title.toLowerCase()} yet</b></p><p className="muted">Real records will appear here when this module is connected.</p></div></>;
 }

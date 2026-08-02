@@ -1,10 +1,10 @@
-# LEADORA
+# LeadRally
 
 AI-powered sales operating system for lead generation, outreach, CRM, automations and business growth.
 
 ## Overview
 
-Leadora is a premium AI SaaS web application built with Flutter Web. It delivers an enterprise-grade dashboard experience inspired by Linear, Stripe, Notion, and Vercel — with a distinctive dark sidebar, gold accent colour, and clean white content panels.
+LeadRally is a Next.js SaaS application deployed to a Cloudflare Worker. It finds public business prospects, prepares evidence-based outreach for manual approval, sends approved messages through Gmail and records activity in Cloudflare D1.
 
 ## Design System
 
@@ -36,72 +36,36 @@ Leadora is a premium AI SaaS web application built with Flutter Web. It delivers
 | Reports | `/reports` |
 | Settings | `/settings` |
 
-## Architecture
+## Production architecture
 
-Clean Architecture with feature-based folder structure:
-
-```
-lib/
-├── main.dart
-├── core/
-│   ├── constants/          # Colors, typography, spacing
-│   ├── router/             # GoRouter configuration
-│   ├── theme/              # Material 3 theme
-│   └── widgets/            # Shared widgets (sidebar, topbar, cards)
-└── features/
-    ├── dashboard/
-    ├── leads/
-    ├── contacts/
-    ├── companies/
-    ├── deals/
-    ├── pipelines/
-    ├── email_outreach/
-    ├── website_audits/
-    ├── ai_agents/
-    ├── automations/
-    ├── analytics/
-    ├── reports/
-    └── settings/
-```
+- Next.js application and API routes
+- Cloudflare Worker deployment through OpenNext
+- Cloudflare D1 for durable CRM and outreach state
+- Gmail OAuth for approved-message sending and reply synchronisation
+- Custom production domains: `leadrally.co.uk` and `www.leadrally.co.uk`
 
 ## Getting Started
 
 ### Deployment
 
-LEADORA must run on a serverless host such as Vercel because the Gmail OAuth
-routes exchange and encrypt tokens on the server. GitHub Pages is static-only
-and cannot run these routes. Configure `VERCEL_TOKEN`, `VERCEL_ORG_ID`, and
-`VERCEL_PROJECT_ID` as GitHub Actions secrets, then add the variables in
-`.env.example` to the Vercel project. Set the Google redirect URI to
-`https://<your-domain>/api/gmail/callback`.
+LeadRally runs on Cloudflare because the Gmail OAuth and prospect-discovery
+routes require a server runtime. GitHub Pages cannot run these routes. The
+production Google OAuth redirect URI is
+`https://leadrally.co.uk/api/gmail/callback`.
 
 ### Prerequisites
 
-- Flutter SDK ≥ 3.24.0
-- Dart SDK ≥ 3.3.0
+- Node.js 22
+- npm
+- Cloudflare Wrangler authentication for deployment
 
 ### Run the app
 
-```bash
-flutter pub get
-flutter run -d chrome
-```
+`npm install` then `npm run dev`.
 
 ### Build for web
 
-```bash
-flutter build web --release
-```
-
-## Key Dependencies
-
-| Package | Purpose |
-|---------|---------|
-| `go_router` | Declarative URL-based routing |
-| `fl_chart` | Charts (line, bar, pie) |
-| `google_fonts` | Inter typeface |
-| `provider` | State management |
-| `intl` | Internationalisation |
+Use `npm run build` for Next.js validation or `npm run cf:deploy` for a direct Cloudflare build and deployment.
 
 ## Features
 

@@ -90,7 +90,7 @@ async function fetchPublicDirectory(query: string) {
         method: 'POST',
         headers: {
           'content-type': 'application/x-www-form-urlencoded',
-          'user-agent': 'LEADORA/1.0 public-contact discovery',
+          'user-agent': 'LeadRally/2.0 public-contact discovery (https://leadrally.co.uk)',
         },
         body: new URLSearchParams({ data: query }),
         signal: AbortSignal.timeout(12_000),

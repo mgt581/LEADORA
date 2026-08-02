@@ -105,7 +105,7 @@ class _Sidebar extends StatelessWidget {
                 if (!collapsed) ...[
                   const SizedBox(width: 10),
                   const Text(
-                    'LEADORA',
+                    'LEADRALLY',
                     style: TextStyle(
                       fontFamily: 'Inter',
                       fontSize: 15,
@@ -452,7 +452,7 @@ class _MobileScaffold extends StatelessWidget {
           ),
         ),
         title: const Text(
-          'LEADORA',
+          'LEADRALLY',
           style: TextStyle(
             fontFamily: 'Inter',
             fontSize: 14,

@@ -1,5 +1,5 @@
-import { LeadoraApp } from '@/components/leadora-app';
+import { LeadRallyApp } from '@/components/leadora-app';
 
 export default function HomePage() {
-  return <LeadoraApp route="dashboard" />;
+  return <LeadRallyApp route="dashboard" />;
 }

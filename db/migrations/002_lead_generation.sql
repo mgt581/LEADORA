@@ -1,4 +1,4 @@
--- LEADORA V1 core records. Provider IDs keep public, free and paid discovery interchangeable.
+-- LeadRally V1 core records. Provider IDs keep public, free and paid discovery interchangeable.
 CREATE TABLE IF NOT EXISTS prospects (
   id TEXT PRIMARY KEY, business_id TEXT NOT NULL, name TEXT NOT NULL, website TEXT NOT NULL,
   email TEXT, phone TEXT, location TEXT, google_maps_url TEXT, industry TEXT, contact_page_url TEXT,

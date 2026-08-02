@@ -1,4 +1,4 @@
-import { LeadoraApp } from '@/components/leadora-app';
+import { LeadRallyApp } from '@/components/leadora-app';
 
 const sections = [
   'login','dashboard','leads','contacts','companies','deals','pipelines',
@@ -11,5 +11,5 @@ export function generateStaticParams() {
 
 export default async function SectionPage({ params }: { params: Promise<{ section:string }> }) {
   const { section } = await params;
-  return <LeadoraApp route={section} />;
+  return <LeadRallyApp route={section} />;
 }

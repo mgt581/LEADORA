@@ -113,7 +113,7 @@ class AppSidebar extends StatelessWidget {
             ),
             child: const Center(
               child: Text(
-                'LO',
+                'LR',
                 style: TextStyle(
                   color: AppColors.white,
                   fontSize: 11,
@@ -124,7 +124,7 @@ class AppSidebar extends StatelessWidget {
             ),
           ),
           const SizedBox(width: AppSpacing.sm),
-          Text('LEADORA', style: AppTypography.logoText),
+          Text('LEADRALLY', style: AppTypography.logoText),
         ],
       ),
     );

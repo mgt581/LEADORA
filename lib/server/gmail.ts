@@ -52,7 +52,7 @@ const friendlyMessages: Record<GmailErrorCode, string> = {
   MISSING_ENCRYPTION_KEY: 'The Gmail token encryption key is missing.',
   MISSING_REDIRECT_URI: 'The Google OAuth redirect URI is missing.',
   MISSING_CLOUDFLARE_ENV: 'Cloudflare environment variables are missing. Configure the account, API token and D1 database ID.',
-  USER_NOT_AUTHENTICATED: 'Sign in to LEADORA before connecting Gmail.',
+  USER_NOT_AUTHENTICATED: 'Sign in to LeadRally before connecting Gmail.',
   OAUTH_TOKEN_MISSING: 'No Gmail OAuth token was found. Connect a Gmail account.',
   OAUTH_TOKEN_EXPIRED: 'The Gmail OAuth token has expired. Reconnect Gmail.',
   GMAIL_API_UNAVAILABLE: 'The Gmail API is unavailable right now. Try again shortly.',

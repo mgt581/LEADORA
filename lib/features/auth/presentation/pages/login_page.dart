@@ -108,7 +108,7 @@ class _Logo extends StatelessWidget {
         children: [
           Container(width: 38, height: 38, decoration: BoxDecoration(color: AppColors.gold, borderRadius: BorderRadius.circular(10)), child: const Center(child: Text('L', style: TextStyle(color: Colors.white, fontWeight: FontWeight.w700, fontSize: 20))),
           const SizedBox(width: 10),
-          const Text('LEADORA', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.textPrimary)),
+          const Text('LEADRALLY', style: TextStyle(fontWeight: FontWeight.w700, letterSpacing: 2, color: AppColors.textPrimary)),
         ],
       );
 }
