@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decryptTokenSet, encodeRawMessage, gmailRequest, TOKEN_COOKIE } from '@/lib/server/gmail';
+import { decryptTokenSet, encodeRawMessage, gmailRequest, readGmailToken, persistGmailTokens } from '@/lib/server/gmail';
 import { decodeHtmlEntities } from '@/lib/text';
 import { cleaningOutreachHtml, constructionOutreachHtml, digitalOutreachHtml, teethWhiteningOutreachHtml } from '@/lib/email-templates';
 
 export const runtime = 'nodejs';
 export async function POST(request: NextRequest) {
-  const cookie = request.cookies.get(TOKEN_COOKIE)?.value;
+  const cookie = readGmailToken(request);
   if (!cookie) return NextResponse.json({ error: 'Connect Gmail before sending.' }, { status: 401 });
   const input = await request.json() as { to?: string; subject?: string; body?: string; from?: string; threadId?: string; inReplyTo?: string; references?: string; brandId?: string; isFollowUp?: boolean };
   if (!input.to || !input.subject || !input.body || !input.from) return NextResponse.json({ error: 'Recipient, sender, subject and body are required.' }, { status: 400 });
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
       : input.brandId === 'mr-white-teeth' ? teethWhiteningOutreachHtml(plainBody, input.isFollowUp)
       : undefined;
     const message = { from: input.from, to: input.to, subject: decodeHtmlEntities(input.subject.trim()), body: plainBody, ...(input.threadId ? { threadId: input.threadId } : {}), ...(input.inReplyTo ? { inReplyTo: input.inReplyTo } : {}), ...(input.references ? { references: input.references } : {}), ...(html ? { html } : {}) };
-    const { response } = await gmailRequest('messages/send', decryptTokenSet(cookie), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ raw: encodeRawMessage(message), ...(input.threadId ? { threadId: input.threadId } : {}) }) });
-    return NextResponse.json(await response.json());
+    const { response, tokens } = await gmailRequest('messages/send', decryptTokenSet(cookie), { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ raw: encodeRawMessage(message), ...(input.threadId ? { threadId: input.threadId } : {}) }) });
+    return persistGmailTokens(NextResponse.json(await response.json()), request, tokens);
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Gmail send failed.' }, { status: 502 }); }
 }

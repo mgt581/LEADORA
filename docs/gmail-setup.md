@@ -18,3 +18,13 @@ The internal `leadora` Worker remains connected to this GitHub repository so the
 Google may require verification before external users can use Gmail restricted scopes. This integration deliberately does not request full mailbox access or `mail.google.com`.
 
 The Gmail OAuth cookie is scoped to the domain where it was created. After moving from the `workers.dev` address to `leadrally.co.uk`, connect Gmail once on the new domain. Existing D1 records are unchanged.
+
+## Production hostname handling
+
+Gmail uses the registered `https://leadrally.co.uk/api/gmail/callback` for both the apex and `www` site. The encrypted Gmail token and short-lived OAuth state cookies use `Domain=leadrally.co.uk`, `Secure`, `HttpOnly`, and `SameSite=Lax`. The callback validates state and returns to the starting hostname, preserving browser-local business email mappings. Other callback origins are rejected. Existing `leadora-gmail-token` cookies remain readable and migrate to the new `leadrally-gmail-token` cookie after a successful Gmail request.
+
+The code exchange records the access-token expiry. Status, sync, and send persist refreshed encrypted tokens; sync reuses the refreshed token across its message requests. Gmail tokens remain encrypted cookies rather than D1 records. The existing `leadora-gmail-messages` state key is now supported by the D1 allowlist; no migration or data reset is required.
+
+After deployment, open Settings and Connect Gmail, choose the intended account, and grant the existing Gmail permissions. No Google Cloud redirect change is needed. Authorization and a real mailbox sync require the account owner's consent; automated tests mock Google and do not send mail.
+
+Regression checks: `npx --yes tsx --test lib/server/gmail*.test.ts`, `npx tsc --noEmit`, and `npm run cf:build`.

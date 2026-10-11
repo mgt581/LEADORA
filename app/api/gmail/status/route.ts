@@ -6,7 +6,8 @@ import {
   gmailErrorMessage,
   GmailIntegrationError,
   gmailRequest,
-  TOKEN_COOKIE,
+  readGmailToken,
+  persistGmailTokens,
 } from '@/lib/server/gmail';
 
 export const runtime = 'nodejs';
@@ -17,12 +18,12 @@ export async function GET(request: NextRequest) {
   if (configError) {
     return NextResponse.json({ connected: false, code: configError.code, error: configError.message, ...diagnostics });
   }
-  const value = request.cookies.get(TOKEN_COOKIE)?.value;
+  const value = readGmailToken(request);
   if (!value) return NextResponse.json({ connected: false, code: 'OAUTH_TOKEN_MISSING', error: gmailErrorMessage('OAUTH_TOKEN_MISSING'), ...diagnostics });
   try {
-    const { response } = await gmailRequest('profile', decryptTokenSet(value));
+    const { response, tokens } = await gmailRequest('profile', decryptTokenSet(value));
     const profile = await response.json() as { emailAddress: string };
-    return NextResponse.json({ connected: true, code: null, emailAddress: profile.emailAddress, ...diagnostics });
+    return persistGmailTokens(NextResponse.json({ connected: true, code: null, emailAddress: profile.emailAddress, ...diagnostics }), request, tokens);
   } catch (error) {
     const integrationError = error instanceof GmailIntegrationError
       ? error

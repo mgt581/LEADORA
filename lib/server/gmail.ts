@@ -1,4 +1,5 @@
 import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEqual } from 'node:crypto';
+import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 export const GMAIL_SCOPES = [
@@ -6,8 +7,10 @@ export const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.readonly',
 ].join(' ');
 
-const TOKEN_COOKIE = 'leadora-gmail-token';
-const STATE_COOKIE = 'leadora-gmail-oauth-state';
+const TOKEN_COOKIE = 'leadrally-gmail-token';
+const LEGACY_TOKEN_COOKIE = 'leadora-gmail-token';
+const RETURN_COOKIE = 'leadrally-gmail-return-origin';
+const STATE_COOKIE = 'leadrally-gmail-oauth-state';
 
 export type TokenSet = { access_token: string; refresh_token?: string; expiry_date?: number; token_type?: string; expires_in?: number };
 export type GmailErrorCode =
@@ -73,11 +76,51 @@ export function configurationError(redirectUri?: string): GmailIntegrationError 
   if (!secretValue) return new GmailIntegrationError('MISSING_CLIENT_SECRET', gmailErrorMessage('MISSING_CLIENT_SECRET'));
   if (!encryption) return new GmailIntegrationError('MISSING_ENCRYPTION_KEY', gmailErrorMessage('MISSING_ENCRYPTION_KEY'));
   const configuredRedirect = env('GOOGLE_OAUTH_REDIRECT_URL');
-  if (configuredRedirect && redirectUri && configuredRedirect !== redirectUri) {
+  if (configuredRedirect && redirectUri && configuredRedirect !== redirectUri && !isLeadRallyAlias(configuredRedirect, redirectUri)) {
     return new GmailIntegrationError('REDIRECT_URI_MISMATCH', gmailErrorMessage('REDIRECT_URI_MISMATCH'));
   }
   return null;
 }
+// Only the two existing production hosts may share this OAuth session.
+function isLeadRallyHost(url: URL) {
+  return url.protocol === 'https:' && !url.port && ['leadrally.co.uk', 'www.leadrally.co.uk'].includes(url.hostname);
+}
+export function isLeadRallyAlias(configured: string, requested: string) {
+  try {
+    const a = new URL(configured), b = new URL(requested);
+    return isLeadRallyHost(a) && isLeadRallyHost(b) && a.pathname === '/api/gmail/callback' && b.pathname === a.pathname && !a.search && !b.search;
+  } catch { return false; }
+}
+export function gmailCookieOptions(requestUrl: string, maxAge = 60 * 60 * 24 * 30) {
+  const url = new URL(requestUrl);
+  return { httpOnly: true, secure: url.protocol === 'https:', sameSite: 'lax' as const, maxAge, path: '/', ...(isLeadRallyHost(url) ? { domain: 'leadrally.co.uk' } : {}) };
+}
+export function gmailSettingsUrl(requestUrl: string, returnOrigin?: string) {
+  const url = new URL(requestUrl);
+  if (returnOrigin) {
+    try {
+      const origin = new URL(returnOrigin);
+      if (isLeadRallyHost(url) && isLeadRallyHost(origin) && origin.href === origin.origin + '/') return new URL('/settings/', origin);
+    } catch {}
+  }
+  return new URL('/settings/', url);
+}
+export function readGmailToken(request: NextRequest) {
+  return request.cookies.get(TOKEN_COOKIE)?.value ?? request.cookies.get(LEGACY_TOKEN_COOKIE)?.value;
+}
+export function persistGmailTokens(response: NextResponse, request: NextRequest, tokens: TokenSet) {
+  response.cookies.set(TOKEN_COOKIE, encryptTokenSet(tokens), gmailCookieOptions(request.url));
+  response.headers.set('Cache-Control', 'no-store');
+  return response;
+}
+export function clearGmailOAuthCookies(response: NextResponse, requestUrl: string) {
+  for (const name of [STATE_COOKIE, RETURN_COOKIE]) response.cookies.set(name, '', gmailCookieOptions(requestUrl, 0));
+}
+export function clearGmailTokens(response: NextResponse, requestUrl: string) {
+  response.cookies.set(TOKEN_COOKIE, '', gmailCookieOptions(requestUrl, 0));
+  response.cookies.set(LEGACY_TOKEN_COOKIE, '', { ...gmailCookieOptions(requestUrl, 0), domain: undefined });
+}
+
 export type GmailHeader = { name: string; value: string };
 export type ParsedGmailMessage = {
   id: string; threadId: string; labelIds: string[]; headers: GmailHeader[];
@@ -104,10 +147,11 @@ function unseal(value: string) {
   return Buffer.concat([decipher.update(Buffer.from(data, 'base64url')), decipher.final()]).toString('utf8');
 }
 
-export { TOKEN_COOKIE, STATE_COOKIE };
+export { TOKEN_COOKIE, STATE_COOKIE, RETURN_COOKIE };
 export function oauthStateMatches(expected: string, actual: string | undefined) {
-  if (!actual || expected.length !== actual.length) return false;
-  return timingSafeEqual(Buffer.from(expected), Buffer.from(actual));
+  if (!expected || !actual) return false;
+  const a = Buffer.from(expected), b = Buffer.from(actual);
+  return a.length === b.length && timingSafeEqual(a, b);
 }
 export function createOAuthState() { return randomBytes(32).toString('base64url'); }
 export function getAuthorizationUrl(state: string, redirectUri: string) {
@@ -136,7 +180,9 @@ export async function exchangeCode(code: string, redirectUri: string): Promise<T
     }),
   });
   if (!response.ok) throw new GmailIntegrationError('GMAIL_API_UNAVAILABLE', `Google authorization failed (${response.status})`);
-  return await response.json() as TokenSet;
+  const tokens = await response.json() as TokenSet;
+  if (!tokens.access_token) throw new GmailIntegrationError('OAUTH_TOKEN_MISSING', gmailErrorMessage('OAUTH_TOKEN_MISSING'));
+  return { ...tokens, expiry_date: Date.now() + (tokens.expires_in ?? 3600) * 1000 };
 }
 
 export async function accessToken(tokens: TokenSet): Promise<TokenSet> {
