@@ -3,10 +3,10 @@
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
-  LayoutDashboard, Users, ContactRound, Building2, Handshake, Columns3,
-  Mail, SearchCheck, Bot, Workflow, ChartNoAxesCombined, FileChartColumn,
-  Settings, Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search, Inbox, RefreshCw,
-  MapPinned, ExternalLink, BarChart3, Link2, Unlink, Database, Globe2, ShieldCheck, PanelsTopLeft
+  LayoutDashboard, Users, ContactRound,
+  Mail, SearchCheck, Workflow, ChartNoAxesCombined, FileChartColumn,
+  Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search, Inbox, RefreshCw,
+  MapPinned, ExternalLink, BarChart3, Link2, Unlink, Database, Globe2, ShieldCheck, PanelsTopLeft, type LucideIcon
 } from 'lucide-react';
 import { getOutreachWorkflow, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 import { decodeHtmlEntities } from '@/lib/text';
@@ -60,14 +60,14 @@ const seedGoogleProfiles: GoogleProfileConfig[] = seedBusinesses.map(business=>(
   analyticsPropertyId:'',
 }));
 
-const nav = [
-  ['dashboard','Dashboard',LayoutDashboard],['leads','Leads',Users],['contacts','Contacts',ContactRound],
-  ['companies','Companies',Building2],['deals','Deals',Handshake],['pipelines','Pipelines',Columns3],
-  ['email-outreach','Email Outreach',Mail],['website-audits','Website Audits',SearchCheck],
-  ['outreach-history','Outreach History',History],['inbox','Inbox',Inbox],
-  ['ai-agents','AI Agents',Bot],['automations','Automations',Workflow],['google-profiles','Google Profiles',MapPinned],['analytics','Analytics',ChartNoAxesCombined],
-  ['reports','Reports',FileChartColumn],['dashboards','Dashboards',PanelsTopLeft],['settings','Settings',Settings],
-] as const;
+type NavigationItem = [slug:string,label:string,icon:LucideIcon];
+const navGroups: Array<{label:string;adminOnly?:boolean;items:NavigationItem[]}> = [
+  { label:'Main', items:[['dashboard','Dashboard',LayoutDashboard],['contacts','Contacts',ContactRound],['leads','Add Leads',Users]] },
+  { label:'Outreach', items:[['email-outreach','Email Outreach',Mail],['website-audits','Website Audit',SearchCheck],['outreach-history','Outreach History',History]] },
+  { label:'Insights', items:[['google-profiles','Google Profiles',MapPinned],['analytics','Analytics',ChartNoAxesCombined],['reports','Reports',FileChartColumn]] },
+  { label:'Administration', adminOnly:true, items:[['backend-analytics','Backend Analytics',PanelsTopLeft]] },
+] ;
+const nav = navGroups.flatMap(group=>group.items);
 
 function useStoredState<T>(key:string, initial:T) {
   const [value,setValue] = useState<T>(initial);
@@ -114,19 +114,19 @@ export function LeadRallyApp({ route='dashboard' }: { route?:string }) {
     const matchesContact=contacts.some(item=>[item.name,item.email,item.company].some(value=>value?.toLowerCase().includes(query)));
     location.href=matchesProspect?'/email-outreach/':matchesContact?'/contacts/':'/leads/';
   }
-  const notifications=drafts.filter(draft=>draft.status==='pending'||draft.status==='send_failed').length+gmailMessages.filter(message=>message.isRead===false&&!message.labelIds.includes('SENT')).length;
+  const notifications=drafts.filter(draft=>draft.status==='pending'||draft.status==='send_failed').length;
 
   return <div className="shell">
     <aside className={`sidebar ${menu?'open':''}`}>
       <div className="brand"><img className="brand-mark" src={LEADRALLY_BRAND.logoPath} alt=""/><span>{LEADRALLY_BRAND.uppercaseName}</span></div>
-      <nav className="nav">{nav.map(([slug,label,Icon])=><Link key={slug} href={`/${slug}/`} className={`nav-link ${route===slug?'active':''}`} onClick={()=>setMenu(false)}><Icon size={16}/><span>{label}</span></Link>)}</nav>
+      <nav className="nav">{navGroups.map(group=><div className="nav-group" key={group.label}><div className="nav-group-label">{group.label}</div>{group.items.map(([slug,label,Icon])=><Link key={slug} href={`/${slug}/`} className={`nav-link ${route===slug?'active':''}`} onClick={()=>setMenu(false)}><Icon size={16}/><span>{label}</span></Link>)}</div>)}</nav>
       <button className="sidebar-user" onClick={()=>setAuth(false)}><div className="avatar">AB</div><div><b>Alex Bryant</b><br/><span style={{color:'#8792a3'}}>Admin · Sign out</span></div><LogOut size={14}/></button>
     </aside>
     <main className="main">
       <header className="topbar">
         <button className="btn secondary mobile-menu" onClick={()=>setMenu(!menu)} aria-label="Open navigation"><Menu size={18}/></button>
         <form onSubmit={search} style={{flex:1,display:'flex',gap:8}}><input aria-label={`Search ${LEADRALLY_BRAND.name}`} className="search" value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} placeholder="Search pages, prospects and contacts…" /><button className="btn secondary" type="submit" aria-label="Run search" title="Search"><Search size={16}/></button></form>
-        <div style={{display:'flex',alignItems:'center',gap:13}}><Link className="btn" href="/leads/" aria-label="Add a lead" title="Add a lead"><Plus size={16}/></Link><Link href="/inbox/" aria-label={`${notifications} notifications`} title="Open notifications" style={{position:'relative',display:'inline-flex',color:'inherit'}}><Bell size={18}/>{notifications>0&&<span className="notification-count">{Math.min(99,notifications)}</span>}</Link><div className="avatar">AB</div></div>
+        <div style={{display:'flex',alignItems:'center',gap:13}}><Link className="btn" href="/leads/" aria-label="Add a lead" title="Add a lead"><Plus size={16}/></Link>{notifications>0&&<Link href="/email-outreach/" aria-label={`${notifications} pending outreach items`} title="Open pending outreach" style={{position:'relative',display:'inline-flex',color:'inherit'}}><Bell size={18}/><span className="notification-count">{Math.min(99,notifications)}</span></Link>}<Link className="avatar" href="/settings/" aria-label="Open settings" title="Settings">AB</Link></div>
       </header>
       <section className="content"><Page route={active[0]} leads={leads} setLeads={setLeads} contacts={contacts} setContacts={setContacts} businesses={businesses} setBusinesses={setBusinesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach} gmailMessages={gmailMessages} setGmailMessages={setGmailMessages}/></section>
     </main>
@@ -154,7 +154,7 @@ function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesse
   if(route==='automations') return <Automations/>;
   if(route==='google-profiles') return <GoogleProfilesPage businesses={businesses}/>;
   if(route==='analytics'||route==='reports') return <Reports title={route==='analytics'?'Analytics':'Reports'} prospects={prospects} drafts={drafts} outreach={outreach} gmailMessages={gmailMessages}/>;
-  if(route==='dashboards'||route==='infrastructure') return <InfrastructurePage/>;
+  if(route==='backend-analytics'||route==='dashboards'||route==='infrastructure') return <InfrastructurePage/>;
   if(route==='settings') return <SettingsPage/>;
   if(route==='website-audits') return <AuditPage prospects={prospects}/>;
   if(route==='inbox') return <InboxPage messages={gmailMessages} setMessages={setGmailMessages} businesses={businesses}/>;
@@ -520,7 +520,7 @@ function InfrastructurePage(){
     'public':'No additional sign-in detected',
   }[access]);
   return <>
-    <Header title="Business Dashboards" sub="Open and switch between your business dashboards from one LeadRally menu." action={<button className="btn secondary" onClick={refresh} disabled={busy}><RefreshCw size={14}/>{busy?' Checking…':' Refresh status'}</button>}/>
+    <Header title="Backend Analytics" sub="Live availability, dashboard access and Cloudflare resources for every business system." action={<button className="btn secondary" onClick={refresh} disabled={busy}><RefreshCw size={14}/>{busy?' Checking…':' Refresh status'}</button>}/>
     {error&&<div role="alert" className="card infrastructure-alert">{error}</div>}
     <div className="card infrastructure-notice"><ShieldCheck size={20}/><div><b>One sign-in covers the Cloudflare Access dashboards</b><div className="muted">Sign in when the first protected dashboard opens. Construction, Cleaning, Casa4 and Mr White share that Cloudflare Access session. MultiPost currently keeps its own app login.</div></div></div>
     <div className="grid kpis infrastructure-kpis">

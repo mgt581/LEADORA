@@ -3,7 +3,7 @@ import { LeadRallyApp } from '@/components/leadora-app';
 const sections = [
   'login','dashboard','leads','contacts','companies','deals','pipelines',
   'email-outreach','outreach-history','inbox','website-audits','ai-agents','automations',
-  'google-profiles','analytics','reports','dashboards','infrastructure','settings'
+  'google-profiles','analytics','reports','backend-analytics','dashboards','infrastructure','settings'
 ];
 
 export function generateStaticParams() {
