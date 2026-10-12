@@ -100,6 +100,9 @@ export async function GET() {
     checkedAt: new Date().toISOString(),
     connectionConfigured: Boolean(token),
     projects,
-  }, { headers: { 'cache-control': 'private, no-store' } });
+  }, { headers: {
+    'cache-control': 'private, no-store, no-cache, must-revalidate, max-age=0',
+    'cloudflare-cdn-cache-control': 'no-store',
+  } });
 }
 

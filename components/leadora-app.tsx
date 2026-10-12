@@ -501,7 +501,7 @@ function InfrastructurePage(){
   async function refresh(){
     setBusy(true);setError('');
     try{
-      const response=await fetch('/api/cloudflare/overview',{cache:'no-store'});
+      const response=await fetch('/api/cloudflare/backend-overview',{cache:'no-store'});
       const data=await response.json();
       if(!response.ok)throw new Error(data.error||'Cloudflare overview is unavailable.');
       setOverview(data);
