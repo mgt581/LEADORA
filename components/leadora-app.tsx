@@ -6,7 +6,7 @@ import {
   LayoutDashboard, Users, ContactRound, Building2, Handshake, Columns3,
   Mail, SearchCheck, Bot, Workflow, ChartNoAxesCombined, FileChartColumn,
   Settings, Menu, Bell, Plus, LogOut, Target, ClipboardCheck, History, Sparkles, Trash2, Pencil, Send, Search, Inbox, RefreshCw,
-  MapPinned, ExternalLink, BarChart3, Link2, Unlink
+  MapPinned, ExternalLink, BarChart3, Link2, Unlink, CloudCog, Database, Globe2, ShieldCheck
 } from 'lucide-react';
 import { getOutreachWorkflow, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 import { decodeHtmlEntities } from '@/lib/text';
@@ -27,6 +27,8 @@ type GmailStatus = {connected:boolean;emailAddress?:string;error?:string;code?:s
 type GoogleProfileConfig = { companyId:string; accountEmail:string; businessProfileUrl:string; publicProfileUrl:string; analyticsPropertyId:string };
 type GoogleConnectionStatus = { connected:boolean; email?:string; properties:Array<{id:string;name:string;accountName:string}>; warning?:string; error?:string };
 type GoogleAnalyticsMetrics = { current:{activeUsers:number;sessions:number;pageViews:number;keyEvents:number};previous:{activeUsers:number;sessions:number;pageViews:number;keyEvents:number};period:string };
+type InfrastructureProject = { id:string;name:string;description:string;publicUrl:string;dashboardUrl:string;cloudflareKind:'worker'|'pages'|'external';cloudflareName:string|null;health:{status:'healthy'|'warning'|'offline';statusCode:number|null;responseMs:number};deployment:{id:string|null;createdAt:string|null;environment:string;branch:string|null}|null;database:{name:string;sizeBytes:number|null;version:string|null}|null;cloudflareError:string|null };
+type InfrastructureOverview = { checkedAt:string;connectionConfigured:boolean;projects:InfrastructureProject[] };
 
 const seedLeads: Lead[] = [];
 const seedContacts: Contact[] = [];
@@ -64,7 +66,7 @@ const nav = [
   ['email-outreach','Email Outreach',Mail],['website-audits','Website Audits',SearchCheck],
   ['outreach-history','Outreach History',History],['inbox','Inbox',Inbox],
   ['ai-agents','AI Agents',Bot],['automations','Automations',Workflow],['google-profiles','Google Profiles',MapPinned],['analytics','Analytics',ChartNoAxesCombined],
-  ['reports','Reports',FileChartColumn],['settings','Settings',Settings],
+  ['reports','Reports',FileChartColumn],['infrastructure','Infrastructure',CloudCog],['settings','Settings',Settings],
 ] as const;
 
 function useStoredState<T>(key:string, initial:T) {
@@ -152,6 +154,7 @@ function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesse
   if(route==='automations') return <Automations/>;
   if(route==='google-profiles') return <GoogleProfilesPage businesses={businesses}/>;
   if(route==='analytics'||route==='reports') return <Reports title={route==='analytics'?'Analytics':'Reports'} prospects={prospects} drafts={drafts} outreach={outreach} gmailMessages={gmailMessages}/>;
+  if(route==='infrastructure') return <InfrastructurePage/>;
   if(route==='settings') return <SettingsPage/>;
   if(route==='website-audits') return <AuditPage prospects={prospects}/>;
   if(route==='inbox') return <InboxPage messages={gmailMessages} setMessages={setGmailMessages} businesses={businesses}/>;
@@ -481,6 +484,60 @@ function GoogleProfilesPage({businesses}:{businesses:BusinessProfile[]}) {
         {report&&<><div className="muted" style={{marginTop:16,fontSize:11}}>{report.period}</div><div className="grid kpis" style={{gridTemplateColumns:'repeat(auto-fit,minmax(110px,1fr))',marginTop:8}}><Kpi label="Active users" value={String(report.current.activeUsers)} detail={trend(report.current.activeUsers,report.previous.activeUsers)}/><Kpi label="Sessions" value={String(report.current.sessions)} detail={trend(report.current.sessions,report.previous.sessions)}/><Kpi label="Page views" value={String(report.current.pageViews)} detail={trend(report.current.pageViews,report.previous.pageViews)}/><Kpi label="Key events" value={String(report.current.keyEvents)} detail={trend(report.current.keyEvents,report.previous.keyEvents)}/></div></>}
       </div>;
     })}</div>
+  </>;
+}
+
+function formatBytes(value:number|null) {
+  if(value===null)return 'Connect private metrics';
+  if(value<1024)return `${value} B`;
+  if(value<1024*1024)return `${(value/1024).toFixed(1)} KB`;
+  return `${(value/1024/1024).toFixed(1)} MB`;
+}
+
+function InfrastructurePage(){
+  const [overview,setOverview]=useState<InfrastructureOverview|null>(null);
+  const [error,setError]=useState('');
+  const [busy,setBusy]=useState(false);
+  async function refresh(){
+    setBusy(true);setError('');
+    try{
+      const response=await fetch('/api/cloudflare/overview',{cache:'no-store'});
+      const data=await response.json();
+      if(!response.ok)throw new Error(data.error||'Cloudflare overview is unavailable.');
+      setOverview(data);
+    }catch(value){setError(value instanceof Error?value.message:'Cloudflare overview is unavailable.');}
+    finally{setBusy(false);}
+  }
+  useEffect(()=>{refresh();},[]);
+  const projects=overview?.projects??[];
+  const healthy=projects.filter(project=>project.health.status==='healthy').length;
+  const attention=projects.length-healthy;
+  return <>
+    <Header title="Infrastructure" sub="One place to check your Cloudflare websites, deployments and databases." action={<button className="btn secondary" onClick={refresh} disabled={busy}><RefreshCw size={14}/>{busy?' Checking…':' Refresh status'}</button>}/>
+    {error&&<div role="alert" className="card infrastructure-alert">{error}</div>}
+    {overview&&!overview.connectionConfigured&&<div className="card infrastructure-notice"><ShieldCheck size={20}/><div><b>Public monitoring is active</b><div className="muted">Website availability is live. Add the restricted read-only Cloudflare token to this preview to display private deployment dates and database sizes.</div></div></div>}
+    <div className="grid kpis infrastructure-kpis">
+      <Kpi label="Systems monitored" value={String(projects.length)} detail="Cloudflare operations areas"/>
+      <Kpi label="Healthy now" value={String(healthy)} detail={projects.length?'Public availability checks':'Loading status…'}/>
+      <Kpi label="Needs attention" value={String(attention)} detail="Warnings or unavailable systems"/>
+      <Kpi label="Last checked" value={overview?new Date(overview.checkedAt).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'}):'—'} detail="Refresh any time"/>
+    </div>
+    <div className="infrastructure-grid">
+      {projects.map(project=>{
+        const tone=project.health.status==='healthy'?'healthy':project.health.status==='warning'?'warning':'offline';
+        return <article className="card infrastructure-card" key={project.id}>
+          <div className="infrastructure-card-head"><div><div className="infrastructure-title"><span className={`status-dot ${tone}`}/><b>{project.name}</b></div><p className="muted">{project.description}</p></div><span className={`health-pill ${tone}`}>{project.health.status==='healthy'?'Healthy':project.health.status==='warning'?'Warning':'Offline'}</span></div>
+          <div className="infrastructure-details">
+            <div><Globe2 size={16}/><span><small>Website response</small><b>{project.health.statusCode??'No response'} · {project.health.responseMs} ms</b></span></div>
+            <div><CloudCog size={16}/><span><small>Latest deployment</small><b>{project.deployment?.createdAt?new Date(project.deployment.createdAt).toLocaleString():overview?.connectionConfigured?'Not reported':'Connect private metrics'}</b>{project.deployment?.branch&&<em>{project.deployment.branch}</em>}</span></div>
+            <div><Database size={16}/><span><small>Database</small><b>{project.database?.name??'No D1 database linked'}</b>{project.database&&<em>{formatBytes(project.database.sizeBytes)}</em>}</span></div>
+          </div>
+          {project.cloudflareError&&<p className="infrastructure-error">{project.cloudflareError}</p>}
+          <div className="infrastructure-actions"><a className="btn secondary" href={project.publicUrl} target="_blank" rel="noreferrer">Open website <ExternalLink size={12}/></a><a className="btn" href={project.dashboardUrl} target="_blank" rel="noreferrer">Open in Cloudflare <ExternalLink size={12}/></a></div>
+        </article>;
+      })}
+      {!overview&&!error&&Array.from({length:6},(_,index)=><div className="card infrastructure-card infrastructure-loading" key={index}/>) }
+    </div>
   </>;
 }
 
