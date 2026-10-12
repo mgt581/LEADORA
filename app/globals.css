@@ -32,7 +32,7 @@ h1 { font-size:25px; margin:0 0 5px; letter-spacing:-.02em; }
 .btn.secondary { background:white; color:#252a33; border:1px solid #dedfe3; box-shadow:none; }
 .notification-count { position:absolute; top:-9px; right:-10px; min-width:17px; height:17px; padding:0 4px; border-radius:99px; background:#b42318; color:#fff; font-size:9px; font-weight:800; display:grid; place-items:center; }
 .digital-email-preview { margin:16px 0 14px; padding:14px 16px; border-radius:10px; background:#083f7a; color:#fff; display:flex; align-items:center; justify-content:space-between; gap:18px; }
-.digital-email-preview img { display:block; width:168px; height:56px; object-fit:contain; }
+.digital-email-preview img { display:block; width:92px; height:92px; object-fit:contain; background:#fff; border-radius:10px; }
 .digital-email-preview div { text-align:right; font-size:13px; }
 .digital-email-preview span { display:block; margin-top:4px; color:#d8eafa; font-size:11px; }
 .cleaning-email-preview { margin:16px 0 14px; padding:14px 16px; border-radius:10px; background:#103542; color:#fff; display:flex; align-items:center; justify-content:space-between; gap:18px; }

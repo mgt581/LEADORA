@@ -1,11 +1,11 @@
 const DIGITAL_WEBSITE = 'https://bryantdigitalsolutions.com';
-const DIGITAL_LOGO = `${DIGITAL_WEBSITE}/assets/logo-bds.jpg`;
+const DIGITAL_LOGO = 'https://www.leadrally.co.uk/branding/outreach/bryant-digital.jpg';
 const CLEANING_WEBSITE = 'https://www.bryantandcocleaning.co.uk';
-const CLEANING_LOGO = `${CLEANING_WEBSITE}/images/logo.png`;
+const CLEANING_LOGO = 'https://www.leadrally.co.uk/branding/outreach/bryant-cleaning.png';
 const CONSTRUCTION_WEBSITE = 'https://bryantconstructiongroup.co.uk';
-const CONSTRUCTION_LOGO = `${CONSTRUCTION_WEBSITE}/assets/logo.png`;
+const CONSTRUCTION_LOGO = 'https://www.leadrally.co.uk/branding/outreach/bryant-construction.png';
 const TEETH_WEBSITE = 'https://teethwhiteningbournemouth.co.uk';
-const TEETH_LOGO = `${TEETH_WEBSITE}/images/logo.png`;
+const TEETH_LOGO = 'https://www.leadrally.co.uk/branding/outreach/mr-white.jpg';
 const HOLDINGS_COMPANY_NUMBER = '13671131';
 
 function escapeHtml(value: string) {
@@ -36,7 +36,7 @@ export function digitalOutreachHtml(body: string, isFollowUp = false) {
     <tr><td align="center">
       <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:620px;background:#ffffff;border:1px solid #dce5ef;border-radius:14px;overflow:hidden;box-shadow:0 5px 20px rgba(8,63,122,.08);">
         <tr><td style="background:#083f7a;padding:20px 28px;">
-          <a href="${DIGITAL_WEBSITE}" style="text-decoration:none;"><img src="${DIGITAL_LOGO}" width="168" height="56" alt="Bryant Digital Solutions" style="display:block;width:168px;height:56px;object-fit:contain;border:0;"></a>
+          <a href="${DIGITAL_WEBSITE}" style="text-decoration:none;"><img src="${DIGITAL_LOGO}" width="92" height="92" alt="Bryant Digital Solutions" style="display:block;width:92px;height:92px;object-fit:contain;border:0;background:#ffffff;border-radius:10px;"></a>
         </td></tr>
         <tr><td style="padding:26px 28px 8px;font-family:Arial,sans-serif;">${paragraphs(body)}</td></tr>
         ${offer}
