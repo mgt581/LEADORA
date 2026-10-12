@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getOutreachWorkflow, type OutreachWorkflowConfig, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workflows';
 import { decodeHtmlEntities } from '@/lib/text';
 import { isPublicBusinessEmail } from '@/lib/leads/public-email';
+import { auditPublicWebsite } from '@/lib/leads/public-website';
 
 export const runtime = 'nodejs';
 
@@ -50,10 +51,18 @@ function publicDirectoryQuery(config: OutreachWorkflowConfig, digitalDiscovery: 
         '["beauty"]',
       ]
     : [''];
-  const statements = selectors.flatMap(filter => [
+  const contactStatements = selectors.flatMap(filter => [
     `nwr["email"]["name"]${filter}(${dorsetBounds});`,
     `nwr["contact:email"]["name"]${filter}(${dorsetBounds});`,
-  ]).join('');
+  ]);
+  // Construction's small email-only directory pool is easily exhausted. A
+  // website is also a public contact source, so include relevant listings that
+  // publish one and inspect their own contact page for a displayed address.
+  // Query each construction category once. Repeating the comparatively broad
+  // category filters for every possible contact tag overloads public mirrors.
+  const statements = config.companyId === 'bryant-construction'
+    ? selectors.map(filter => `nwr["name"]${filter}(${dorsetBounds});`).join('')
+    : contactStatements.join('');
   return `[out:json][timeout:18];(${statements});out center tags 600;`;
 }
 
@@ -138,28 +147,54 @@ export async function POST(request: NextRequest) {
   try {
     const data = await fetchPublicDirectory(query);
     const seen = new Set<string>();
+    const constructionDiscovery = config.companyId === 'bryant-construction';
     const allCandidates = (data.elements ?? []).flatMap(element => {
       const tags = element.tags ?? {}; const listedEmail = (tags.email || tags['contact:email'] || '').toLowerCase(); const email = isPublicBusinessEmail(listedEmail) ? listedEmail : ''; const name = tags.name;
       const rawWebsite = tags.website || tags['contact:website'] || '';
       const website = rawWebsite ? normaliseWebsite(rawWebsite) : '';
-      const identity = digitalDiscovery ? website.toLowerCase() : email;
-      if (!name || (!digitalDiscovery && !email) || !identity || seen.has(identity) || (email && excludedEmails.has(email)) || (website && excludedWebsites.has(website.toLowerCase()))) return [];
+      const websiteIdentity = website.toLowerCase();
+      const identity = (digitalDiscovery || constructionDiscovery) ? (websiteIdentity || email) : email;
+      if (!name || (!digitalDiscovery && !constructionDiscovery && !email) || (!email && !website) || !identity || seen.has(identity) || (email && excludedEmails.has(email)) || (website && excludedWebsites.has(websiteIdentity))) return [];
       seen.add(identity);
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;
       return [{ name: clean(name), email, website, phone: tags.phone || tags['contact:phone'] || '', location: location(tags), industry: industry(tags), tags, contactUrl: website, googleMapsUrl: lat && lon ? `https://www.google.com/maps/search/?api=1&query=${lat},${lon}` : `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${name} Dorset`)}` }];
     });
-    if (digitalDiscovery) allCandidates.sort((a, b) => Number(Boolean(b.email)) - Number(Boolean(a.email)));
+    if (digitalDiscovery || constructionDiscovery) allCandidates.sort((a, b) => Number(Boolean(b.email)) - Number(Boolean(a.email)));
     const relevant = digitalDiscovery ? allCandidates : allCandidates.filter(candidate => matchesWorkflow(candidate.tags, config));
-    const selectionLimit = digitalDiscovery ? Math.min(20, limit * 2) : limit;
+    const selectionLimit = (digitalDiscovery || constructionDiscovery) ? Math.min(30, limit * 3) : limit;
     const selected = relevant.slice(0, selectionLimit);
     const candidates = selected.map(({ tags: _tags, ...candidate }) => candidate);
-    const prospects = digitalDiscovery ? candidates : await Promise.all(candidates.map(async candidate => ({ ...candidate, proposal: await proposal(config, candidate.name, candidate.industry, candidate.location) })));
+    const auditedConstructionCandidates = constructionDiscovery
+      ? (await Promise.all(candidates.map(async candidate => {
+          if (candidate.email) return candidate;
+          if (!candidate.website) return null;
+          try {
+            const audited = await auditPublicWebsite(candidate.website);
+            const email = audited.contactEmail?.toLowerCase() ?? '';
+            if (!isPublicBusinessEmail(email) || excludedEmails.has(email)) return null;
+            return {
+              ...candidate,
+              email,
+              website: audited.website,
+              phone: candidate.phone || audited.phoneNumber || '',
+              contactUrl: audited.contactPageUrl || audited.website,
+            };
+          } catch { return null; }
+        }))).filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate))
+      : candidates;
+    const uniqueProspectEmails = new Set<string>();
+    const constructionCandidates = auditedConstructionCandidates.filter(candidate => {
+      if (uniqueProspectEmails.has(candidate.email)) return false;
+      uniqueProspectEmails.add(candidate.email);
+      return true;
+    }).slice(0, limit);
+    const prospects = digitalDiscovery ? candidates : await Promise.all(constructionCandidates.map(async candidate => ({ ...candidate, proposal: await proposal(config, candidate.name, candidate.industry, candidate.location) })));
     return NextResponse.json({
       prospects,
       source: config.leadSource,
       companyId: config.companyId,
       limit,
-      categoryFallbackUsed: false,
+      categoryFallbackUsed: constructionDiscovery && prospects.some(prospect => !selected.find(candidate => candidate.email === prospect.email)?.email),
       exhausted: prospects.length === 0,
     });
   } catch (error) { return NextResponse.json({ error: error instanceof Error ? error.message : 'Public directory search failed.' }, { status: 502 }); }
