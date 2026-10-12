@@ -4,13 +4,14 @@ import { decodeHtmlEntities } from '@/lib/text';
 import { cleaningOutreachHtml, constructionOutreachHtml, digitalOutreachHtml, teethWhiteningOutreachHtml } from '@/lib/email-templates';
 
 export const runtime = 'nodejs';
+const ALLOWED_SENDERS = new Set(['info@bryantandcocleaning.co.uk','info@bryantconstructiongroup.co.uk','info@bryantdigitalsolutions.com','info@mrwhiteteeth.co.uk']);
 export async function POST(request: NextRequest) {
   const cookie = readGmailToken(request);
   if (!cookie) return NextResponse.json({ error: 'Connect Gmail before sending.' }, { status: 401 });
   const input = await request.json() as { to?: string; subject?: string; body?: string; from?: string; threadId?: string; inReplyTo?: string; references?: string; brandId?: string; isFollowUp?: boolean };
   if (!input.to || !input.subject || !input.body || !input.from) return NextResponse.json({ error: 'Recipient, sender, subject and body are required.' }, { status: 400 });
   const emailPattern = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-  if (!emailPattern.test(input.to) || !emailPattern.test(input.from) || /[\r\n]/.test(input.to + input.from)) return NextResponse.json({ error: 'Enter valid sender and recipient email addresses.' }, { status: 400 });
+  if (!emailPattern.test(input.to) || !emailPattern.test(input.from) || !ALLOWED_SENDERS.has(input.from.toLowerCase()) || /[\r\n]/.test([input.to,input.from,input.subject,input.inReplyTo,input.references].filter(Boolean).join(''))) return NextResponse.json({ error: 'Enter valid, authorised email headers.' }, { status: 400 });
   if (input.subject.length > 200 || input.body.length > 100_000) return NextResponse.json({ error: 'The subject or email body is too long.' }, { status: 413 });
   try {
     const plainBody = decodeHtmlEntities(input.body);

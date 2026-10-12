@@ -8,8 +8,10 @@ import { POST as disconnect } from '../../app/api/gmail/disconnect/route';
 import { POST as sync } from '../../app/api/gmail/sync/route';
 import { GET as readState, PUT as writeState } from '../../app/api/state/[key]/route';
 import { encryptTokenSet, decryptTokenSet, TOKEN_COOKIE, STATE_COOKIE, RETURN_COOKIE, oauthStateMatches, isLeadRallyAlias } from './gmail';
+import { createSession, SESSION_COOKIE } from './auth';
 
 const env = { GOOGLE_OAUTH_CLIENT_ID: 'test-client', GOOGLE_OAUTH_CLIENT_SECRET: 'test-secret', GMAIL_TOKEN_ENCRYPTION_KEY: 'test-only-encryption-key', GOOGLE_OAUTH_REDIRECT_URL: 'https://leadrally.co.uk/api/gmail/callback' };
+process.env.LEADRALLY_SESSION_SECRET='test-session-secret-that-is-longer-than-32-characters';
 (globalThis as any)[Symbol.for('__cloudflare-context__')] = { env };
 const originalFetch = globalThis.fetch;
 function request(url: string, cookie = '', init: RequestInit = {}) { return new NextRequest(url, { ...init, headers: { ...init.headers, cookie } }); }
@@ -93,14 +95,18 @@ test('sync reuses one refreshed token for all messages and retains business matc
 
 test('Gmail state uses the existing storage key and unknown keys remain rejected', async () => {
   const bindings: unknown[][] = [];
-  const statement = { bind(...values: unknown[]) { bindings.push(values); return this; }, async first() { return { value_json: '[{"id":"existing"}]', updated_at: 'test-date' }; }, async run() {} };
+  let reads=0;
+  const statement = { bind(...values: unknown[]) { bindings.push(values); return this; }, async first() { reads++; return reads===1 ? { value_json: '[{"id":"existing"}]', updated_at: 'test-date', version:1 } : {version:2}; }, async run() {} };
   (env as any).LEADORA_DB = { prepare() { return statement; } };
   const params = { params: Promise.resolve({ key: 'leadora-gmail-messages' }) };
-  const response = await readState(request('https://leadrally.co.uk/api/state/leadora-gmail-messages'), params);
+  const denied=await readState(request('https://leadrally.co.uk/api/state/leadora-gmail-messages'),params);
+  assert.equal(denied.status,401);
+  const session=`${SESSION_COOKIE}=${createSession('ajbryantsleads@gmail.com')}`;
+  const response = await readState(request('https://leadrally.co.uk/api/state/leadora-gmail-messages',session), params);
   assert.deepEqual((await response.json()).value, [{ id: 'existing' }]);
-  const write = await writeState(request('https://leadrally.co.uk/api/state/leadora-gmail-messages', '', { method: 'PUT', body: JSON.stringify({ value: [{ id: 'preserved' }] }) }), params);
-  assert.equal(write.status, 200); assert.equal(bindings[1][0], 'leadora-gmail-messages');
-  const invalid = await readState(request('https://leadrally.co.uk/api/state/arbitrary'), { params: Promise.resolve({ key: 'arbitrary' }) });
+  const write = await writeState(request('https://leadrally.co.uk/api/state/leadora-gmail-messages', session, { method: 'PUT', body: JSON.stringify({ value: [{ id: 'preserved' }],version:1 }) }), params);
+  assert.equal(write.status, 200); assert.ok(bindings.some(values=>values.includes('leadora-gmail-messages')&&values.includes('owner')));
+  const invalid = await readState(request('https://leadrally.co.uk/api/state/arbitrary',session), { params: Promise.resolve({ key: 'arbitrary' }) });
   assert.equal(invalid.status, 404);
 });
 

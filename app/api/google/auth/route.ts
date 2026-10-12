@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
     const redirectUri = googleIntegrationRedirectUrl(request.url);
     const response = NextResponse.redirect(googleIntegrationAuthorizationUrl(state, redirectUri));
     response.cookies.set(GOOGLE_INTEGRATION_STATE_COOKIE, state, {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 600, path: '/',
+      httpOnly: true, secure: true, sameSite: 'lax', maxAge: 600, path: '/', domain:'leadrally.co.uk',
     });
     return response;
   } catch {

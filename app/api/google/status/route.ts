@@ -25,7 +25,7 @@ export async function GET(request: NextRequest) {
     catch (error) { warning = error instanceof Error ? error.message : 'Analytics properties are unavailable.'; }
     const response = NextResponse.json({ connected: true, email, properties, warning });
     response.cookies.set(cookieName, encryptTokenSet(tokens), {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24 * 90, path: '/',
+      httpOnly: true, secure: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 90, path: '/', domain:'leadrally.co.uk',
     });
     return response;
   } catch {
