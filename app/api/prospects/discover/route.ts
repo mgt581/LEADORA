@@ -15,6 +15,11 @@ const publicDirectoryMirrors = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
 ];
+// The regional mirror routinely needs 15–18 seconds for the construction
+// query. Keep the application timeout above the upstream query timeout so a
+// healthy but busy mirror is not reported as unavailable.
+const publicDirectoryTimeoutMs = 20_000;
+const publicDirectoryDeadlineMs = 22_000;
 const dorsetBounds = '50.50,-2.95,51.10,-1.70';
 
 function normaliseWebsite(value: string) {
@@ -49,7 +54,7 @@ function publicDirectoryQuery(config: OutreachWorkflowConfig, digitalDiscovery: 
     `nwr["email"]["name"]${filter}(${dorsetBounds});`,
     `nwr["contact:email"]["name"]${filter}(${dorsetBounds});`,
   ]).join('');
-  return `[out:json][timeout:12];(${statements});out center tags 600;`;
+  return `[out:json][timeout:18];(${statements});out center tags 600;`;
 }
 
 function fallbackProposal(config: OutreachWorkflowConfig, name: string, businessType: string, place: string) {
@@ -93,7 +98,7 @@ async function fetchPublicDirectory(query: string) {
           'user-agent': 'LeadRally/2.0 public-contact discovery (https://leadrally.co.uk)',
         },
         body: new URLSearchParams({ data: query }),
-        signal: AbortSignal.timeout(12_000),
+        signal: AbortSignal.timeout(publicDirectoryTimeoutMs),
       });
       if (!response.ok) throw new Error(`${response.status}`);
       const data = await response.json() as { elements?: OsmElement[] };
@@ -102,7 +107,7 @@ async function fetchPublicDirectory(query: string) {
     });
     try {
       const deadline = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('directory deadline exceeded')), 13_000);
+        setTimeout(() => reject(new Error('directory deadline exceeded')), publicDirectoryDeadlineMs);
       });
       return await Promise.race([Promise.any(attempts), deadline]);
     } catch {
