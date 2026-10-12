@@ -57,7 +57,11 @@ export async function GET() {
   const token = env.CLOUDFLARE_READ_TOKEN?.trim();
   const accountId = env.CLOUDFLARE_ACCOUNT_ID?.trim() || CLOUDFLARE_ACCOUNT_ID;
   const projects = await Promise.all(CLOUDFLARE_PROJECTS.map(async project => {
-    const health = await publicHealth(project.publicUrl);
+    // This handler responding is the authoritative LeadRally health check.
+    // A Worker fetching its own custom domain can create a false 522 signal.
+    const health = project.id === 'leadrally'
+      ? { status: 'healthy' as const, statusCode: 200, responseMs: 0 }
+      : await publicHealth(project.publicUrl);
     let deployment = null;
     let database = project.database ? { name: project.database.name, sizeBytes: null as number | null, version: null as string | null } : null;
     let cloudflareError: string | null = null;
