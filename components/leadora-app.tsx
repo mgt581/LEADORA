@@ -522,7 +522,7 @@ function InfrastructurePage(){
   return <>
     <Header title="Backend Analytics" sub="Live availability, dashboard access and Cloudflare resources for every business system." action={<button className="btn secondary" onClick={refresh} disabled={busy}><RefreshCw size={14}/>{busy?' Checking…':' Refresh status'}</button>}/>
     {error&&<div role="alert" className="card infrastructure-alert">{error}</div>}
-    <div className="card infrastructure-notice"><ShieldCheck size={20}/><div><b>One sign-in covers the Cloudflare Access dashboards</b><div className="muted">Sign in when the first protected dashboard opens. Construction, Cleaning, Casa4 and Mr White share that Cloudflare Access session. MultiPost currently keeps its own app login.</div></div></div>
+    <div className="card infrastructure-notice"><ShieldCheck size={20}/><div><b>One sign-in covers all seven business dashboards</b><div className="muted">Sign in when the first protected dashboard opens. Bryant Digital Solutions, MultiPost, Construction, Cleaning, Holdings, Casa4 and Mr White all use the same Cloudflare Access account.</div></div></div>
     <div className="grid kpis infrastructure-kpis">
       <Kpi label="Systems monitored" value={String(projects.length)} detail="Cloudflare operations areas"/>
       <Kpi label="Healthy now" value={String(healthy)} detail={projects.length?'Public availability checks':'Loading status…'}/>
