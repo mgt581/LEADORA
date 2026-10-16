@@ -298,7 +298,6 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
     const business=businesses.find(b=>b.id===businessId); if(!business)return;
     setBusy(true); setSendError(''); setNotice(''); setProgress('Finding public Dorset prospects…');
     try {
-      const existingForBusiness=prospects.filter(p=>p.businessId===business.id);
       const response=await fetch('/api/prospects/discover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({limit:10,companyId:business.id,excludeEmails:prospects.map(p=>p.email).filter(Boolean),excludeWebsites:prospects.map(p=>p.website).filter(Boolean),excludeNames:prospects.map(p=>p.name).filter(Boolean)})}); const result=await response.json(); if(!response.ok)throw new Error(result.error||'Public directory search failed.');
       const known=new Set(prospects.map(p=>p.website.toLowerCase())); const candidates=(result.prospects as Array<{name:string;email:string;website:string;phone:string;location:string;industry:string;contactUrl:string;googleMapsUrl:string}>).filter(item=>!known.has(item.website.toLowerCase())); const created:Prospect[]=[];
       for(let offset=0;offset<candidates.length&&created.length<10;offset+=4){
@@ -318,8 +317,7 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
     if(workflow.workflowType==='dorset-prospecting'){
       setBusy(true); setSendError(''); setNotice('');
       try {
-        const existingForBusiness=prospects.filter(p=>p.businessId===business.id);
-        const response=await fetch('/api/prospects/discover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({limit:10,companyId:business.id,excludeEmails:prospects.map(p=>p.email).filter(Boolean),excludeWebsites:prospects.map(p=>p.website).filter(Boolean),excludeNames:prospects.map(p=>p.name).filter(Boolean)})});
+          const response=await fetch('/api/prospects/discover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({limit:10,companyId:business.id,excludeEmails:prospects.map(p=>p.email).filter(Boolean),excludeWebsites:prospects.map(p=>p.website).filter(Boolean),excludeNames:prospects.map(p=>p.name).filter(Boolean)})});
         const result=await response.json(); if(!response.ok) throw new Error(result.error||'Public directory search failed.');
         const existingEmails=new Set(prospects.map(p=>p.email.toLowerCase()));
         const found=(result.prospects as Array<{name:string;email:string;website:string;phone:string;location:string;industry:string;contactUrl:string;googleMapsUrl:string;proposal:{subject:string;body:string;callToAction:string}}>).filter(item=>!existingEmails.has(item.email.toLowerCase()));
