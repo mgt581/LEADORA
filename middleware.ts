@@ -13,7 +13,7 @@ async function authenticated(request:NextRequest){
   }catch{return false;}
 }
 export async function middleware(request:NextRequest){
-  if(request.nextUrl.pathname==='/api/auth/login'||request.nextUrl.pathname==='/api/auth/session')return NextResponse.next();
+  if(request.nextUrl.pathname==='/api/auth/login'||request.nextUrl.pathname==='/api/auth/session'||request.nextUrl.pathname==='/api/auth/google')return NextResponse.next();
   if(!await authenticated(request))return NextResponse.json({error:'Authentication required.'},{status:401,headers:{'cache-control':'no-store'}});
   if(!['GET','HEAD','OPTIONS'].includes(request.method)){
     const origin=request.headers.get('origin');
