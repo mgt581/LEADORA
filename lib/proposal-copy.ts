@@ -14,7 +14,7 @@ function clean(value: string) {
 
 function serviceLink(companyId: string) {
   return {
-    'bryant-digital': 'https://bryantdigitalsolutions.com',
+    'bryant-digital': 'https://bryantdigitalsolutions.co.uk',
     'bryant-cleaning': 'https://www.bryantandcocleaning.co.uk',
     'bryant-construction': 'https://bryantconstructiongroup.co.uk',
     'mr-white-teeth': 'https://teethwhiteningbournemouth.co.uk',
