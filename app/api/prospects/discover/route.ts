@@ -23,6 +23,9 @@ function normaliseWebsite(value: string) {
   const trimmed = value.trim();
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
 }
+function websiteIdentity(value: string) {
+  return value.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+}
 function location(tags: Record<string, string>) {
   return [tags['addr:housenumber'], tags['addr:street'], tags['addr:city'] || tags['addr:town'] || tags['addr:village'], tags['addr:postcode']].filter(Boolean).join(', ') || 'Dorset';
 }
@@ -100,7 +103,7 @@ export async function POST(request: NextRequest) {
   }
   const limit = Math.max(1, Math.min(Number(body.limit) || 10, 10));
   const excludedEmails = new Set((body.excludeEmails ?? []).map(value => value.toLowerCase().trim()).filter(Boolean).slice(0, 1000));
-  const excludedWebsites = new Set((body.excludeWebsites ?? []).map(value => value.toLowerCase().trim()).filter(Boolean).slice(0, 1000));
+  const excludedWebsites = new Set((body.excludeWebsites ?? []).map(websiteIdentity).filter(Boolean).slice(0, 1000));
   const excludedNames = new Set((body.excludeNames ?? []).map(value => value.toLowerCase().trim()).filter(Boolean).slice(0, 1000));
 
   try {
@@ -113,10 +116,10 @@ export async function POST(request: NextRequest) {
       const name = clean(tags.name || '');
       const rawWebsite = tags.website || tags['contact:website'] || '';
       const website = rawWebsite ? normaliseWebsite(rawWebsite) : '';
-      const websiteIdentity = website.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+      const websiteKey = websiteIdentity(website);
       const nameIdentity = name.toLowerCase();
-      const identity = websiteIdentity || email || nameIdentity;
-      if (!name || !identity || seen.has(identity) || (email && excludedEmails.has(email)) || (websiteIdentity && excludedWebsites.has(websiteIdentity)) || excludedNames.has(nameIdentity)) return [];
+      const identity = websiteKey || email || nameIdentity;
+      if (!name || !identity || seen.has(identity) || (email && excludedEmails.has(email)) || (websiteKey && excludedWebsites.has(websiteKey)) || excludedNames.has(nameIdentity)) return [];
       if (!digitalDiscovery && !matchesWorkflow(tags, config)) return [];
       seen.add(identity);
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;
@@ -135,7 +138,7 @@ export async function POST(request: NextRequest) {
       }];
     });
     allCandidates.sort((a, b) => b.score - a.score || a.name.localeCompare(b.name));
-    const selectionLimit = digitalDiscovery ? Math.min(48, limit * 5) : Math.min(60, limit * 6);
+    const selectionLimit = digitalDiscovery ? Math.min(48, limit * 5) : Math.min(36, limit * 4);
     const candidates = allCandidates.slice(0, selectionLimit).map(({ tags: _tags, score: _score, ...candidate }) => candidate);
 
     const auditedCandidates = digitalDiscovery ? candidates : (await Promise.all(candidates.map(async candidate => {
@@ -159,7 +162,7 @@ export async function POST(request: NextRequest) {
 
     const unique = new Set<string>();
     const finalCandidates = auditedCandidates.filter(candidate => {
-      const website = candidate.website.toLowerCase().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
+      const website = websiteIdentity(candidate.website);
       const email = candidate.email.toLowerCase();
       const name = candidate.name.toLowerCase();
       const identity = website || email || name;
