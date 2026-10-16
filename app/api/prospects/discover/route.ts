@@ -15,8 +15,8 @@ const publicDirectoryMirrors = [
   'https://overpass-api.de/api/interpreter',
   'https://overpass.private.coffee/api/interpreter',
 ];
-const publicDirectoryTimeoutMs = 25_000;
-const publicDirectoryDeadlineMs = 28_000;
+const publicDirectoryTimeoutMs = 18_000;
+const publicDirectoryDeadlineMs = 21_000;
 const dorsetBounds = '50.50,-2.95,51.10,-1.70';
 
 function normaliseWebsite(value: string) {
@@ -43,7 +43,7 @@ function relevanceScore(tags: Record<string, string>, config: OutreachWorkflowCo
 }
 
 function publicDirectoryQuery(config: OutreachWorkflowConfig, digitalDiscovery: boolean) {
-  if (digitalDiscovery) return `[out:json][timeout:22];(nwr["name"](${dorsetBounds}););out center tags 1200;`;
+  if (digitalDiscovery) return `[out:json][timeout:16];(nwr["name"]["website"](${dorsetBounds});nwr["name"]["contact:website"](${dorsetBounds}););out center tags 800;`;
   const selectors = config.companyId === 'bryant-construction' ? [
     '["office"~"estate_agent|property_management|architect|surveying"]',
     '["craft"~"builder|carpenter|roofer|plumber|electrician"]',
