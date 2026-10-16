@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
     const tokens = await exchangeGoogleIntegrationCode(code, googleIntegrationRedirectUrl(request.url));
     const response = NextResponse.redirect(new URL(`/google-profiles/?google=connected&companyId=${companyId}`, request.url));
     response.cookies.set(googleCompanyCookie(companyId), encryptTokenSet(tokens), {
-      httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'lax', maxAge: 60 * 60 * 24 * 90, path: '/',
+      httpOnly: true, secure: true, sameSite: 'lax', maxAge: 60 * 60 * 24 * 90, path: '/', domain:'leadrally.co.uk',
     });
     response.cookies.delete(GOOGLE_INTEGRATION_STATE_COOKIE);
     return response;

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { CLOUDFLARE_ACCOUNT_ID, CLOUDFLARE_PROJECTS, cloudflareDashboardUrl } from '@/lib/cloudflare-projects';
+import { requireAdmin } from '@/lib/server/auth';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -52,7 +53,8 @@ function deploymentSummary(result: unknown, kind: 'worker' | 'pages' | 'external
   return latest ? { id: latest.id ?? null, createdAt: latest.created_on ?? null, environment: latest.source ?? 'production', branch: null } : null;
 }
 
-export async function GET() {
+export async function GET(request: import('next/server').NextRequest) {
+  const auth=requireAdmin(request); if('response' in auth)return auth.response;
   const env = runtimeEnv();
   const token = env.CLOUDFLARE_READ_TOKEN?.trim();
   const accountId = env.CLOUDFLARE_ACCOUNT_ID?.trim() || CLOUDFLARE_ACCOUNT_ID;

@@ -12,6 +12,8 @@ import { getOutreachWorkflow, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workfl
 import { decodeHtmlEntities } from '@/lib/text';
 import { isPublicBusinessEmail } from '@/lib/leads/public-email';
 import { LEADRALLY_BRAND } from '@/lib/brand';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { firebaseAuth } from '@/lib/firebase';
 
 type Lead = { name:string; email:string; company:string; status:string; source:string; created:string };
 type Contact = { name:string; email:string; company:string; phone:string; status:string };
@@ -72,19 +74,19 @@ const nav = navGroups.flatMap(group=>group.items);
 function useStoredState<T>(key:string, initial:T) {
   const [value,setValue] = useState<T>(initial);
   const loaded=useRef(false);
-  useEffect(() => { const saved=localStorage.getItem(key); if(saved) try { setValue(JSON.parse(saved)); } catch {} },[key]);
+  const version=useRef(0);
   useEffect(() => {
-    if(!key.startsWith('leadora-') || key==='leadora-auth' || key==='leadora-businesses'){loaded.current=true;return;}
+    if(!key.startsWith('leadora-')){loaded.current=true;return;}
     let cancelled=false;
-    fetch(`/api/state/${key}`).then(async response=>{if(!response.ok)throw new Error();return response.json();}).then(data=>{if(!cancelled&&data.value!==null)setValue(data.value as T);}).catch(()=>{}).finally(()=>{loaded.current=true;});
+    fetch(`/api/state/${key}`).then(async response=>{if(!response.ok)throw new Error();return response.json();}).then(data=>{if(!cancelled){version.current=data.version??0;if(data.value!==null)setValue(data.value as T);}}).catch(()=>{}).finally(()=>{loaded.current=true;});
     return ()=>{cancelled=true;};
   },[key]);
-  useEffect(() => { localStorage.setItem(key,JSON.stringify(value)); if(loaded.current&&key.startsWith('leadora-')&&key!=='leadora-auth'&&key!=='leadora-businesses') fetch(`/api/state/${key}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({value})}).catch(()=>{}); },[key,value]);
+  useEffect(() => { if(loaded.current&&key.startsWith('leadora-')) fetch(`/api/state/${key}`,{method:'PUT',headers:{'content-type':'application/json'},body:JSON.stringify({value,version:version.current})}).then(async response=>{const data=await response.json();if(!response.ok)throw new Error(data.error||'Unable to save changes.');version.current=data.version;}).catch(error=>window.dispatchEvent(new CustomEvent('leadrally-save-error',{detail:error.message}))); },[key,value]);
   return [value,setValue] as const;
 }
 
 export function LeadRallyApp({ route='dashboard' }: { route?:string }) {
-  const [auth,setAuth] = useStoredState('leadora-auth',false);
+  const [auth,setAuth] = useState<boolean|null>(null);
   const [leads,setLeads] = useStoredState<Lead[]>('leadora-leads',seedLeads);
   const [contacts,setContacts] = useStoredState<Contact[]>('leadora-contacts',seedContacts);
   const [businesses,setBusinesses] = useStoredState<BusinessProfile[]>('leadora-businesses',seedBusinesses);
@@ -93,6 +95,7 @@ export function LeadRallyApp({ route='dashboard' }: { route?:string }) {
   const [outreach,setOutreach] = useStoredState<Outreach[]>('leadora-outreach',[]);
   const [gmailMessages,setGmailMessages] = useStoredState<GmailMessage[]>('leadora-gmail-messages',[]);
   const [menu,setMenu] = useState(false);
+  const [saveError,setSaveError] = useState('');
   const [globalSearch,setGlobalSearch] = useState('');
 
   useEffect(() => {
@@ -102,8 +105,10 @@ export function LeadRallyApp({ route='dashboard' }: { route?:string }) {
     if(realContacts.length!==contacts.length)setContacts(realContacts);
   },[leads,contacts,setLeads,setContacts]);
   useEffect(()=>{if(prospects.some(item=>item.email&&!isPublicBusinessEmail(item.email)))setProspects(prospects.map(item=>item.email&&!isPublicBusinessEmail(item.email)?{...item,email:'',reasons:[...item.reasons.filter(reason=>!/public.*email/i.test(reason)),'A valid public business email was not found.']}:item));},[prospects,setProspects]);
+  useEffect(()=>{fetch('/api/auth/session').then(response=>setAuth(response.ok)).catch(()=>setAuth(false));const handler=(event:Event)=>setSaveError((event as CustomEvent<string>).detail);window.addEventListener('leadrally-save-error',handler);return()=>window.removeEventListener('leadrally-save-error',handler);},[]);
 
-  if(route==='login' || !auth) return <Login onLogin={()=>setAuth(true)} />;
+  if(auth===null)return <main className="login"><div className="login-card"><p>Checking your secure session…</p></div></main>;
+  if(route==='login' || !auth) return <Login onLogin={()=>location.reload()} />;
   const active = nav.find(n=>n[0]===route) ?? nav[0];
   function search(e:React.FormEvent) {
     e.preventDefault();
@@ -120,7 +125,7 @@ export function LeadRallyApp({ route='dashboard' }: { route?:string }) {
     <aside className={`sidebar ${menu?'open':''}`}>
       <div className="brand"><img className="brand-mark" src={LEADRALLY_BRAND.logoPath} alt=""/><span>{LEADRALLY_BRAND.uppercaseName}</span></div>
       <nav className="nav">{navGroups.map(group=><div className="nav-group" key={group.label}><div className="nav-group-label">{group.label}</div>{group.items.map(([slug,label,Icon])=><Link key={slug} href={`/${slug}/`} className={`nav-link ${route===slug?'active':''}`} onClick={()=>setMenu(false)}><Icon size={16}/><span>{label}</span></Link>)}</div>)}</nav>
-      <button className="sidebar-user" onClick={()=>setAuth(false)}><div className="avatar">AB</div><div><b>Alex Bryant</b><br/><span style={{color:'#8792a3'}}>Admin · Sign out</span></div><LogOut size={14}/></button>
+      <button className="sidebar-user" onClick={async()=>{await fetch('/api/auth/logout',{method:'POST'});for(const key of Object.keys(localStorage))if(key.startsWith('leadora-'))localStorage.removeItem(key);setAuth(false);}}><div className="avatar">AB</div><div><b>Alex Bryant</b><br/><span style={{color:'#8792a3'}}>Admin · Sign out</span></div><LogOut size={14}/></button>
     </aside>
     <main className="main">
       <header className="topbar">
@@ -128,21 +133,25 @@ export function LeadRallyApp({ route='dashboard' }: { route?:string }) {
         <form onSubmit={search} style={{flex:1,display:'flex',gap:8}}><input aria-label={`Search ${LEADRALLY_BRAND.name}`} className="search" value={globalSearch} onChange={e=>setGlobalSearch(e.target.value)} placeholder="Search pages, prospects and contacts…" /><button className="btn secondary" type="submit" aria-label="Run search" title="Search"><Search size={16}/></button></form>
         <div style={{display:'flex',alignItems:'center',gap:13}}><Link className="btn" href="/leads/" aria-label="Add a lead" title="Add a lead"><Plus size={16}/></Link>{notifications>0&&<Link href="/email-outreach/" aria-label={`${notifications} pending outreach items`} title="Open pending outreach" style={{position:'relative',display:'inline-flex',color:'inherit'}}><Bell size={18}/><span className="notification-count">{Math.min(99,notifications)}</span></Link>}<Link className="avatar" href="/settings/" aria-label="Open settings" title="Settings">AB</Link></div>
       </header>
-      <section className="content"><Page route={active[0]} leads={leads} setLeads={setLeads} contacts={contacts} setContacts={setContacts} businesses={businesses} setBusinesses={setBusinesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach} gmailMessages={gmailMessages} setGmailMessages={setGmailMessages}/></section>
+      <section className="content">{saveError&&<div role="alert" className="card" style={{color:'#b42318',marginBottom:16}}>Changes were not saved: {saveError} Reload before editing again.</div>}<Page route={active[0]} leads={leads} setLeads={setLeads} contacts={contacts} setContacts={setContacts} businesses={businesses} setBusinesses={setBusinesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach} gmailMessages={gmailMessages} setGmailMessages={setGmailMessages}/></section>
     </main>
   </div>;
 }
 
 function Login({onLogin}:{onLogin:()=>void}) {
   const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [error,setError]=useState('');
-  function submit(e:React.FormEvent){e.preventDefault(); if(!email.includes('@')||password.length<6){setError('Enter a valid email and a password of at least 6 characters.');return;} onLogin();}
+  const [busy,setBusy]=useState(false); const [googleBusy,setGoogleBusy]=useState(false);
+  async function submit(e:React.FormEvent){e.preventDefault();setBusy(true);setError('');try{const response=await fetch('/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email,password})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Sign in failed.');onLogin();}catch(value){setError(value instanceof Error?value.message:'Sign in failed.');}finally{setBusy(false);}}
+  async function signInWithGoogle(){setGoogleBusy(true);setError('');try{const result=await signInWithPopup(firebaseAuth,new GoogleAuthProvider());const idToken=await result.user.getIdToken();const response=await fetch('/api/auth/google',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({idToken})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Google sign-in failed.');onLogin();}catch(value){setError(value instanceof Error?value.message:'Google sign-in failed.');}finally{setGoogleBusy(false);}}
   return <main className="login"><form className="login-card" onSubmit={submit}>
     <div className="login-logo"><img className="login-brand-mark" src={LEADRALLY_BRAND.logoPath} alt=""/><span>{LEADRALLY_BRAND.uppercaseName}</span></div>
     <h1>Welcome back</h1><p className="muted">Sign in to your sales workspace.</p>
+    <button type="button" className="btn secondary" style={{width:'100%',marginBottom:12}} onClick={signInWithGoogle} disabled={busy||googleBusy}>{googleBusy?'Connecting to Google…':'Continue with Google'}</button>
+    <div className="muted" style={{textAlign:'center',fontSize:12,marginBottom:12}}>or use your LeadRally password</div>
     <div className="form-row"><label>Email address<input className="field" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder={LEADRALLY_BRAND.ownerEmail}/></label></div>
     <div className="form-row"><label>Password<input className="field" type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="6+ characters"/></label></div>
-    {error&&<p style={{color:'#b42318',fontSize:12}}>{error}</p>}<button className="btn" style={{width:'100%',marginTop:8}}>Sign in</button>
-    <p className="muted" style={{textAlign:'center',marginTop:14}}>Your sign-in is remembered on this device.</p>
+    {error&&<p style={{color:'#b42318',fontSize:12}}>{error}</p>}<button className="btn" style={{width:'100%',marginTop:8}} disabled={busy||googleBusy}>{busy?'Signing in…':'Sign in'}</button>
+    <p className="muted" style={{textAlign:'center',marginTop:14}}>Secure administrator access only.</p>
   </form></main>;
 }
 
