@@ -51,6 +51,11 @@ const DEFAULT_BUSINESS_EMAIL_MAPPINGS: Record<string,string> = {
   'bryant-digital':'info@bryantdigitalsolutions.co.uk',
   'mr-white-teeth':'info@mrwhiteteeth.co.uk',
 };
+function normaliseBusinessEmailMappings(value: Record<string,string>) {
+  const next = { ...value };
+  if (next['bryant-digital']?.trim().toLowerCase() === 'info@bryantdigitalsolutions.com') next['bryant-digital'] = 'info@bryantdigitalsolutions.co.uk';
+  return next;
+}
 const seedGoogleProfiles: GoogleProfileConfig[] = seedBusinesses.map(business=>({
   companyId:business.id,
   accountEmail:'',
@@ -363,7 +368,7 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
     if(!d||!p)return;
     if(!['approved','send_failed'].includes(d.status)||sending)return;
     if(!isPublicBusinessEmail(p.email)){setSendError('A valid public business email is required before sending.');return;}
-    const mappings=JSON.parse(localStorage.getItem('leadora-business-email-mappings')||'{}') as Record<string,string>;
+    const mappings=normaliseBusinessEmailMappings(JSON.parse(localStorage.getItem('leadora-business-email-mappings')||'{}') as Record<string,string>);
     const from=mappings[d.businessId]?.trim()||DEFAULT_BUSINESS_EMAIL_MAPPINGS[d.businessId]; if(!from){setSendError('Add a mapped business email in Settings before sending.');return;}
     setSending(id);setSendError('');
     try {
@@ -408,7 +413,7 @@ function InboxPage({messages,setMessages,businesses}:{messages:GmailMessage[];se
   async function sync() {
     setBusy(true); setError('');
     try {
-      const stored=JSON.parse(localStorage.getItem('leadora-business-email-mappings')||'{}') as Record<string,string>; const mappings={...DEFAULT_BUSINESS_EMAIL_MAPPINGS,...stored};
+      const stored=normaliseBusinessEmailMappings(JSON.parse(localStorage.getItem('leadora-business-email-mappings')||'{}') as Record<string,string>); const mappings={...DEFAULT_BUSINESS_EMAIL_MAPPINGS,...stored};
       const response=await fetch('/api/gmail/sync',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({mappings:Object.fromEntries(Object.entries(mappings).map(([id,address])=>[id,address?[address]:[]]))})});
       const data=await response.json(); if(!response.ok) throw new Error(data.error||'Synchronisation failed.');
       const existing=new Map(messages.map(m=>[m.id,m])); (data.messages as GmailMessage[]).forEach(m=>existing.set(m.id,m)); setMessages([...existing.values()]);
@@ -579,7 +584,7 @@ function SettingsPage(){
   const [gmail,setGmail]=useState<GmailStatus>({connected:false}); const [mapping,setMapping]=useState<Record<string,string>>(DEFAULT_BUSINESS_EMAIL_MAPPINGS); const [syncing,setSyncing]=useState(false);
   const [system,setSystem]=useState<SystemStatus|null>(null);
   useEffect(()=>{fetchIntegrationStatus().then(({gmailStatus,systemStatus})=>{setGmail(gmailStatus); setSystem({...systemStatus.statuses,connectedAccount:{ok:gmailStatus.connected,detail:gmailStatus.connected?`Connected · ${gmailStatus.emailAddress}`:'No Gmail account connected'},gmailApi:{ok:gmailStatus.connected,detail:gmailStatus.connected?'Profile check passed':gmailStatus.error??'Gmail status is unavailable'}});});},[]);
-  useEffect(()=>{const savedMapping=localStorage.getItem('leadora-business-email-mappings'); if(savedMapping) try{setMapping({...DEFAULT_BUSINESS_EMAIL_MAPPINGS,...JSON.parse(savedMapping)});}catch{}},[]);
+  useEffect(()=>{const savedMapping=localStorage.getItem('leadora-business-email-mappings'); if(savedMapping) try{setMapping(normaliseBusinessEmailMappings({...DEFAULT_BUSINESS_EMAIL_MAPPINGS,...JSON.parse(savedMapping)}));}catch{}},[]);
   useEffect(()=>{const preferences=localStorage.getItem('leadora-outreach-settings');if(preferences)try{const parsed=JSON.parse(preferences) as {dailyLimit?:number;style?:string};if(parsed.dailyLimit)setDaily(String(parsed.dailyLimit));if(parsed.style)setStyle(parsed.style);}catch{}},[]);
   function save(){const limit=Number(daily); if(!Number.isInteger(limit)||limit<1){setSaved('Enter a positive whole number');return;} try { localStorage.setItem('leadora-outreach-settings',JSON.stringify({dailyLimit:limit,style})); setSaved('Saved'); } catch { setSaved('Unable to save preferences'); }}
   function saveMappings(){if(Object.values(mapping).some(address=>!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(address.trim()))){setSaved('Enter a valid email address for every company');return;}localStorage.setItem('leadora-business-email-mappings',JSON.stringify(mapping));setSaved('Mappings saved');}
