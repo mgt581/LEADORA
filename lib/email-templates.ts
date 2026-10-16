@@ -1,4 +1,4 @@
-const DIGITAL_WEBSITE = 'https://bryantdigitalsolutions.com';
+const DIGITAL_WEBSITE = 'https://bryantdigitalsolutions.co.uk';
 const DIGITAL_LOGO = 'https://www.leadrally.co.uk/branding/outreach/bryant-digital.jpg';
 const CLEANING_WEBSITE = 'https://www.bryantandcocleaning.co.uk';
 const CLEANING_LOGO = 'https://www.leadrally.co.uk/branding/outreach/bryant-cleaning.png';
@@ -45,7 +45,7 @@ export function digitalOutreachHtml(body: string, isFollowUp = false) {
         </td></tr>
         <tr><td style="background:#f7f9fc;padding:16px 28px;color:#66758b;font-family:Arial,sans-serif;font-size:12px;line-height:1.5;text-align:center;">
           Bryant Group Holdings Ltd &nbsp;·&nbsp; Company No. ${HOLDINGS_COMPANY_NUMBER} &nbsp;·&nbsp; 07843 969254<br>
-          <a href="${DIGITAL_WEBSITE}" style="color:#0b69b7;text-decoration:none;">bryantdigitalsolutions.com</a>
+          <a href="${DIGITAL_WEBSITE}" style="color:#0b69b7;text-decoration:none;">bryantdigitalsolutions.co.uk</a>
         </td></tr>
       </table>
     </td></tr>
