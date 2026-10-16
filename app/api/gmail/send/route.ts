@@ -4,7 +4,7 @@ import { decodeHtmlEntities } from '@/lib/text';
 import { cleaningOutreachHtml, constructionOutreachHtml, digitalOutreachHtml, teethWhiteningOutreachHtml } from '@/lib/email-templates';
 
 export const runtime = 'nodejs';
-const ALLOWED_SENDERS = new Set(['info@bryantandcocleaning.co.uk','info@bryantconstructiongroup.co.uk','info@bryantdigitalsolutions.com','info@mrwhiteteeth.co.uk']);
+const ALLOWED_SENDERS = new Set(['info@bryantandcocleaning.co.uk','info@bryantconstructiongroup.co.uk','info@bryantdigitalsolutions.co.uk','info@bryantdigitalsolutions.com','info@mrwhiteteeth.co.uk']);
 export async function POST(request: NextRequest) {
   const cookie = readGmailToken(request);
   if (!cookie) return NextResponse.json({ error: 'Connect Gmail before sending.' }, { status: 401 });
