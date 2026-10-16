@@ -242,6 +242,10 @@ export async function gmailRequest(path: string, tokens: TokenSet, init?: Reques
     ...init, headers: { ...(init?.headers ?? {}), authorization: 'Bearer ' + current.access_token },
   });
   if (response.status === 401) throw new GmailIntegrationError('OAUTH_TOKEN_EXPIRED', gmailErrorMessage('OAUTH_TOKEN_EXPIRED'));
-  if (!response.ok) throw new GmailIntegrationError('GMAIL_API_UNAVAILABLE', `Gmail request failed (${response.status})`);
+  if (!response.ok) {
+    let detail = '';
+    try { detail = (await response.clone().json())?.error?.message || ''; } catch {}
+    throw new GmailIntegrationError('GMAIL_API_UNAVAILABLE', detail ? 'Gmail request failed (' + response.status + '): ' + detail : 'Gmail request failed (' + response.status + ')');
+  }
   return { response, tokens: current };
 }
