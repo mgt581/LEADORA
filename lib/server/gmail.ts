@@ -2,6 +2,8 @@ import { createCipheriv, createDecipheriv, createHash, randomBytes, timingSafeEq
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 
+export const GMAIL_CONNECTION_EMAIL = 'ajbryantsleads@gmail.com';
+
 export const GMAIL_SCOPES = [
   'https://www.googleapis.com/auth/gmail.send',
   'https://www.googleapis.com/auth/gmail.readonly',
@@ -161,6 +163,7 @@ export function getAuthorizationUrl(state: string, redirectUri: string) {
     client_id: env('GOOGLE_OAUTH_CLIENT_ID') ?? '',
     redirect_uri: env('GOOGLE_OAUTH_REDIRECT_URL') ?? redirectUri,
     response_type: 'code', access_type: 'offline', prompt: 'consent',
+    login_hint: GMAIL_CONNECTION_EMAIL,
     scope: GMAIL_SCOPES, state,
   });
   return `https://accounts.google.com/o/oauth2/v2/auth?${params}`;
