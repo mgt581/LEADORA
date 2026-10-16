@@ -7,5 +7,5 @@ export function isPublicBusinessEmail(value: string) {
   const email = value.trim().toLowerCase();
   if (!emailPattern.test(email)) return false;
   const [mailbox, host] = email.split('@');
-  return !placeholderMailbox.test(mailbox) && !placeholderHost.test(host) && !/^(no-?reply|do-?not-?reply)$/i.test(mailbox);
+  return !placeholderMailbox.test(mailbox) && !placeholderHost.test(host) && !assetHost.test(host) && !assetMailbox.test(mailbox) && !/^(no-?reply|do-?not-?reply)$/i.test(mailbox);
 }
