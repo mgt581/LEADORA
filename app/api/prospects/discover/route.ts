@@ -18,6 +18,7 @@ const publicDirectoryMirrors = [
 const publicDirectoryTimeoutMs = 18_000;
 const publicDirectoryDeadlineMs = 21_000;
 const dorsetBounds = '50.50,-2.95,51.10,-1.70';
+// Keep the Digital website-only discovery path in the same deploy as sender-domain updates.
 
 function normaliseWebsite(value: string) {
   const trimmed = value.trim();
