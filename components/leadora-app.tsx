@@ -274,6 +274,18 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
   const constructionOfferBody=(business:BusinessProfile,name:string,place:string)=>constructionProposal(business,name,place).body;
   const teethProposal=(business:BusinessProfile,name:string,place:string)=>proposalFor(business.id,name,'complementary local business',place,{companyName:business.name});
   const teethPartnershipBody=(business:BusinessProfile,name:string,place:string)=>teethProposal(business,name,place).body;
+  useEffect(()=>{
+    const legacyPending=drafts.some(draft=>draft.status==='pending'&&!draft.isFollowUp&&draft.templateVersion!==PROPOSAL_TEMPLATE_VERSION);
+    if(!legacyPending)return;
+    const rewritten=drafts.map(draft=>{
+      if(draft.status!=='pending'||draft.isFollowUp||draft.templateVersion===PROPOSAL_TEMPLATE_VERSION)return draft;
+      const prospect=prospects.find(item=>item.id===draft.prospectId); const business=businesses.find(item=>item.id===draft.businessId);
+      if(!prospect||!business)return draft;
+      const copy=proposalFor(business.id,prospect.name,prospect.industry||'local business',prospect.location||business.serviceArea,{finding:prospect.audit?.notes[0],companyName:business.name});
+      return {...draft,subject:copy.subject,body:copy.body,callToAction:copy.callToAction,templateVersion:PROPOSAL_TEMPLATE_VERSION};
+    });
+    if(rewritten.some((draft,index)=>draft!==drafts[index]))setDrafts(rewritten);
+  },[drafts,prospects,businesses,setDrafts]);
   const legacyDigitalDraftCount=drafts.filter(draft=>draft.businessId==='bryant-digital'&&['pending','edited'].includes(draft.status)&&draft.templateVersion!==PROPOSAL_TEMPLATE_VERSION).length;
   const legacyCleaningDraftCount=drafts.filter(draft=>draft.businessId==='bryant-cleaning'&&['pending','edited'].includes(draft.status)&&draft.templateVersion!==PROPOSAL_TEMPLATE_VERSION).length;
   const legacyConstructionDraftCount=drafts.filter(draft=>draft.businessId==='bryant-construction'&&['pending','edited'].includes(draft.status)&&draft.templateVersion!==PROPOSAL_TEMPLATE_VERSION).length;
