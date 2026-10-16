@@ -12,6 +12,8 @@ import { getOutreachWorkflow, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workfl
 import { decodeHtmlEntities } from '@/lib/text';
 import { isPublicBusinessEmail } from '@/lib/leads/public-email';
 import { LEADRALLY_BRAND } from '@/lib/brand';
+import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
+import { firebaseAuth } from '@/lib/firebase';
 
 type Lead = { name:string; email:string; company:string; status:string; source:string; created:string };
 type Contact = { name:string; email:string; company:string; phone:string; status:string };
@@ -138,14 +140,17 @@ export function LeadRallyApp({ route='dashboard' }: { route?:string }) {
 
 function Login({onLogin}:{onLogin:()=>void}) {
   const [email,setEmail]=useState(''); const [password,setPassword]=useState(''); const [error,setError]=useState('');
-  const [busy,setBusy]=useState(false);
+  const [busy,setBusy]=useState(false); const [googleBusy,setGoogleBusy]=useState(false);
   async function submit(e:React.FormEvent){e.preventDefault();setBusy(true);setError('');try{const response=await fetch('/api/auth/login',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({email,password})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Sign in failed.');onLogin();}catch(value){setError(value instanceof Error?value.message:'Sign in failed.');}finally{setBusy(false);}}
+  async function signInWithGoogle(){setGoogleBusy(true);setError('');try{const result=await signInWithPopup(firebaseAuth,new GoogleAuthProvider());const idToken=await result.user.getIdToken();const response=await fetch('/api/auth/google',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({idToken})});const data=await response.json();if(!response.ok)throw new Error(data.error||'Google sign-in failed.');onLogin();}catch(value){setError(value instanceof Error?value.message:'Google sign-in failed.');}finally{setGoogleBusy(false);}}
   return <main className="login"><form className="login-card" onSubmit={submit}>
     <div className="login-logo"><img className="login-brand-mark" src={LEADRALLY_BRAND.logoPath} alt=""/><span>{LEADRALLY_BRAND.uppercaseName}</span></div>
     <h1>Welcome back</h1><p className="muted">Sign in to your sales workspace.</p>
+    <button type="button" className="btn secondary" style={{width:'100%',marginBottom:12}} onClick={signInWithGoogle} disabled={busy||googleBusy}>{googleBusy?'Connecting to Google…':'Continue with Google'}</button>
+    <div className="muted" style={{textAlign:'center',fontSize:12,marginBottom:12}}>or use your LeadRally password</div>
     <div className="form-row"><label>Email address<input className="field" type="email" value={email} onChange={e=>setEmail(e.target.value)} placeholder={LEADRALLY_BRAND.ownerEmail}/></label></div>
     <div className="form-row"><label>Password<input className="field" type="password" value={password} onChange={e=>setPassword(e.target.value)} placeholder="6+ characters"/></label></div>
-    {error&&<p style={{color:'#b42318',fontSize:12}}>{error}</p>}<button className="btn" style={{width:'100%',marginTop:8}} disabled={busy}>{busy?'Signing in…':'Sign in'}</button>
+    {error&&<p style={{color:'#b42318',fontSize:12}}>{error}</p>}<button className="btn" style={{width:'100%',marginTop:8}} disabled={busy||googleBusy}>{busy?'Signing in…':'Sign in'}</button>
     <p className="muted" style={{textAlign:'center',marginTop:14}}>Secure administrator access only.</p>
   </form></main>;
 }
