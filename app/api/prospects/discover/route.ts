@@ -4,6 +4,7 @@ import { decodeHtmlEntities } from '@/lib/text';
 import { isPublicBusinessEmail } from '@/lib/leads/public-email';
 import { auditPublicWebsite } from '@/lib/leads/public-website';
 import { proposalFor } from '@/lib/proposal-copy';
+import { isKnownLead, normaliseLeadEmail, normaliseLeadName, normaliseLeadWebsite } from '@/lib/leads/identity';
 
 export const runtime = 'nodejs';
 
@@ -24,9 +25,6 @@ const dorsetBounds = '50.50,-2.95,51.10,-1.70';
 function normaliseWebsite(value: string) {
   const trimmed = value.trim();
   return /^https?:\/\//i.test(trimmed) ? trimmed : `https://${trimmed}`;
-}
-function websiteIdentity(value: string) {
-  return value.toLowerCase().trim().replace(/^https?:\/\//, '').replace(/^www\./, '').replace(/\/$/, '');
 }
 function location(tags: Record<string, string>) {
   return [tags['addr:housenumber'], tags['addr:street'], tags['addr:city'] || tags['addr:town'] || tags['addr:village'], tags['addr:postcode']].filter(Boolean).join(', ') || 'Dorset';
@@ -104,13 +102,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'This company does not have a Dorset prospecting workflow.' }, { status: 400 });
   }
   const limit = Math.max(1, Math.min(Number(body.limit) || 10, 10));
-  const excludedEmails = new Set((body.excludeEmails ?? []).map(value => value.toLowerCase().trim()).filter(Boolean).slice(0, 1000));
-  const excludedWebsites = new Set((body.excludeWebsites ?? []).map(websiteIdentity).filter(Boolean).slice(0, 1000));
-  const excludedNames = new Set((body.excludeNames ?? []).map(value => value.toLowerCase().trim()).filter(Boolean).slice(0, 1000));
+  const excludedEmails = new Set((body.excludeEmails ?? []).map(normaliseLeadEmail).filter(Boolean).slice(0, 1000));
+  const excludedWebsites = new Set((body.excludeWebsites ?? []).map(normaliseLeadWebsite).filter(Boolean).slice(0, 1000));
+  const excludedNames = new Set((body.excludeNames ?? []).map(normaliseLeadName).filter(Boolean).slice(0, 1000));
 
   try {
     const data = await fetchPublicDirectory(publicDirectoryQuery(config, digitalDiscovery));
-    const seen = new Set<string>();
+    const seenCandidates: Array<{ name: string; email: string; website: string }> = [];
     const allCandidates = (data.elements ?? []).flatMap(element => {
       const tags = element.tags ?? {};
       const listedEmail = (tags.email || tags['contact:email'] || '').toLowerCase().trim();
@@ -118,12 +116,13 @@ export async function POST(request: NextRequest) {
       const name = clean(tags.name || '');
       const rawWebsite = tags.website || tags['contact:website'] || '';
       const website = rawWebsite ? normaliseWebsite(rawWebsite) : '';
-      const websiteKey = websiteIdentity(website);
-      const nameIdentity = name.toLowerCase();
-      const identity = websiteKey || email || nameIdentity;
-      if (!name || !identity || seen.has(identity) || (email && excludedEmails.has(email)) || (websiteKey && excludedWebsites.has(websiteKey)) || excludedNames.has(nameIdentity)) return [];
+      const websiteKey = normaliseLeadWebsite(website);
+      const nameIdentity = normaliseLeadName(name);
+      const identity = { name, email, website };
+      const excluded = (email && excludedEmails.has(normaliseLeadEmail(email))) || (websiteKey && excludedWebsites.has(websiteKey)) || excludedNames.has(nameIdentity);
+      if (!name || excluded || isKnownLead(identity, seenCandidates)) return [];
       if (!digitalDiscovery && !matchesWorkflow(tags, config)) return [];
-      seen.add(identity);
+      seenCandidates.push(identity);
       const lat = element.lat ?? element.center?.lat; const lon = element.lon ?? element.center?.lon;
       const phone = tags.phone || tags['contact:phone'] || '';
       return [{
@@ -162,16 +161,16 @@ export async function POST(request: NextRequest) {
       }
     }))).filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate));
 
-    const unique = new Set<string>();
+    const uniqueRecords: Array<{ email: string; website: string; name: string }> = [];
     const finalCandidates = auditedCandidates.filter(candidate => {
-      const website = websiteIdentity(candidate.website);
-      const email = candidate.email.toLowerCase();
-      const name = candidate.name.toLowerCase();
-      const identity = website || email || name;
-      if (!identity || unique.has(identity) || (email && unique.has(email)) || unique.has(name)) return false;
-      unique.add(identity); if (email) unique.add(email); unique.add(name);
+      const website = normaliseLeadWebsite(candidate.website);
+      const email = normaliseLeadEmail(candidate.email);
+      const name = normaliseLeadName(candidate.name);
+      const identity = { website, email, name };
+      if ((!website && !email && !name) || isKnownLead(identity, uniqueRecords)) return false;
+      uniqueRecords.push(identity);
       return true;
-    }).slice(0, limit);
+    }).slice(0, digitalDiscovery ? selectionLimit : limit);
 
     const prospects = digitalDiscovery
       ? finalCandidates
@@ -185,6 +184,7 @@ export async function POST(request: NextRequest) {
       source: config.leadSource,
       companyId: config.companyId,
       limit,
+      candidateLimit: digitalDiscovery ? selectionLimit : limit,
       exhausted: prospects.length === 0,
     });
   } catch (error) {

@@ -12,6 +12,7 @@ import { getOutreachWorkflow, CLIENT_CONTACT_PHONE } from '@/lib/outreach-workfl
 import { proposalFor, PROPOSAL_TEMPLATE_VERSION } from '@/lib/proposal-copy';
 import { decodeHtmlEntities } from '@/lib/text';
 import { isPublicBusinessEmail } from '@/lib/leads/public-email';
+import { isKnownLead, normaliseLeadEmail } from '@/lib/leads/identity';
 import { LEADRALLY_BRAND } from '@/lib/brand';
 import { GoogleAuthProvider, signInWithPopup } from 'firebase/auth';
 import { firebaseAuth } from '@/lib/firebase';
@@ -163,6 +164,7 @@ function Login({onLogin}:{onLogin:()=>void}) {
 }
 
 function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach,gmailMessages,setGmailMessages}:{route:string;leads:Lead[];setLeads:(v:Lead[])=>void;contacts:Contact[];setContacts:(v:Contact[])=>void;businesses:BusinessProfile[];setBusinesses:(v:BusinessProfile[])=>void;prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void;gmailMessages:GmailMessage[];setGmailMessages:(v:GmailMessage[])=>void}) {
+  const knownIdentities=[...prospects.map(({name,email,website})=>({name,email,website})),...leads.map(item=>({name:item.name||item.company,email:item.email})),...contacts.map(item=>({name:item.name||item.company,email:item.email}))];
   if(route==='dashboard') return <Dashboard prospects={prospects} drafts={drafts} outreach={outreach} gmailMessages={gmailMessages}/>;
   if(route==='leads') return <Leads leads={leads} setLeads={setLeads}/>;
   if(route==='contacts') return <Contacts contacts={contacts} setContacts={setContacts}/>;
@@ -174,7 +176,7 @@ function Page({route,leads,setLeads,contacts,setContacts,businesses,setBusinesse
   if(route==='settings') return <SettingsPage/>;
   if(route==='website-audits') return <AuditPage prospects={prospects}/>;
   if(route==='inbox') return <InboxPage messages={gmailMessages} setMessages={setGmailMessages} businesses={businesses}/>;
-  if(route==='email-outreach') return <OutreachPage businesses={businesses} prospects={prospects} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach}/>;
+  if(route==='email-outreach') return <OutreachPage businesses={businesses} prospects={prospects} knownIdentities={knownIdentities} setProspects={setProspects} drafts={drafts} setDrafts={setDrafts} outreach={outreach} setOutreach={setOutreach}/>;
   if(route==='outreach-history') return <HistoryPage businesses={businesses} prospects={prospects} outreach={outreach}/>;
   return <GenericPage route={route}/>;
 }
@@ -259,7 +261,7 @@ function Reports({title,prospects,drafts,outreach,gmailMessages}:{title:string;p
   const pending=drafts.filter(draft=>draft.status==='pending').length;const approved=drafts.filter(draft=>draft.status==='approved').length;
   return <><Header title={title} sub="Recorded outreach performance only—no template figures." action={<span className="btn secondary">{rangeLabel}</span>}/><div className="grid kpis"><Kpi label="Total Prospects" value={String(prospects.length)} detail="Recorded all time"/><Kpi label="Emails Sent" value={String(sent)} detail="Accepted by Gmail"/><Kpi label="Replies" value={String(replies)} detail="Imported from Gmail"/><Kpi label="Reply Rate" value={replyRate} detail="Replies ÷ emails sent"/></div><div className="grid dashboard-grid"><div className="card"><b>Prospects Found · Last 7 Days</b>{max===0?<p className="muted" style={{marginTop:28}}>No prospects recorded in this period.</p>:<><div className="chart-bars">{counts.map((count,index)=><div className="bar" key={days[index].toISOString()} title={`${count} prospect${count===1?'':'s'}`} style={{height:`${Math.max(6,(count/max)*100)}%`}}/>)}</div><div style={{display:'flex',justifyContent:'space-between'}}>{days.map(date=><span className="muted" key={date.toISOString()}>{date.toLocaleDateString('en-GB',{weekday:'short'})}</span>)}</div></>}</div><div className="card"><b>Current Outreach Funnel</b><div style={{display:'grid',gap:16,marginTop:24}}>{[['Prospects',prospects.length],['Drafts',drafts.length],['Awaiting approval',pending],['Approved',approved],['Sent',sent],['Replies',replies]].map(([label,value])=><div key={String(label)} style={{display:'flex',justifyContent:'space-between',borderBottom:'1px solid #eee',paddingBottom:10}}><span className="muted">{label}</span><b>{value}</b></div>)}</div></div></div></>}
 
-function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outreach,setOutreach}:{businesses:BusinessProfile[];prospects:Prospect[];setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void}) {
+function OutreachPage({businesses,prospects,knownIdentities,setProspects,drafts,setDrafts,outreach,setOutreach}:{businesses:BusinessProfile[];prospects:Prospect[];knownIdentities:Array<{name?:string;email?:string;website?:string}>;setProspects:(v:Prospect[])=>void;drafts:Draft[];setDrafts:(v:Draft[])=>void;outreach:Outreach[];setOutreach:(v:Outreach[])=>void}) {
   const [businessId,setBusinessId]=useState(businesses[0]?.id||''); const [busy,setBusy]=useState(false); const [sending,setSending]=useState<string|null>(null); const [sendError,setSendError]=useState(''); const [notice,setNotice]=useState(''); const [website,setWebsite]=useState(''); const [progress,setProgress]=useState(''); const [gmail,setGmail]=useState<GmailStatus|null>(null);
   const workflow=getOutreachWorkflow(businessId) ?? getOutreachWorkflow('bryant-digital');
   const pending=drafts.filter(d=>(d.status==='pending'||d.status==='edited')&&d.businessId===businessId);
@@ -317,13 +319,27 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
     const business=businesses.find(b=>b.id===businessId); if(!business)return;
     setBusy(true); setSendError(''); setNotice(''); setProgress('Finding public Dorset prospects…');
     try {
-      const response=await fetch('/api/prospects/discover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({limit:10,companyId:business.id,excludeEmails:prospects.map(p=>p.email).filter(Boolean),excludeWebsites:prospects.map(p=>p.website).filter(Boolean),excludeNames:prospects.map(p=>p.name).filter(Boolean)})}); const result=await response.json(); if(!response.ok)throw new Error(result.error||'Public directory search failed.');
-      const known=new Set(prospects.map(p=>p.website.toLowerCase())); const candidates=(result.prospects as Array<{name:string;email:string;website:string;phone:string;location:string;industry:string;contactUrl:string;googleMapsUrl:string}>).filter(item=>!known.has(item.website.toLowerCase())); const created:Prospect[]=[];
-      for(let offset=0;offset<candidates.length&&created.length<10;offset+=4){
-        const batch=candidates.slice(offset,offset+4);setProgress(`Checking websites ${offset+1}–${Math.min(offset+batch.length,candidates.length)} of ${candidates.length} · ${created.length} prospects ready…`);
+      type Candidate={name:string;email:string;website:string;phone:string;location:string;industry:string;contactUrl:string;googleMapsUrl:string};
+      const scanned:Candidate[]=[]; const created:Prospect[]=[];
+      for(let page=0;page<5&&created.length<10;page++){
+        const exclusions=[...knownIdentities,...scanned];
+        const response=await fetch('/api/prospects/discover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({limit:10,companyId:business.id,excludeEmails:exclusions.map(item=>item.email).filter((value):value is string=>Boolean(value)),excludeWebsites:exclusions.map(item=>item.website).filter((value):value is string=>Boolean(value)),excludeNames:exclusions.map(item=>item.name).filter((value):value is string=>Boolean(value))})});
+        const result=await response.json(); if(!response.ok)throw new Error(result.error||'Public directory search failed.');
+        const candidates=(result.prospects as Candidate[]).filter(item=>!isKnownLead(item,[...knownIdentities,...scanned]));
+        if(!candidates.length)break;
+        scanned.push(...candidates);
+        for(let offset=0;offset<candidates.length&&created.length<10;offset+=4){
+        const batch=candidates.slice(offset,offset+4);setProgress(`Checking websites ${page*48+offset+1}–${page*48+Math.min(offset+batch.length,candidates.length)} · ${created.length} prospects ready…`);
         const checked=await Promise.all(batch.map(async item=>{try {const auditResponse=await fetch('/api/leads/audit',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({website:item.website})});const audited=await auditResponse.json();if(!auditResponse.ok)throw new Error();const contactEmail=audited.contactEmail||item.email;if(!contactEmail)return null;const audit=audited.audit as Audit;const opportunity=audit.notes.length?`The audit found ${audit.notes.slice(0,2).join(' and ').toLowerCase()}.`:'The website has a solid foundation and may benefit from a focused growth review.';return {id:`${business.id}-${crypto.randomUUID()}`,businessId:business.id,name:audited.businessName||item.name,website:audited.website||item.website,email:contactEmail,phone:audited.phoneNumber||item.phone,location:item.location,industry:item.industry,contactUrl:audited.contactPageUrl||item.contactUrl,googleMapsUrl:item.googleMapsUrl,score:audit.overallScore,reasons:[opportunity,'A public business email was found on the website or its contact page.'],discoveredAt:new Date().toISOString(),contacted:false,audit,recommendedService:workflow.recommendedService,confidence:Math.max(40,Math.min(95,100-audit.overallScore))} satisfies Prospect;}catch{if(!item.email)return null;return {id:`${business.id}-${crypto.randomUUID()}`,businessId:business.id,name:item.name,website:item.website,email:item.email,phone:item.phone,location:item.location,industry:item.industry,contactUrl:item.contactUrl,googleMapsUrl:item.googleMapsUrl,score:50,reasons:['Public business contact details were published in an OpenStreetMap listing.','The website audit was unavailable, so this draft makes no audit claim.'],discoveredAt:new Date().toISOString(),contacted:false,recommendedService:workflow.recommendedService,confidence:50} satisfies Prospect;}}));
-        const available=checked.filter(Boolean) as Prospect[];
+        const seenThisRun: Array<{name:string;email:string;website:string}> = [];
+        const available=(checked.filter(Boolean) as Prospect[]).filter(item=>{
+          if(isKnownLead(item,[...knownIdentities,...created,...seenThisRun]))return false;
+          seenThisRun.push(item);
+          return true;
+        });
         created.push(...available.slice(0,10-created.length));
+        }
+        if(candidates.length<48)break;
       }
       if(!created.length){setSendError('No additional new Dorset prospects are available from the current public directory results. Existing businesses were skipped to prevent duplicates.');return;}
       const newDrafts=created.map(p=>{const note=p.audit?.notes[0];return {id:`draft-${p.id}`,prospectId:p.id,businessId:business.id,subject:digitalProposal(business,p.name,note).subject,body:digitalOfferBody(business,p.name,note),callToAction:digitalProposal(business,p.name,note).callToAction,generatedAt:new Date().toISOString(),status:'pending',templateVersion:PROPOSAL_TEMPLATE_VERSION} satisfies Draft});
@@ -336,13 +352,13 @@ function OutreachPage({businesses,prospects,setProspects,drafts,setDrafts,outrea
     if(workflow.workflowType==='dorset-prospecting'){
       setBusy(true); setSendError(''); setNotice('');
       try {
-          const response=await fetch('/api/prospects/discover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({limit:10,companyId:business.id,excludeEmails:prospects.map(p=>p.email).filter(Boolean),excludeWebsites:prospects.map(p=>p.website).filter(Boolean),excludeNames:prospects.map(p=>p.name).filter(Boolean)})});
+          const response=await fetch('/api/prospects/discover',{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify({limit:10,companyId:business.id,excludeEmails:knownIdentities.map(item=>item.email).filter((value):value is string=>Boolean(value)),excludeWebsites:knownIdentities.map(item=>item.website).filter((value):value is string=>Boolean(value)),excludeNames:knownIdentities.map(item=>item.name).filter((value):value is string=>Boolean(value))})});
         const result=await response.json(); if(!response.ok) throw new Error(result.error||'Public directory search failed.');
-        const existingEmails=new Set(prospects.map(p=>p.email.toLowerCase()));
-        const found=(result.prospects as Array<{name:string;email:string;website:string;phone:string;location:string;industry:string;contactUrl:string;googleMapsUrl:string;proposal:{subject:string;body:string;callToAction:string}}>).filter(item=>!existingEmails.has(item.email.toLowerCase()));
-        if(!found.length){setSendError('No additional new Dorset prospects are available from the current public directory results. Existing businesses were skipped to prevent duplicates.');return;}
-        const created=found.map(item=>({id:`${business.id}-${crypto.randomUUID()}`,businessId:business.id,name:item.name,website:item.website,email:item.email,phone:item.phone,location:item.location,industry:item.industry,contactUrl:item.contactUrl,googleMapsUrl:item.googleMapsUrl,score:70,reasons:[`Public business contact email published via ${workflow.leadSource}.`,`Suitable ${workflow.recommendedService.toLowerCase()} prospect based on its public business category.`],discoveredAt:new Date().toISOString(),contacted:false,recommendedService:workflow.recommendedService,confidence:70} satisfies Prospect));
-        const createdDrafts=created.map((prospect,index)=>({id:`draft-${prospect.id}`,prospectId:prospect.id,businessId:business.id,subject:found[index].proposal.subject,body:found[index].proposal.body,callToAction:found[index].proposal.callToAction,generatedAt:new Date().toISOString(),status:'pending',templateVersion:PROPOSAL_TEMPLATE_VERSION} satisfies Draft));
+        const found=(result.prospects as Array<{name:string;email:string;website:string;phone:string;location:string;industry:string;contactUrl:string;googleMapsUrl:string;proposal:{subject:string;body:string;callToAction:string}}>).filter(item=>!isKnownLead(item,knownIdentities));
+        const uniqueFound=found.filter((item,index)=>found.findIndex(other=>normaliseLeadEmail(other.email)===normaliseLeadEmail(item.email))===index);
+        if(!uniqueFound.length){setSendError('No additional new Dorset prospects are available from the current public directory results. Existing businesses were skipped to prevent duplicates.');return;}
+        const created=uniqueFound.map(item=>({id:`${business.id}-${crypto.randomUUID()}`,businessId:business.id,name:item.name,website:item.website,email:item.email,phone:item.phone,location:item.location,industry:item.industry,contactUrl:item.contactUrl,googleMapsUrl:item.googleMapsUrl,score:70,reasons:[`Public business contact email published via ${workflow.leadSource}.`,`Suitable ${workflow.recommendedService.toLowerCase()} prospect based on its public business category.`],discoveredAt:new Date().toISOString(),contacted:false,recommendedService:workflow.recommendedService,confidence:70} satisfies Prospect));
+        const createdDrafts=created.map((prospect,index)=>({id:`draft-${prospect.id}`,prospectId:prospect.id,businessId:business.id,subject:uniqueFound[index].proposal.subject,body:uniqueFound[index].proposal.body,callToAction:uniqueFound[index].proposal.callToAction,generatedAt:new Date().toISOString(),status:'pending',templateVersion:PROPOSAL_TEMPLATE_VERSION} satisfies Draft));
         setProspects([...prospects,...created]); setDrafts([...drafts,...createdDrafts]);
         setNotice(`Added ${created.length} new ${business.name} prospect${created.length===1?'':'s'} to the approval queue.`);
       } catch(error) {setSendError(error instanceof Error?error.message:'Public directory search failed.');} finally {setBusy(false);} return;
