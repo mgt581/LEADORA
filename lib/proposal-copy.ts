@@ -1,6 +1,6 @@
 import { CLIENT_CONTACT_PHONE } from './outreach-workflows';
 
-export const PROPOSAL_TEMPLATE_VERSION = 3;
+export const PROPOSAL_TEMPLATE_VERSION = 4;
 
 export type Proposal = {
   subject: string;
@@ -10,6 +10,10 @@ export type Proposal = {
 
 function clean(value: string) {
   return value.replace(/\s+/g, ' ').trim();
+}
+
+function readableCategory(value: string) {
+  return clean(value).replace(/[_-]+/g, ' ').replace(/\b\p{L}/gu, letter => letter.toUpperCase()) || 'local business';
 }
 
 function serviceLink(companyId: string) {
@@ -35,7 +39,8 @@ export function proposalFor(
   options: { finding?: string; website?: string; companyName?: string } = {},
 ): Proposal {
   const business = clean(name) || 'your business';
-  const category = clean(businessType).toLowerCase() || 'local business';
+  const category = readableCategory(businessType);
+  const categoryArticle = /^[aeiou]/i.test(category) ? 'an' : 'a';
   const location = clean(place) || 'Dorset';
   const companyName = options.companyName ?? ({
     'bryant-digital': 'Bryant Digital Solutions',
@@ -46,18 +51,16 @@ export function proposalFor(
   const link = serviceLink(companyId);
 
   if (companyId === 'bryant-digital') {
-    const finding = options.finding
-      ? clean(options.finding).replace(/[.]+$/, '')
-      : 'there may be a few straightforward opportunities to improve visibility and enquiries';
+    const finding = options.finding ? clean(options.finding).replace(/[.]+$/, '') : '';
     return {
-      subject: `A practical website idea for ${business}`,
-      body: `Hi ${business} team,
+      subject: `Website review for ${business}`,
+      body: `Hello,
 
-I was reviewing local businesses in ${location} and came across ${business}. I noticed ${finding.toLowerCase()}.
+I’ve reviewed ${business}’s website${finding ? ` and noticed ${finding.charAt(0).toLowerCase()}${finding.slice(1)}` : ''}.
 
-I run ${companyName}. I can send over a short, no-obligation website and SEO review with the specific actions I would prioritise — no hard sell and no long contract.
+I’m Alex at ${companyName}. I can send a short, no-obligation review with practical improvements for your site’s search visibility and enquiry journey.
 
-If that would be useful, reply “audit” and I’ll send it across. If someone else looks after the website, I’m happy to speak with them instead.
+Would you like me to send it over?
 
 Kind regards,
 
@@ -70,14 +73,14 @@ ${link}`,
 
   if (companyId === 'bryant-cleaning') {
     return {
-      subject: `Cleaning cover for ${business}`,
-      body: `Hi ${business} team,
+      subject: `Cleaning support for ${business}`,
+      body: `Hello,
 
-I’m contacting a small number of ${category} businesses in ${location} because reliable cleaning cover can be difficult to arrange around opening hours.
+I found ${business}, listed as ${categoryArticle} ${category.toLowerCase()} in ${location} in a public business listing. I’m Alex at ${companyName}.
 
-${companyName} provides dependable commercial cleaning with clear, tailored quotations rather than a one-size-fits-all package. I’m not assuming you need a new cleaner — I wanted to offer a sensible alternative if you are reviewing cover, have a gap in the rota, or need a backup team.
+We provide commercial cleaning with plans and quotes tailored to each site. If you are reviewing your current arrangements or need additional cover, I’d be happy to prepare a no-obligation quote.
 
-Would it be useful if I sent a short outline and indicative quotation?
+Would that be useful?
 
 Kind regards,
 
@@ -90,14 +93,14 @@ ${link}`,
 
   if (companyId === 'bryant-construction') {
     return {
-      subject: `Property maintenance support for ${business}`,
-      body: `Hi ${business} team,
+      subject: `A contractor contact for ${business}`,
+      body: `Hello,
 
-I’m getting in touch because ${category} businesses and property teams in ${location} often need a reliable contractor for repairs, maintenance and small refurbishment work.
+I found ${business}, listed as ${categoryArticle} ${category.toLowerCase()} in ${location} in a public business listing. I’m Alex at ${companyName}.
 
-${companyName} provides clear, itemised quotations before work starts, covering practical jobs such as repairs, alterations and property refreshes. There’s no assumption that you have an active project — if something is coming up, I’d be glad to price it properly.
+We provide construction and refurbishment work, with clear, itemised quotes agreed before work starts. If a repair or project comes up, I’d be glad to discuss the scope and price it for you.
 
-Would it be helpful to have our details on file for future work?
+Would you like me to send our details for your supplier records?
 
 Kind regards,
 
@@ -109,14 +112,14 @@ ${link}`,
   }
 
   return {
-    subject: `A simple local referral idea for ${business}`,
-    body: `Hi ${business} team,
+    subject: `Local referral partnership idea`,
+    body: `Hello,
 
-I run ${companyName} in Bournemouth and I’m contacting a small number of complementary local businesses about straightforward referral partnerships.
+I’m Alex at ${companyName} in Bournemouth. I found ${business}, listed as ${categoryArticle} ${category.toLowerCase()} in ${location} in a public business listing.
 
-Your ${category} business looks like it could be a natural fit for clients who ask about professional teeth whitening. I’m not suggesting anything complicated: just a conversation about whether a referral or cross-promotion arrangement would genuinely benefit both businesses.
+We offer professional teeth whitening and are exploring simple referral partnerships with complementary local businesses. Any arrangement would be discussed first and would only go ahead if it suited both sides.
 
-Would you be open to a quick, no-obligation chat?
+Would you be open to a brief conversation?
 
 Kind regards,
 
